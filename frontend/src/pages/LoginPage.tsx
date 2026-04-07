@@ -1,47 +1,66 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const LoginPage = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedLoginType, setSelectedLoginType] = useState('student');
-  const [selectedTechnicianType, setSelectedTechnicianType] = useState('electrical');
-const navigate = useNavigate();
+type LoginType = 'student' | 'staff' | 'admin' | 'technician';
+type TechnicianType = 'electrical' | 'it-support' | 'mechanical' | 'lab-equipment';
 
-const navBtnStyle = {
-  width: '100%',
-  padding: '13px 16px',
-  borderRadius: '14px',
-  border: '1px solid rgba(255,255,255,0.16)',
-  background: 'rgba(255,255,255,0.08)',
-  color: '#ffffff',
-  fontSize: '14px',
-  fontWeight: '700',
-  cursor: 'pointer'
+type TechnicianOption = {
+  value: TechnicianType;
+  label: string;
 };
 
-  const technicianTypes = [
+type StatItem = {
+  num: string;
+  label: string;
+};
+
+import { useEffect } from 'react';
+
+// Inside your LoginPage component, before the return:
+
+
+const LoginPage = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedLoginType, setSelectedLoginType] = useState<LoginType>('student');
+  const [selectedTechnicianType, setSelectedTechnicianType] =
+    useState<TechnicianType>('electrical');
+
+  const navigate = useNavigate();
+
+  const navBtnStyle: CSSProperties = {
+    width: '100%',
+    padding: '13px 16px',
+    borderRadius: '14px',
+    border: '1px solid #d4d4d8',
+    background: '#ffffff',
+    color: '#111111',
+    fontSize: '14px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+  };
+
+  const technicianTypes: TechnicianOption[] = [
     { value: 'electrical', label: 'Electrical Technician' },
     { value: 'it-support', label: 'IT Support Technician' },
     { value: 'mechanical', label: 'Mechanical Technician' },
     { value: 'lab-equipment', label: 'Lab Equipment Technician' },
   ];
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = (): void => {
     setIsLoading(true);
-
-    // Later you can pass selectedLoginType and selectedTechnicianType to backend if needed
-    // Example:
-    // window.location.href = `http://localhost:8080/oauth2/authorization/google?loginType=${selectedLoginType}&techType=${selectedTechnicianType}`;
-
     window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
 
-  const stats = [
+  const stats: StatItem[] = [
     { num: '24/7', label: 'Support Available' },
     { num: '500+', label: 'Active Users' },
     { num: '98%', label: 'Resolution Rate' },
     { num: '4.8★', label: 'User Rating' },
   ];
+
+  const selectedTechnicianLabel =
+    technicianTypes.find((tech) => tech.value === selectedTechnicianType)?.label ?? '';
 
   return (
     <>
@@ -54,43 +73,67 @@ const navBtnStyle = {
 
         body {
           font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+          background: #ffffff;
         }
 
         .login-page {
           min-height: 100vh;
           display: flex;
-          background: linear-gradient(135deg, #0f172a 0%, #111827 45%, #1e1b4b 100%);
+          background:
+            radial-gradient(circle at 10% 12%, rgba(249, 115, 22, 0.12), transparent 22%),
+            radial-gradient(circle at 88% 18%, rgba(251, 146, 60, 0.12), transparent 20%),
+            radial-gradient(circle at 82% 82%, rgba(24, 24, 27, 0.08), transparent 24%),
+            linear-gradient(135deg, #ffffff 0%, #fafafa 48%, #fff7ed 100%);
           position: relative;
           overflow: hidden;
-          color: white;
+          color: #111111;
         }
 
-        .orb {
+        .login-page::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(17, 17, 17, 0.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(17, 17, 17, 0.035) 1px, transparent 1px);
+          background-size: 38px 38px;
+          animation: gridFloat 18s ease-in-out infinite;
+          pointer-events: none;
+          opacity: 0.55;
+        }
+
+        @keyframes gridFloat {
+          0% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(8px, 8px, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+
+        .accent-blob {
           position: absolute;
           border-radius: 50%;
-          filter: blur(110px);
+          filter: blur(100px);
           pointer-events: none;
-          opacity: 0.75;
+          opacity: 0.45;
         }
 
-        .orb-1 {
-          width: 460px;
-          height: 460px;
-          background: rgba(59, 130, 246, 0.22);
-          top: -140px;
-          left: -120px;
+        .blob-1 {
+          width: 360px;
+          height: 360px;
+          background: rgba(249, 115, 22, 0.18);
+          top: -120px;
+          left: -100px;
         }
 
-        .orb-2 {
-          width: 420px;
-          height: 420px;
-          background: rgba(139, 92, 246, 0.22);
-          bottom: -140px;
-          right: -100px;
+        .blob-2 {
+          width: 340px;
+          height: 340px;
+          background: rgba(251, 146, 60, 0.16);
+          bottom: -110px;
+          right: -80px;
         }
 
         .left-panel {
-          flex: 1.4;
+          flex: 1.2;
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -106,43 +149,41 @@ const navBtnStyle = {
           width: fit-content;
           padding: 10px 16px;
           border-radius: 999px;
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.14);
+          background: rgba(255,255,255,0.88);
+          border: 1px solid #e4e4e7;
           margin-bottom: 28px;
-          backdrop-filter: blur(12px);
+          box-shadow: 0 6px 18px rgba(0,0,0,0.04);
         }
 
         .badge-dot {
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          background: #4ade80;
+          background: #f97316;
         }
 
         .brand-badge span {
           font-size: 12px;
           font-weight: 700;
           letter-spacing: 0.08em;
-          color: #bfdbfe;
+          color: #18181b;
         }
 
         .hero-title {
-          font-size: 68px;
+          font-size: 64px;
           line-height: 1.05;
           font-weight: 800;
           margin-bottom: 22px;
           max-width: 760px;
-          background: linear-gradient(135deg, #ffffff 0%, #dbeafe 50%, #c4b5fd 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          color: #111111;
+          letter-spacing: -0.03em;
         }
 
         .hero-subtitle {
           max-width: 700px;
           font-size: 18px;
           line-height: 1.8;
-          color: rgba(219, 234, 254, 0.82);
+          color: #52525b;
           margin-bottom: 40px;
         }
 
@@ -153,34 +194,33 @@ const navBtnStyle = {
         }
 
         .stat-card {
-          padding: 26px 24px;
-          border-radius: 24px;
-          background: rgba(255,255,255,0.07);
-          border: 1px solid rgba(255,255,255,0.12);
-          backdrop-filter: blur(14px);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-          transition: transform 0.2s ease, background 0.2s ease;
+          padding: 24px 22px;
+          border-radius: 22px;
+          background: rgba(255,255,255,0.88);
+          border: 1px solid #e4e4e7;
+          box-shadow: 0 10px 26px rgba(0,0,0,0.05);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .stat-card:hover {
           transform: translateY(-2px);
-          background: rgba(255,255,255,0.09);
+          box-shadow: 0 14px 32px rgba(0,0,0,0.07);
         }
 
         .stat-number {
           font-size: 34px;
           font-weight: 800;
-          color: #ffffff;
+          color: #111111;
           margin-bottom: 8px;
         }
 
         .stat-label {
           font-size: 14px;
-          color: rgba(191, 219, 254, 0.8);
+          color: #52525b;
         }
 
         .right-panel {
-          flex: 1.15;
+          flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -192,43 +232,43 @@ const navBtnStyle = {
         .glass-card {
           width: 100%;
           max-width: 920px;
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.16);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border-radius: 34px;
-          padding: 52px 46px;
-          box-shadow: 0 32px 90px rgba(0,0,0,0.38);
+          background: rgba(255,255,255,0.92);
+          border: 1px solid #e4e4e7;
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border-radius: 30px;
+          padding: 48px 42px;
+          box-shadow: 0 24px 60px rgba(0,0,0,0.10);
         }
 
         .card-top {
-          margin-bottom: 34px;
+          margin-bottom: 30px;
           text-align: center;
         }
 
         .lock-icon-wrap {
-          width: 82px;
-          height: 82px;
-          margin: 0 auto 22px;
-          border-radius: 24px;
+          width: 78px;
+          height: 78px;
+          margin: 0 auto 20px;
+          border-radius: 22px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
-          box-shadow: 0 14px 36px rgba(79, 70, 229, 0.35);
+          background: linear-gradient(135deg, #ea580c, #fb923c);
+          box-shadow: 0 14px 32px rgba(249, 115, 22, 0.25);
         }
 
         .card-title {
-          font-size: 38px;
+          font-size: 36px;
           font-weight: 800;
           margin-bottom: 10px;
-          color: #ffffff;
+          color: #111111;
         }
 
         .card-subtitle {
           font-size: 15px;
           line-height: 1.8;
-          color: rgba(219, 234, 254, 0.76);
+          color: #52525b;
           max-width: 560px;
           margin: 0 auto;
         }
@@ -238,7 +278,7 @@ const navBtnStyle = {
           font-weight: 700;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: rgba(191, 219, 254, 0.76);
+          color: #52525b;
           margin-bottom: 14px;
         }
 
@@ -250,36 +290,37 @@ const navBtnStyle = {
         }
 
         .type-card {
-          border: 1px solid rgba(255,255,255,0.12);
-          background: rgba(255,255,255,0.05);
-          border-radius: 20px;
-          padding: 20px 18px;
+          border: 1px solid #e4e4e7;
+          background: #ffffff;
+          border-radius: 18px;
+          padding: 18px 18px;
           cursor: pointer;
           transition: all 0.2s ease;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.03);
         }
 
         .type-card:hover {
           transform: translateY(-2px);
-          background: rgba(255,255,255,0.08);
+          border-color: #fdba74;
         }
 
         .type-card.active {
-          border: 1px solid rgba(96, 165, 250, 0.9);
-          background: rgba(59, 130, 246, 0.16);
-          box-shadow: 0 0 0 1px rgba(96,165,250,0.22);
+          border: 1px solid #f97316;
+          background: #fff7ed;
+          box-shadow: 0 0 0 1px rgba(249,115,22,0.10);
         }
 
         .type-title {
           font-size: 17px;
           font-weight: 700;
-          color: #ffffff;
+          color: #111111;
           margin-bottom: 6px;
         }
 
         .type-desc {
           font-size: 13px;
           line-height: 1.6;
-          color: rgba(219, 234, 254, 0.72);
+          color: #52525b;
         }
 
         .field-group {
@@ -296,26 +337,23 @@ const navBtnStyle = {
           -webkit-appearance: none;
           -moz-appearance: none;
           padding: 16px 52px 16px 18px;
-          border-radius: 18px;
-          border: 1px solid rgba(255,255,255,0.14);
-          background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));
-          color: #ffffff;
+          border-radius: 16px;
+          border: 1px solid #d4d4d8;
+          background: #ffffff;
+          color: #111111;
           font-size: 15px;
           font-weight: 500;
           outline: none;
-          backdrop-filter: blur(14px);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-          transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .select-box:focus {
-          border-color: rgba(96, 165, 250, 0.95);
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
-          background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.07));
+          border-color: #f97316;
+          box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
         }
 
         .select-box option {
-          color: #111827;
+          color: #111111;
           background: #ffffff;
         }
 
@@ -325,21 +363,21 @@ const navBtnStyle = {
           right: 18px;
           transform: translateY(-50%);
           pointer-events: none;
-          color: rgba(191, 219, 254, 0.9);
+          color: #52525b;
         }
 
         .info-box {
           margin-bottom: 24px;
           padding: 18px 18px;
-          border-radius: 20px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 18px;
+          background: #fafafa;
+          border: 1px solid #e4e4e7;
         }
 
         .info-box p {
           font-size: 14px;
           line-height: 1.75;
-          color: rgba(219, 234, 254, 0.78);
+          color: #3f3f46;
         }
 
         .google-btn {
@@ -350,21 +388,20 @@ const navBtnStyle = {
           gap: 12px;
           padding: 18px 22px;
           border: none;
-          border-radius: 20px;
-          background: #ffffff;
-          color: #111827;
+          border-radius: 18px;
+          background: linear-gradient(135deg, #ea580c, #fb923c);
+          color: #ffffff;
           font-size: 16px;
           font-weight: 700;
           cursor: pointer;
           transition: all 0.2s ease;
           margin-bottom: 18px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+          box-shadow: 0 10px 28px rgba(249, 115, 22, 0.22);
         }
 
-        
         .google-btn:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 16px 34px rgba(0,0,0,0.28);
+          box-shadow: 0 16px 34px rgba(249, 115, 22, 0.28);
         }
 
         .google-btn:disabled {
@@ -376,21 +413,21 @@ const navBtnStyle = {
           text-align: center;
           font-size: 13px;
           line-height: 1.8;
-          color: rgba(191, 219, 254, 0.66);
+          color: #52525b;
         }
 
         .secure-note {
           margin-top: 14px;
           text-align: center;
           font-size: 12px;
-          color: rgba(191, 219, 254, 0.56);
+          color: #71717a;
         }
 
         .spinner {
           width: 18px;
           height: 18px;
-          border: 2px solid #d1d5db;
-          border-top-color: #4f46e5;
+          border: 2px solid rgba(255,255,255,0.45);
+          border-top-color: #ffffff;
           border-radius: 50%;
           animation: spin 0.7s linear infinite;
         }
@@ -409,7 +446,7 @@ const navBtnStyle = {
           }
 
           .hero-title {
-            font-size: 54px;
+            font-size: 52px;
           }
 
           .stats-grid {
@@ -496,8 +533,8 @@ const navBtnStyle = {
       `}</style>
 
       <div className="login-page">
-        <div className="orb orb-1" />
-        <div className="orb orb-2" />
+        <div className="accent-blob blob-1" />
+        <div className="accent-blob blob-2" />
 
         <div className="left-panel">
           <div className="brand-badge">
@@ -592,7 +629,9 @@ const navBtnStyle = {
                   <select
                     className="select-box"
                     value={selectedTechnicianType}
-                    onChange={(e) => setSelectedTechnicianType(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setSelectedTechnicianType(e.target.value as TechnicianType)
+                    }
                   >
                     {technicianTypes.map((tech) => (
                       <option key={tech.value} value={tech.value}>
@@ -626,9 +665,7 @@ const navBtnStyle = {
                   'Admins can manage tickets, assign technicians, review progress, and monitor overall operations.'}
 
                 {selectedLoginType === 'technician' &&
-                  `Technicians can access assigned repair tasks and update work progress as a ${
-                    technicianTypes.find((tech) => tech.value === selectedTechnicianType)?.label
-                  }.`}
+                  `Technicians can access assigned repair tasks and update work progress as a ${selectedTechnicianLabel}.`}
               </p>
             </div>
 
@@ -646,19 +683,19 @@ const navBtnStyle = {
                 <>
                   <svg width="20" height="20" viewBox="0 0 24 24">
                     <path
-                      fill="#4285F4"
+                      fill="#ffffff"
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                     />
                     <path
-                      fill="#34A853"
+                      fill="#fff7ed"
                       d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
                     />
                     <path
-                      fill="#FBBC05"
+                      fill="#ffedd5"
                       d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
                     />
                     <path
-                      fill="#EA4335"
+                      fill="#fed7aa"
                       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                     />
                   </svg>
@@ -668,36 +705,22 @@ const navBtnStyle = {
             </button>
 
             <div style={{ display: 'grid', gap: '10px', marginTop: '14px' }}>
-  <button
-    onClick={() => navigate('/dashboard/my-tickets')}
-    style={navBtnStyle}
-  >
-    Open My Tickets
-  </button>
+              <button onClick={() => navigate('/dashboard/my-tickets')} style={navBtnStyle}>
+                Open My Tickets
+              </button>
 
-  <button
-    onClick={() => navigate('/dashboard/technician/tickets')}
-    style={navBtnStyle}
-  >
-    Open Technician Dashboard
-  </button>
+              <button onClick={() => navigate('/dashboard/technician/tickets')} style={navBtnStyle}>
+                Open Technician Dashboard
+              </button>
 
-  <button
-    onClick={() => navigate('/dashboard/admin/tickets')}
-    style={navBtnStyle}
-  >
-    Open Admin Tickets
-  </button>
+              <button onClick={() => navigate('/dashboard/admin/tickets')} style={navBtnStyle}>
+                Open Admin Tickets
+              </button>
 
-  <button
-    onClick={() => navigate('/dashboard/notifications')}
-    style={navBtnStyle}
-  >
-    Open Notifications
-  </button>
-</div>
-
-            
+              <button onClick={() => navigate('/dashboard/notifications')} style={navBtnStyle}>
+                Open Notifications
+              </button>
+            </div>
 
             <div className="footer-note">
               Secure role-based access for students, staff, admins, and specialized technicians.
