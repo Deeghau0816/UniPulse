@@ -14,7 +14,7 @@ type StatItem = {
   label: string;
 };
 
-import { useEffect } from 'react';
+
 
 // Inside your LoginPage component, before the return:
 
