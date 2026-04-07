@@ -1,11 +1,38 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+type TicketCategory = 'Electrical' | 'IT Support' | 'Mechanical' | 'Lab Equipment';
+
+type FormDataState = {
+  category: TicketCategory | '';
+  location: string;
+  priority: TicketPriority | '';
+  preferredContact: string;
+  description: string;
+};
+
+type AttachmentItem = {
+  file: File;
+  name: string;
+  size: string;
+  preview: string;
+};
+
+type FormErrors = {
+  category?: string;
+  location?: string;
+  priority?: string;
+  preferredContact?: string;
+  description?: string;
+  attachments?: string;
+};
+
 const CreateTicketPage = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataState>({
     category: '',
     location: '',
     priority: '',
@@ -13,21 +40,23 @@ const CreateTicketPage = () => {
     description: '',
   });
 
-  const [attachments, setAttachments] = useState([]);
-  const [errors, setErrors] = useState({});
-  const [submitMessage, setSubmitMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [submitMessage, setSubmitMessage] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const categoryOptions = [
+  const categoryOptions: TicketCategory[] = [
     'Electrical',
     'IT Support',
     'Mechanical',
     'Lab Equipment',
   ];
 
-  const priorityOptions = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+  const priorityOptions: TicketPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
-  const handleChange = (e) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ): void => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -41,10 +70,10 @@ const CreateTicketPage = () => {
     }));
   };
 
-  const validateFiles = (files) => {
+  const validateFiles = (files: File[]): string[] => {
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     const maxSize = 2 * 1024 * 1024;
-    const fileErrors = [];
+    const fileErrors: string[] = [];
 
     files.forEach((file) => {
       if (!allowedTypes.includes(file.type)) {
@@ -59,7 +88,7 @@ const CreateTicketPage = () => {
     return fileErrors;
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const selectedFiles = Array.from(e.target.files || []);
     if (!selectedFiles.length) return;
 
@@ -83,7 +112,7 @@ const CreateTicketPage = () => {
       return;
     }
 
-    const mappedFiles = selectedFiles.map((file) => ({
+    const mappedFiles: AttachmentItem[] = selectedFiles.map((file) => ({
       file,
       name: file.name,
       size: (file.size / 1024 / 1024).toFixed(2),
@@ -100,14 +129,18 @@ const CreateTicketPage = () => {
     e.target.value = '';
   };
 
-  const removeAttachment = (indexToRemove) => {
-    setAttachments((prev) =>
-      prev.filter((_, index) => index !== indexToRemove)
-    );
+  const removeAttachment = (indexToRemove: number): void => {
+    setAttachments((prev) => {
+      const removed = prev[indexToRemove];
+      if (removed?.preview) {
+        URL.revokeObjectURL(removed.preview);
+      }
+      return prev.filter((_, index) => index !== indexToRemove);
+    });
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
 
     if (!formData.category) {
       newErrors.category = 'Category is required.';
@@ -135,11 +168,11 @@ const CreateTicketPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleCancel = () => {
+  const handleCancel = (): void => {
     navigate('/dashboard/my-tickets');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     setSubmitMessage('');
 
@@ -162,14 +195,20 @@ const CreateTicketPage = () => {
         description: '',
       });
 
-     setAttachments([]);
-  setErrors({});
-  setIsSubmitting(false);
+      attachments.forEach((item) => {
+        if (item.preview) {
+          URL.revokeObjectURL(item.preview);
+        }
+      });
 
-  setTimeout(() => {
-    navigate('/dashboard/my-tickets');
-  }, 1000);
-}, 1200);
+      setAttachments([]);
+      setErrors({});
+      setIsSubmitting(false);
+
+      setTimeout(() => {
+        navigate('/dashboard/my-tickets');
+      }, 1000);
+    }, 1200);
   };
 
   return (
@@ -180,95 +219,144 @@ const CreateTicketPage = () => {
         }
 
         body {
+          margin: 0;
           font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+          background: #ffffff;
         }
 
         .create-ticket-page {
           min-height: 100vh;
-          background: linear-gradient(135deg, #0f172a 0%, #111827 45%, #1e1b4b 100%);
           position: relative;
           overflow-x: hidden;
-          color: white;
+          background:
+            radial-gradient(circle at 10% 12%, rgba(249, 115, 22, 0.12), transparent 22%),
+            radial-gradient(circle at 88% 18%, rgba(251, 146, 60, 0.12), transparent 20%),
+            radial-gradient(circle at 82% 82%, rgba(24, 24, 27, 0.08), transparent 24%),
+            linear-gradient(135deg, #ffffff 0%, #fafafa 48%, #fff7ed 100%);
+          color: #111111;
         }
 
-        .orb {
+        .create-ticket-page::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(17, 17, 17, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(17, 17, 17, 0.03) 1px, transparent 1px);
+          background-size: 38px 38px;
+          animation: gridFloat 18s ease-in-out infinite;
+          pointer-events: none;
+          opacity: 0.55;
+        }
+
+        @keyframes gridFloat {
+          0% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(8px, 8px, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+
+        .accent-blob {
           position: absolute;
           border-radius: 50%;
-          filter: blur(110px);
+          filter: blur(100px);
           pointer-events: none;
-          opacity: 0.75;
+          opacity: 0.42;
         }
 
-        .orb-1 {
-          width: 460px;
-          height: 460px;
-          background: rgba(59, 130, 246, 0.22);
-          top: -140px;
-          left: -120px;
+        .blob-1 {
+          width: 340px;
+          height: 340px;
+          background: rgba(249, 115, 22, 0.18);
+          top: -110px;
+          left: -90px;
         }
 
-        .orb-2 {
-          width: 420px;
-          height: 420px;
-          background: rgba(139, 92, 246, 0.22);
-          bottom: -140px;
-          right: -100px;
+        .blob-2 {
+          width: 320px;
+          height: 320px;
+          background: rgba(251, 146, 60, 0.16);
+          bottom: -100px;
+          right: -70px;
         }
 
         .page-header {
-          padding: 80px 72px 32px;
+          padding: 72px 72px 28px;
           position: relative;
           z-index: 2;
         }
 
         .header-content {
-          max-width: 1280px;
+          max-width: 1180px;
           margin: 0 auto;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 16px;
+          flex-wrap: wrap;
         }
 
         .page-title {
-          font-size: 46px;
+          font-size: 42px;
           font-weight: 800;
           margin-bottom: 10px;
-          background: linear-gradient(135deg, #ffffff 0%, #dbeafe 50%, #c4b5fd 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          color: #111111;
+          letter-spacing: -0.02em;
         }
 
         .page-subtitle {
-          font-size: 16px;
-          line-height: 1.7;
-          color: rgba(219, 234, 254, 0.78);
+          font-size: 15px;
+          line-height: 1.8;
+          color: #52525b;
           max-width: 760px;
         }
 
+        .header-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .header-btn {
+          padding: 13px 16px;
+          border-radius: 14px;
+          border: 1px solid #d4d4d8;
+          background: #ffffff;
+          color: #111111;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .header-btn:hover {
+          background: #fafafa;
+        }
+
         .form-section {
-          padding: 0 72px 80px;
+          padding: 0 72px 72px;
           position: relative;
           z-index: 2;
         }
 
         .form-container {
-          max-width: 1280px;
+          max-width: 1180px;
           margin: 0 auto;
         }
 
         .form-card {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.14);
-          backdrop-filter: blur(24px);
-          border-radius: 28px;
+          background: rgba(255,255,255,0.92);
+          border: 1px solid #e4e4e7;
+          border-radius: 24px;
           padding: 30px;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+          box-shadow: 0 12px 28px rgba(0,0,0,0.05);
         }
 
         .section-title {
-          font-size: 14px;
-          font-weight: 700;
+          font-size: 13px;
+          font-weight: 800;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: rgba(191, 219, 254, 0.76);
+          color: #ea580c;
           margin-bottom: 18px;
         }
 
@@ -292,33 +380,33 @@ const CreateTicketPage = () => {
         .label {
           font-size: 14px;
           font-weight: 700;
-          color: #dbeafe;
+          color: #111111;
         }
 
         .input,
         .select,
         .textarea {
           width: 100%;
-          border-radius: 16px;
-          border: 1px solid rgba(255,255,255,0.14);
-          background: rgba(255,255,255,0.06);
-          color: #ffffff;
+          border-radius: 14px;
+          border: 1px solid #d4d4d8;
+          background: #ffffff;
+          color: #111111;
           padding: 14px 16px;
           font-size: 15px;
           outline: none;
-          backdrop-filter: blur(14px);
           transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .input::placeholder,
+        .textarea::placeholder {
+          color: #71717a;
         }
 
         .input:focus,
         .select:focus,
         .textarea:focus {
-          border-color: rgba(96, 165, 250, 0.95);
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
-        }
-
-        .select option {
-          color: #111827;
+          border-color: #f97316;
+          box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
         }
 
         .textarea {
@@ -329,20 +417,20 @@ const CreateTicketPage = () => {
 
         .hint-text {
           font-size: 12px;
-          color: rgba(191, 219, 254, 0.62);
+          color: #71717a;
           line-height: 1.6;
         }
 
         .error-text {
           font-size: 12px;
-          color: #fca5a5;
+          color: #dc2626;
           line-height: 1.5;
         }
 
         .upload-box {
-          background: rgba(255,255,255,0.05);
-          border: 1.5px dashed rgba(147,197,253,0.38);
-          border-radius: 22px;
+          background: #fafafa;
+          border: 1.5px dashed #f97316;
+          border-radius: 20px;
           padding: 22px;
         }
 
@@ -357,22 +445,22 @@ const CreateTicketPage = () => {
         .upload-title {
           font-size: 16px;
           font-weight: 700;
-          color: #ffffff;
+          color: #111111;
           margin-bottom: 6px;
         }
 
         .upload-text {
           font-size: 14px;
           line-height: 1.7;
-          color: rgba(219, 234, 254, 0.76);
+          color: #52525b;
         }
 
         .upload-btn {
           border: none;
-          border-radius: 14px;
+          border-radius: 12px;
           padding: 12px 16px;
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
-          color: white;
+          background: linear-gradient(135deg, #ea580c, #fb923c);
+          color: #ffffff;
           font-size: 14px;
           font-weight: 700;
           cursor: pointer;
@@ -392,10 +480,11 @@ const CreateTicketPage = () => {
         }
 
         .preview-card {
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: #ffffff;
+          border: 1px solid #e4e4e7;
           border-radius: 18px;
           padding: 12px;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.04);
         }
 
         .preview-image {
@@ -409,14 +498,14 @@ const CreateTicketPage = () => {
         .preview-name {
           font-size: 12px;
           font-weight: 700;
-          color: #e0f2fe;
+          color: #111111;
           margin-bottom: 4px;
           word-break: break-word;
         }
 
         .preview-size {
           font-size: 12px;
-          color: rgba(191, 219, 254, 0.68);
+          color: #71717a;
           margin-bottom: 10px;
         }
 
@@ -425,15 +514,15 @@ const CreateTicketPage = () => {
           border: none;
           border-radius: 12px;
           padding: 10px 12px;
-          background: rgba(239,68,68,0.16);
-          color: #fecaca;
+          background: #18181b;
+          color: #ffffff;
           font-size: 13px;
           font-weight: 700;
           cursor: pointer;
         }
 
         .remove-btn:hover {
-          background: rgba(239,68,68,0.24);
+          background: #27272a;
         }
 
         .actions {
@@ -446,7 +535,7 @@ const CreateTicketPage = () => {
         .secondary-btn,
         .primary-btn {
           border: none;
-          border-radius: 16px;
+          border-radius: 14px;
           padding: 14px 20px;
           font-size: 14px;
           font-weight: 700;
@@ -455,23 +544,23 @@ const CreateTicketPage = () => {
         }
 
         .secondary-btn {
-          background: rgba(255,255,255,0.08);
-          color: #ffffff;
-          border: 1px solid rgba(255,255,255,0.12);
+          background: #ffffff;
+          color: #111111;
+          border: 1px solid #d4d4d8;
         }
 
         .secondary-btn:hover {
-          background: rgba(255,255,255,0.12);
+          background: #fafafa;
         }
 
         .primary-btn {
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+          background: linear-gradient(135deg, #ea580c, #fb923c);
           color: #ffffff;
-          box-shadow: 0 10px 28px rgba(79, 70, 229, 0.28);
+          box-shadow: 0 10px 24px rgba(249, 115, 22, 0.20);
         }
 
         .primary-btn:hover:not(:disabled) {
-          transform: translateY(-2px);
+          transform: translateY(-1px);
         }
 
         .primary-btn:disabled {
@@ -482,10 +571,10 @@ const CreateTicketPage = () => {
         .success-message {
           margin-top: 18px;
           padding: 14px 16px;
-          border-radius: 16px;
-          background: rgba(34,197,94,0.16);
-          border: 1px solid rgba(134,239,172,0.3);
-          color: #bbf7d0;
+          border-radius: 14px;
+          background: #fff7ed;
+          border: 1px solid #fdba74;
+          color: #c2410c;
           font-size: 14px;
           font-weight: 600;
         }
@@ -519,19 +608,15 @@ const CreateTicketPage = () => {
 
         @media (max-width: 768px) {
           .page-header {
-            padding: 56px 24px 24px;
+            padding: 52px 24px 20px;
           }
 
           .form-section {
-            padding: 0 24px 56px;
+            padding: 0 24px 48px;
           }
 
           .page-title {
-            font-size: 36px;
-          }
-
-          .page-subtitle {
-            font-size: 14px;
+            font-size: 34px;
           }
 
           .form-card {
@@ -545,16 +630,27 @@ const CreateTicketPage = () => {
       `}</style>
 
       <div className="create-ticket-page">
-        <div className="orb orb-1" />
-        <div className="orb orb-2" />
+        <div className="accent-blob blob-1" />
+        <div className="accent-blob blob-2" />
 
         <div className="page-header">
           <div className="header-content">
-            <h1 className="page-title">Create Incident Ticket</h1>
-            <p className="page-subtitle">
-              Submit a new maintenance or incident report for a campus room, lab,
-              facility, or equipment item. You can upload up to 3 images as evidence.
-            </p>
+            <div>
+              <h1 className="page-title">Create Incident Ticket</h1>
+              <p className="page-subtitle">
+                Submit a new maintenance or incident report for a campus room, lab,
+                facility, or equipment item. You can upload up to 3 images as evidence.
+              </p>
+            </div>
+
+            <div className="header-actions">
+              <button className="header-btn" onClick={() => navigate('/dashboard/my-tickets')}>
+                My Tickets
+              </button>
+              <button className="header-btn" onClick={() => navigate('/dashboard/notifications')}>
+                Notifications
+              </button>
+            </div>
           </div>
         </div>
 

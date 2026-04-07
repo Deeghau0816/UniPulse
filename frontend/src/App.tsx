@@ -1,19 +1,34 @@
-import { PerfectMainPage } from './pages/PerfectMainPage';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import './App.css';
+
+import LoginPage from './pages/LoginPage';
+import MyTicketsPage from './pages/MyTicketsPage';
+import CreateTicketPage from './pages/CreateTicketPage';
+import TicketDetailsPage from './pages/TicketDetailsPage';
+import TechnicianDashboardPage from './pages/TechnicianDashboardPage';
+import NotificationsPage from './pages/NotificationsPage';
+import AdminTicketsPage from './pages/AdminTicketsPage';
 
 function App() {
-  // Perfect configuration
-  const isAdmin = false; // Change to true to see admin view
-  const userId = 'user-123';
-  const userName = 'John Doe';
-  const userRole = 'Student';
-
   return (
-    <PerfectMainPage 
-      isAdmin={isAdmin} 
-      userId={userId}
-      userName={userName}
-      userRole={userRole}
-    />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
+
+        <Route path="/dashboard/my-tickets" element={<MyTicketsPage />} />
+        <Route path="/dashboard/tickets/new" element={<CreateTicketPage />} />
+        <Route path="/dashboard/tickets/:ticketId" element={<TicketDetailsPage />} />
+
+        <Route
+          path="/dashboard/technician/tickets"
+          element={<TechnicianDashboardPage />}
+        />
+
+        <Route path="/dashboard/notifications" element={<NotificationsPage />} />
+        <Route path="/dashboard/admin/tickets" element={<AdminTicketsPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
