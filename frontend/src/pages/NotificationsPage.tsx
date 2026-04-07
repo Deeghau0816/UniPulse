@@ -1,10 +1,24 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+type NotificationType = 'STATUS_CHANGE' | 'NEW_COMMENT' | 'ASSIGNMENT';
+type FilterType = 'ALL' | 'UNREAD' | NotificationType;
+
+type NotificationItem = {
+  id: number;
+  type: NotificationType;
+  title: string;
+  message: string;
+  relatedTicketId: string;
+  isRead: boolean;
+  createdAt: string;
+};
+
 const NotificationsPage = () => {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState('ALL');
-  const [notifications, setNotifications] = useState([
+
+  const [filter, setFilter] = useState<FilterType>('ALL');
+  const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
       id: 1,
       type: 'STATUS_CHANGE',
@@ -60,7 +74,7 @@ const NotificationsPage = () => {
 
   const unreadCount = notifications.filter((item) => !item.isRead).length;
 
-  const markAsRead = (id) => {
+  const markAsRead = (id: number): void => {
     setNotifications((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, isRead: true } : item
@@ -68,13 +82,13 @@ const NotificationsPage = () => {
     );
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = (): void => {
     setNotifications((prev) =>
       prev.map((item) => ({ ...item, isRead: true }))
     );
   };
 
-  const getNotificationClass = (type) => {
+  const getNotificationClass = (type: NotificationType): string => {
     switch (type) {
       case 'STATUS_CHANGE':
         return 'notif-status';
@@ -87,7 +101,7 @@ const NotificationsPage = () => {
     }
   };
 
-  const getNotificationLabel = (type) => {
+  const getNotificationLabel = (type: NotificationType): string => {
     switch (type) {
       case 'STATUS_CHANGE':
         return 'Status Update';
@@ -100,7 +114,7 @@ const NotificationsPage = () => {
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -121,38 +135,62 @@ const NotificationsPage = () => {
         body {
           margin: 0;
           font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+          background: #ffffff;
         }
 
         .notifications-page {
           min-height: 100vh;
-          background: linear-gradient(135deg, #0f172a 0%, #111827 45%, #1e1b4b 100%);
           position: relative;
           overflow-x: hidden;
-          color: white;
+          background:
+            radial-gradient(circle at 10% 12%, rgba(249, 115, 22, 0.12), transparent 22%),
+            radial-gradient(circle at 88% 18%, rgba(251, 146, 60, 0.12), transparent 20%),
+            radial-gradient(circle at 82% 82%, rgba(24, 24, 27, 0.08), transparent 24%),
+            linear-gradient(135deg, #ffffff 0%, #fafafa 48%, #fff7ed 100%);
+          color: #111111;
         }
 
-        .orb {
+        .notifications-page::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(17, 17, 17, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(17, 17, 17, 0.03) 1px, transparent 1px);
+          background-size: 38px 38px;
+          animation: gridFloat 18s ease-in-out infinite;
+          pointer-events: none;
+          opacity: 0.55;
+        }
+
+        @keyframes gridFloat {
+          0% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(8px, 8px, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+
+        .accent-blob {
           position: absolute;
           border-radius: 50%;
-          filter: blur(110px);
+          filter: blur(100px);
           pointer-events: none;
-          opacity: 0.75;
+          opacity: 0.42;
         }
 
-        .orb-1 {
-          width: 460px;
-          height: 460px;
-          background: rgba(59, 130, 246, 0.22);
-          top: -140px;
-          left: -120px;
+        .blob-1 {
+          width: 340px;
+          height: 340px;
+          background: rgba(249, 115, 22, 0.18);
+          top: -110px;
+          left: -90px;
         }
 
-        .orb-2 {
-          width: 420px;
-          height: 420px;
-          background: rgba(139, 92, 246, 0.22);
-          bottom: -140px;
-          right: -100px;
+        .blob-2 {
+          width: 320px;
+          height: 320px;
+          background: rgba(251, 146, 60, 0.16);
+          bottom: -100px;
+          right: -70px;
         }
 
         .page-header {
@@ -175,27 +213,56 @@ const NotificationsPage = () => {
           font-size: 42px;
           font-weight: 800;
           margin-bottom: 10px;
-          background: linear-gradient(135deg, #ffffff 0%, #dbeafe 50%, #c4b5fd 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          color: #111111;
+          letter-spacing: -0.02em;
         }
 
         .page-subtitle {
           font-size: 15px;
           line-height: 1.7;
-          color: rgba(219, 234, 254, 0.78);
+          color: #52525b;
           max-width: 760px;
+        }
+
+        .header-right {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          align-items: flex-end;
         }
 
         .unread-chip {
           padding: 12px 16px;
           border-radius: 16px;
-          background: rgba(255,255,255,0.10);
-          border: 1px solid rgba(255,255,255,0.14);
-          color: #fff;
+          background: #ffffff;
+          border: 1px solid #e4e4e7;
+          color: #111111;
           font-size: 14px;
           font-weight: 700;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.04);
+        }
+
+        .quick-links {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .quick-btn {
+          padding: 12px 16px;
+          border-radius: 14px;
+          border: 1px solid #d4d4d8;
+          background: #ffffff;
+          color: #111111;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .quick-btn:hover {
+          background: #fafafa;
         }
 
         .content-section {
@@ -225,9 +292,9 @@ const NotificationsPage = () => {
         }
 
         .filter-btn {
-          border: 1px solid rgba(255,255,255,0.14);
-          background: rgba(255,255,255,0.08);
-          color: rgba(219, 234, 254, 0.84);
+          border: 1px solid #d4d4d8;
+          background: #ffffff;
+          color: #111111;
           padding: 12px 16px;
           border-radius: 14px;
           font-size: 14px;
@@ -237,25 +304,22 @@ const NotificationsPage = () => {
         }
 
         .filter-btn.active {
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+          background: linear-gradient(135deg, #ea580c, #fb923c);
           color: #ffffff;
           border-color: transparent;
+          box-shadow: 0 10px 24px rgba(249, 115, 22, 0.20);
         }
 
         .mark-all-btn {
           border: none;
           border-radius: 14px;
           padding: 12px 16px;
-          background: rgba(255,255,255,0.10);
+          background: linear-gradient(135deg, #ea580c, #fb923c);
           color: #fff;
           font-size: 14px;
           font-weight: 700;
           cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .mark-all-btn:hover {
-          background: rgba(255,255,255,0.16);
+          box-shadow: 0 10px 24px rgba(249, 115, 22, 0.20);
         }
 
         .notification-list {
@@ -265,25 +329,25 @@ const NotificationsPage = () => {
         }
 
         .notification-card {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.14);
-          backdrop-filter: blur(24px);
+          background: rgba(255,255,255,0.92);
+          border: 1px solid #e4e4e7;
           border-radius: 22px;
           padding: 20px;
           display: flex;
           justify-content: space-between;
           gap: 20px;
-          transition: transform 0.2s ease, border-color 0.2s ease;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.05);
         }
 
         .notification-card:hover {
           transform: translateY(-2px);
-          border-color: rgba(96,165,250,0.35);
+          box-shadow: 0 14px 30px rgba(0,0,0,0.07);
         }
 
         .notification-card.unread {
-          border-color: rgba(96,165,250,0.45);
-          box-shadow: 0 0 0 1px rgba(96,165,250,0.12);
+          border-color: #fb923c;
+          box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.10), 0 10px 24px rgba(0,0,0,0.05);
         }
 
         .notification-left {
@@ -304,56 +368,57 @@ const NotificationsPage = () => {
           font-size: 12px;
           font-weight: 700;
           border: 1px solid transparent;
+          text-transform: uppercase;
         }
 
         .notif-status {
-          background: rgba(59,130,246,0.18);
-          color: #93c5fd;
-          border-color: rgba(147,197,253,0.35);
+          background: #fff7ed;
+          color: #c2410c;
+          border-color: #fdba74;
         }
 
         .notif-comment {
-          background: rgba(251,191,36,0.16);
-          color: #fde68a;
-          border-color: rgba(253,230,138,0.35);
+          background: #ffedd5;
+          color: #c2410c;
+          border-color: #fb923c;
         }
 
         .notif-assign {
-          background: rgba(34,197,94,0.16);
-          color: #86efac;
-          border-color: rgba(134,239,172,0.35);
+          background: #f4f4f5;
+          color: #18181b;
+          border-color: #d4d4d8;
         }
 
         .notif-default {
-          background: rgba(148,163,184,0.16);
-          color: #cbd5e1;
-          border-color: rgba(203,213,225,0.28);
+          background: #fafafa;
+          color: #3f3f46;
+          border-color: #d4d4d8;
         }
 
         .unread-dot {
           width: 10px;
           height: 10px;
           border-radius: 50%;
-          background: #60a5fa;
+          background: #f97316;
         }
 
         .notification-title {
           font-size: 18px;
           font-weight: 800;
-          color: #ffffff;
+          color: #111111;
           margin-bottom: 8px;
         }
 
         .notification-message {
           font-size: 14px;
           line-height: 1.7;
-          color: rgba(219, 234, 254, 0.84);
+          color: #3f3f46;
           margin-bottom: 12px;
         }
 
         .notification-meta {
           font-size: 13px;
-          color: rgba(191, 219, 254, 0.66);
+          color: #71717a;
         }
 
         .notification-actions {
@@ -374,8 +439,9 @@ const NotificationsPage = () => {
         }
 
         .view-btn {
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+          background: linear-gradient(135deg, #ea580c, #fb923c);
           color: #ffffff;
+          box-shadow: 0 10px 24px rgba(249, 115, 22, 0.20);
         }
 
         .view-btn:hover {
@@ -383,31 +449,33 @@ const NotificationsPage = () => {
         }
 
         .read-btn {
-          background: rgba(255,255,255,0.10);
+          background: #111111;
           color: #ffffff;
         }
 
         .read-btn:hover {
-          background: rgba(255,255,255,0.16);
+          background: #27272a;
         }
 
         .empty-state {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.14);
-          border-radius: 24px;
+          background: rgba(255,255,255,0.92);
+          border: 1px solid #e4e4e7;
+          border-radius: 22px;
           padding: 40px 24px;
           text-align: center;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.05);
         }
 
         .empty-title {
           font-size: 24px;
           font-weight: 800;
           margin-bottom: 10px;
+          color: #111111;
         }
 
         .empty-text {
           font-size: 14px;
-          color: rgba(219, 234, 254, 0.76);
+          color: #52525b;
           line-height: 1.7;
         }
 
@@ -441,17 +509,20 @@ const NotificationsPage = () => {
             font-size: 34px;
           }
 
+          .header-content,
+          .header-right,
+          .quick-links,
           .toolbar,
           .notification-actions {
             flex-direction: column;
-            align-items: stretch;
+            align-items: flex-start;
           }
         }
       `}</style>
 
       <div className="notifications-page">
-        <div className="orb orb-1" />
-        <div className="orb orb-2" />
+        <div className="accent-blob blob-1" />
+        <div className="accent-blob blob-2" />
 
         <div className="page-header">
           <div className="header-content">
@@ -462,8 +533,23 @@ const NotificationsPage = () => {
               </p>
             </div>
 
-            <div className="unread-chip">
-              Unread: {unreadCount}
+            <div className="header-right">
+              <div className="unread-chip">Unread: {unreadCount}</div>
+
+              <div className="quick-links">
+                <button className="quick-btn" onClick={() => navigate('/dashboard/my-tickets')}>
+                  My Tickets
+                </button>
+                <button className="quick-btn" onClick={() => navigate('/dashboard/tickets/new')}>
+                  Create Ticket
+                </button>
+                <button
+                  className="quick-btn"
+                  onClick={() => navigate('/dashboard/technician/tickets')}
+                >
+                  Technician Dashboard
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -471,19 +557,6 @@ const NotificationsPage = () => {
         <div className="content-section">
           <div className="content-container">
             <div className="toolbar">
-
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '12px' }}>
-  <button className="filter-btn" onClick={() => navigate('/dashboard/my-tickets')}>
-    My Tickets
-  </button>
-  <button className="filter-btn" onClick={() => navigate('/dashboard/tickets/new')}>
-    Create Ticket
-  </button>
-  <button className="filter-btn" onClick={() => navigate('/dashboard/technician')}>
-    Technician Dashboard
-  </button>
-</div>
-
               <div className="filter-group">
                 <button
                   className={`filter-btn ${filter === 'ALL' ? 'active' : ''}`}
