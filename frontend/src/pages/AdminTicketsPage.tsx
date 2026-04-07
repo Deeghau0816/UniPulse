@@ -1,16 +1,33 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'REJECTED';
+type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+type TicketCategory = 'Electrical' | 'IT Support' | 'Mechanical' | 'Lab Equipment';
+type TechnicianFilter = 'ALL' | 'UNASSIGNED' | string;
+
+type AdminTicket = {
+  id: string;
+  category: TicketCategory;
+  location: string;
+  priority: TicketPriority;
+  status: TicketStatus;
+  createdBy: string;
+  assignedTo: string;
+  description: string;
+  createdAt: string;
+};
+
 const AdminTicketsPage = () => {
   const navigate = useNavigate();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [priorityFilter, setPriorityFilter] = useState('ALL');
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
-  const [technicianFilter, setTechnicianFilter] = useState('ALL');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | TicketStatus>('ALL');
+  const [priorityFilter, setPriorityFilter] = useState<'ALL' | TicketPriority>('ALL');
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | TicketCategory>('ALL');
+  const [technicianFilter, setTechnicianFilter] = useState<TechnicianFilter>('ALL');
 
-  const initialTickets = [
+  const initialTickets: AdminTicket[] = [
     {
       id: 'TKT-001',
       category: 'Electrical',
@@ -79,9 +96,9 @@ const AdminTicketsPage = () => {
     },
   ];
 
-  const [tickets, setTickets] = useState(initialTickets);
+  const [tickets, setTickets] = useState<AdminTicket[]>(initialTickets);
 
-  const technicianOptions = [
+  const technicianOptions: string[] = [
     'Nimal Perera',
     'Kasun Madusha',
     'Ayesha Fernando',
@@ -125,7 +142,7 @@ const AdminTicketsPage = () => {
     return filtered;
   }, [tickets, searchTerm, statusFilter, priorityFilter, categoryFilter, technicianFilter]);
 
-  const clearFilters = () => {
+  const clearFilters = (): void => {
     setSearchTerm('');
     setStatusFilter('ALL');
     setPriorityFilter('ALL');
@@ -133,7 +150,7 @@ const AdminTicketsPage = () => {
     setTechnicianFilter('ALL');
   };
 
-  const handleAssignTechnician = (ticketId, technicianName) => {
+  const handleAssignTechnician = (ticketId: string, technicianName: string): void => {
     setTickets((prev) =>
       prev.map((ticket) =>
         ticket.id === ticketId
@@ -143,7 +160,7 @@ const AdminTicketsPage = () => {
     );
   };
 
-  const getStatusClass = (status) => {
+  const getStatusClass = (status: TicketStatus): string => {
     switch (status) {
       case 'OPEN':
         return 'status-open';
@@ -160,7 +177,7 @@ const AdminTicketsPage = () => {
     }
   };
 
-  const getPriorityClass = (priority) => {
+  const getPriorityClass = (priority: TicketPriority): string => {
     switch (priority) {
       case 'LOW':
         return 'priority-low';
@@ -175,7 +192,7 @@ const AdminTicketsPage = () => {
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -196,38 +213,62 @@ const AdminTicketsPage = () => {
         body {
           margin: 0;
           font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+          background: #ffffff;
         }
 
         .admin-page {
           min-height: 100vh;
-          background: linear-gradient(135deg, #0f172a 0%, #111827 45%, #1e1b4b 100%);
           position: relative;
           overflow-x: hidden;
-          color: white;
+          background:
+            radial-gradient(circle at 10% 12%, rgba(249, 115, 22, 0.12), transparent 22%),
+            radial-gradient(circle at 88% 18%, rgba(251, 146, 60, 0.12), transparent 20%),
+            radial-gradient(circle at 82% 82%, rgba(24, 24, 27, 0.08), transparent 24%),
+            linear-gradient(135deg, #ffffff 0%, #fafafa 48%, #fff7ed 100%);
+          color: #111111;
         }
 
-        .orb {
+        .admin-page::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(17, 17, 17, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(17, 17, 17, 0.03) 1px, transparent 1px);
+          background-size: 38px 38px;
+          animation: gridFloat 18s ease-in-out infinite;
+          pointer-events: none;
+          opacity: 0.55;
+        }
+
+        @keyframes gridFloat {
+          0% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(8px, 8px, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+
+        .accent-blob {
           position: absolute;
           border-radius: 50%;
-          filter: blur(110px);
+          filter: blur(100px);
           pointer-events: none;
-          opacity: 0.75;
+          opacity: 0.42;
         }
 
-        .orb-1 {
-          width: 460px;
-          height: 460px;
-          background: rgba(59, 130, 246, 0.22);
-          top: -140px;
-          left: -120px;
+        .blob-1 {
+          width: 340px;
+          height: 340px;
+          background: rgba(249, 115, 22, 0.18);
+          top: -110px;
+          left: -90px;
         }
 
-        .orb-2 {
-          width: 420px;
-          height: 420px;
-          background: rgba(139, 92, 246, 0.22);
-          bottom: -140px;
-          right: -100px;
+        .blob-2 {
+          width: 320px;
+          height: 320px;
+          background: rgba(251, 146, 60, 0.16);
+          bottom: -100px;
+          right: -70px;
         }
 
         .page-header {
@@ -250,27 +291,56 @@ const AdminTicketsPage = () => {
           font-size: 42px;
           font-weight: 800;
           margin-bottom: 10px;
-          background: linear-gradient(135deg, #ffffff 0%, #dbeafe 50%, #c4b5fd 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          color: #111111;
+          letter-spacing: -0.02em;
         }
 
         .page-subtitle {
           font-size: 15px;
           line-height: 1.7;
-          color: rgba(219, 234, 254, 0.78);
+          color: #52525b;
           max-width: 760px;
+        }
+
+        .header-right {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          align-items: flex-end;
         }
 
         .summary-chip {
           padding: 12px 16px;
           border-radius: 16px;
-          background: rgba(255,255,255,0.10);
-          border: 1px solid rgba(255,255,255,0.14);
-          color: #fff;
+          background: #ffffff;
+          border: 1px solid #e4e4e7;
+          color: #111111;
           font-size: 14px;
           font-weight: 700;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.04);
+        }
+
+        .quick-links {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .quick-btn {
+          padding: 12px 16px;
+          border-radius: 14px;
+          border: 1px solid #d4d4d8;
+          background: #ffffff;
+          color: #111111;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .quick-btn:hover {
+          background: #fafafa;
         }
 
         .content-section {
@@ -285,12 +355,12 @@ const AdminTicketsPage = () => {
         }
 
         .filter-card {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.14);
-          backdrop-filter: blur(24px);
-          border-radius: 24px;
-          padding: 24px;
-          margin-bottom: 24px;
+          background: rgba(255,255,255,0.92);
+          border: 1px solid #e4e4e7;
+          border-radius: 22px;
+          padding: 22px;
+          margin-bottom: 22px;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.05);
         }
 
         .filter-grid {
@@ -300,27 +370,35 @@ const AdminTicketsPage = () => {
         }
 
         .input,
-        .select {
+        .select,
+        .assign-select {
           width: 100%;
-          border-radius: 16px;
-          border: 1px solid rgba(255,255,255,0.14);
-          background: rgba(255,255,255,0.06);
-          color: #fff;
+          border-radius: 14px;
+          border: 1px solid #d4d4d8;
+          background: #ffffff;
+          color: #111111;
           padding: 14px 16px;
           font-size: 14px;
           outline: none;
         }
 
-        .select option {
-          color: #111827;
+        .input::placeholder {
+          color: #71717a;
+        }
+
+        .input:focus,
+        .select:focus,
+        .assign-select:focus {
+          border-color: #f97316;
+          box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
         }
 
         .clear-btn {
-          border: 1px solid rgba(255,255,255,0.14);
-          background: rgba(255,255,255,0.08);
-          color: #fff;
+          border: 1px solid #d4d4d8;
+          background: #ffffff;
+          color: #111111;
           padding: 14px 18px;
-          border-radius: 16px;
+          border-radius: 14px;
           font-size: 14px;
           font-weight: 700;
           cursor: pointer;
@@ -328,7 +406,7 @@ const AdminTicketsPage = () => {
 
         .results-text {
           font-size: 14px;
-          color: rgba(219, 234, 254, 0.72);
+          color: #52525b;
           margin-bottom: 18px;
         }
 
@@ -339,17 +417,17 @@ const AdminTicketsPage = () => {
         }
 
         .ticket-card {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.14);
-          backdrop-filter: blur(24px);
-          border-radius: 24px;
+          background: rgba(255,255,255,0.92);
+          border: 1px solid #e4e4e7;
+          border-radius: 22px;
           padding: 22px;
-          transition: transform 0.2s ease, border-color 0.2s ease;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .ticket-card:hover {
           transform: translateY(-3px);
-          border-color: rgba(96,165,250,0.42);
+          box-shadow: 0 14px 30px rgba(0,0,0,0.07);
         }
 
         .ticket-top {
@@ -362,20 +440,20 @@ const AdminTicketsPage = () => {
         .ticket-id {
           font-size: 13px;
           font-weight: 700;
-          color: #93c5fd;
+          color: #ea580c;
           margin-bottom: 8px;
         }
 
         .ticket-category {
           font-size: 22px;
           font-weight: 800;
-          color: #ffffff;
+          color: #111111;
           margin-bottom: 6px;
         }
 
         .ticket-location {
           font-size: 14px;
-          color: rgba(219, 234, 254, 0.74);
+          color: #52525b;
         }
 
         .badge-wrap {
@@ -392,23 +470,24 @@ const AdminTicketsPage = () => {
           font-weight: 700;
           border: 1px solid transparent;
           white-space: nowrap;
+          text-transform: uppercase;
         }
 
-        .status-open { background: rgba(59,130,246,0.18); color: #93c5fd; border-color: rgba(147,197,253,0.35); }
-        .status-progress { background: rgba(251,191,36,0.16); color: #fde68a; border-color: rgba(253,230,138,0.35); }
-        .status-resolved { background: rgba(34,197,94,0.16); color: #86efac; border-color: rgba(134,239,172,0.35); }
-        .status-closed { background: rgba(148,163,184,0.16); color: #cbd5e1; border-color: rgba(203,213,225,0.28); }
-        .status-rejected { background: rgba(239,68,68,0.16); color: #fca5a5; border-color: rgba(252,165,165,0.35); }
+        .status-open { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
+        .status-progress { background: #fff7ed; color: #ea580c; border-color: #fb923c; }
+        .status-resolved { background: #f4f4f5; color: #18181b; border-color: #d4d4d8; }
+        .status-closed { background: #fafafa; color: #3f3f46; border-color: #d4d4d8; }
+        .status-rejected { background: #111111; color: #ffffff; border-color: #111111; }
 
-        .priority-low { background: rgba(16,185,129,0.14); color: #6ee7b7; border-color: rgba(110,231,183,0.35); }
-        .priority-medium { background: rgba(59,130,246,0.14); color: #93c5fd; border-color: rgba(147,197,253,0.35); }
-        .priority-high { background: rgba(249,115,22,0.15); color: #fdba74; border-color: rgba(253,186,116,0.35); }
-        .priority-critical { background: rgba(239,68,68,0.16); color: #fca5a5; border-color: rgba(252,165,165,0.35); }
+        .priority-low { background: #fafafa; color: #52525b; border-color: #d4d4d8; }
+        .priority-medium { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
+        .priority-high { background: #ffedd5; color: #c2410c; border-color: #fb923c; }
+        .priority-critical { background: #111111; color: #ffffff; border-color: #111111; }
 
         .ticket-description {
           font-size: 14px;
           line-height: 1.7;
-          color: rgba(219, 234, 254, 0.84);
+          color: #3f3f46;
           margin-bottom: 16px;
         }
 
@@ -420,23 +499,23 @@ const AdminTicketsPage = () => {
         }
 
         .meta-box {
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 16px;
+          background: #fafafa;
+          border: 1px solid #e4e4e7;
+          border-radius: 14px;
           padding: 14px;
         }
 
         .meta-label {
           font-size: 11px;
           font-weight: 700;
-          color: rgba(191, 219, 254, 0.68);
+          color: #71717a;
           margin-bottom: 6px;
           text-transform: uppercase;
         }
 
         .meta-value {
           font-size: 13px;
-          color: #ffffff;
+          color: #111111;
           line-height: 1.5;
         }
 
@@ -447,24 +526,9 @@ const AdminTicketsPage = () => {
         .assign-label {
           font-size: 12px;
           font-weight: 700;
-          color: rgba(191, 219, 254, 0.72);
+          color: #71717a;
           margin-bottom: 8px;
           text-transform: uppercase;
-        }
-
-        .assign-select {
-          width: 100%;
-          border-radius: 14px;
-          border: 1px solid rgba(255,255,255,0.14);
-          background: rgba(255,255,255,0.06);
-          color: #fff;
-          padding: 12px 14px;
-          font-size: 14px;
-          outline: none;
-        }
-
-        .assign-select option {
-          color: #111827;
         }
 
         .ticket-footer {
@@ -473,42 +537,45 @@ const AdminTicketsPage = () => {
           align-items: center;
           gap: 12px;
           padding-top: 16px;
-          border-top: 1px solid rgba(255,255,255,0.08);
+          border-top: 1px solid #e4e4e7;
         }
 
         .ticket-date {
           font-size: 13px;
-          color: rgba(191, 219, 254, 0.68);
+          color: #71717a;
         }
 
         .details-btn {
           border: none;
           border-radius: 14px;
           padding: 12px 16px;
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+          background: linear-gradient(135deg, #ea580c, #fb923c);
           color: #fff;
           font-size: 14px;
           font-weight: 700;
           cursor: pointer;
+          box-shadow: 0 10px 24px rgba(249, 115, 22, 0.20);
         }
 
         .empty-state {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.14);
-          border-radius: 24px;
+          background: rgba(255,255,255,0.92);
+          border: 1px solid #e4e4e7;
+          border-radius: 22px;
           padding: 40px 24px;
           text-align: center;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.05);
         }
 
         .empty-title {
           font-size: 24px;
           font-weight: 800;
           margin-bottom: 10px;
+          color: #111111;
         }
 
         .empty-text {
           font-size: 14px;
-          color: rgba(219, 234, 254, 0.76);
+          color: #52525b;
           line-height: 1.7;
         }
 
@@ -552,6 +619,9 @@ const AdminTicketsPage = () => {
             grid-template-columns: 1fr;
           }
 
+          .header-content,
+          .header-right,
+          .quick-links,
           .ticket-top,
           .ticket-footer {
             flex-direction: column;
@@ -561,8 +631,8 @@ const AdminTicketsPage = () => {
       `}</style>
 
       <div className="admin-page">
-        <div className="orb orb-1" />
-        <div className="orb orb-2" />
+        <div className="accent-blob blob-1" />
+        <div className="accent-blob blob-2" />
 
         <div className="page-header">
           <div className="header-content">
@@ -573,21 +643,28 @@ const AdminTicketsPage = () => {
               </p>
             </div>
 
-            <div className="summary-chip">
-              Total Tickets: {tickets.length}
+            <div className="header-right">
+              <div className="summary-chip">Total Tickets: {tickets.length}</div>
+
+              <div className="quick-links">
+                <button className="quick-btn" onClick={() => navigate('/dashboard/my-tickets')}>
+                  My Tickets
+                </button>
+                <button
+                  className="quick-btn"
+                  onClick={() => navigate('/dashboard/technician/tickets')}
+                >
+                  Technician Dashboard
+                </button>
+                <button
+                  className="quick-btn"
+                  onClick={() => navigate('/dashboard/notifications')}
+                >
+                  Notifications
+                </button>
+              </div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '12px' }}>
-  <button className="clear-btn" onClick={() => navigate('/dashboard/my-tickets')}>
-    My Tickets
-  </button>
-  <button className="clear-btn" onClick={() => navigate('/dashboard/technician/tickets')}>
-    Technician Dashboard
-  </button>
-  <button className="clear-btn" onClick={() => navigate('/dashboard/notifications')}>
-    Notifications
-  </button>
-</div>
         </div>
 
         <div className="content-section">
@@ -599,13 +676,15 @@ const AdminTicketsPage = () => {
                   type="text"
                   placeholder="Search by ticket ID, category, creator, location..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                 />
 
                 <select
                   className="select"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setStatusFilter(e.target.value as 'ALL' | TicketStatus)
+                  }
                 >
                   <option value="ALL">All Statuses</option>
                   <option value="OPEN">OPEN</option>
@@ -618,7 +697,9 @@ const AdminTicketsPage = () => {
                 <select
                   className="select"
                   value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setPriorityFilter(e.target.value as 'ALL' | TicketPriority)
+                  }
                 >
                   <option value="ALL">All Priorities</option>
                   <option value="LOW">LOW</option>
@@ -630,7 +711,9 @@ const AdminTicketsPage = () => {
                 <select
                   className="select"
                   value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setCategoryFilter(e.target.value as 'ALL' | TicketCategory)
+                  }
                 >
                   <option value="ALL">All Categories</option>
                   <option value="Electrical">Electrical</option>
@@ -642,7 +725,9 @@ const AdminTicketsPage = () => {
                 <select
                   className="select"
                   value={technicianFilter}
-                  onChange={(e) => setTechnicianFilter(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setTechnicianFilter(e.target.value)
+                  }
                 >
                   <option value="ALL">All Technicians</option>
                   <option value="UNASSIGNED">Unassigned</option>
@@ -709,7 +794,9 @@ const AdminTicketsPage = () => {
                       <select
                         className="assign-select"
                         value={ticket.assignedTo}
-                        onChange={(e) => handleAssignTechnician(ticket.id, e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                          handleAssignTechnician(ticket.id, e.target.value)
+                        }
                       >
                         <option value="">Unassigned</option>
                         {technicianOptions.map((tech) => (
