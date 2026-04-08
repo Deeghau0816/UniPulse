@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'REJECTED';
-type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+import { ticketService, type TicketStatus, type TicketPriority } from '../services/ticketService';
+import StatusIndicator from '../components/StatusIndicator';
+import MessageChat from '../components/MessageChat';
 
 type Attachment = {
   id: number;
@@ -41,56 +41,87 @@ const TicketDetailsPage = () => {
   const { ticketId } = useParams<{ ticketId: string }>();
   const [newComment, setNewComment] = useState<string>('');
 
-  const ticket = useMemo<TicketDetails>(
-    () => ({
-      id: ticketId || 'TKT-001',
-      category: 'Electrical',
-      location: 'Lab Building - Room 203',
-      priority: 'HIGH',
-      status: 'IN_PROGRESS',
-      description:
-        'Power outage in computer lab affecting multiple workstations and projector access. Students are unable to continue practical sessions properly, and the room needs urgent technician attention.',
-      createdAt: '2026-03-30T10:30:00Z',
-      preferredContact: 'student@sliit.lk',
-      createdBy: 'Kavindi Perera',
-      assignedTechnician: 'Nimal Perera',
-      technicianType: 'Electrical Technician',
-      resolutionNotes:
-        'Main circuit line inspection has been completed. A damaged power distribution point was identified and temporary restoration has been done. Full replacement is scheduled.',
-      rejectionReason: '',
-      attachments: [
-        {
-          id: 1,
-          name: 'lab-power-issue-1.jpg',
-          url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
-        },
-        {
-          id: 2,
-          name: 'lab-power-issue-2.jpg',
-          url: 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=900&q=80',
-        },
-      ],
-      comments: [
-        {
-          id: 1,
-          author: 'Kavindi Perera',
-          role: 'USER',
-          message: 'The issue started around 9.30 AM during our lab session.',
-          createdAt: '2026-03-30T10:40:00Z',
-        },
-        {
-          id: 2,
-          author: 'Nimal Perera',
-          role: 'TECHNICIAN',
-          message: 'Initial inspection completed. I am checking the affected power line now.',
-          createdAt: '2026-03-30T11:20:00Z',
-        },
-      ],
-    }),
-    [ticketId]
-  );
+  const [ticket, setTicket] = useState<TicketDetails | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [comments, setComments] = useState<CommentItem[]>([]);
+  
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editForm, setEditForm] = useState<Partial<TicketDetails>>({});
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  
+  // Delete confirmation state
+  const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
-  const [comments, setComments] = useState<CommentItem[]>(ticket.comments);
+  // Current user state (for demo purposes - in real app, this would come from auth context)
+  const [currentUserName] = useState(() => {
+    // Check if user is viewing from technician dashboard
+    const path = window.location.pathname;
+    if (path.includes('/dashboard/technician/')) {
+      return localStorage.getItem('selectedTechnician') || 'Current Technician';
+    }
+    return 'Current User';
+  });
+  
+  const [currentUserRole] = useState<'USER' | 'TECHNICIAN' | 'ADMIN'>(() => {
+    const path = window.location.pathname;
+    if (path.includes('/dashboard/technician/')) {
+      return 'TECHNICIAN';
+    }
+    return 'USER';
+  });
+
+  const isCurrentUserTechnician = currentUserRole === 'TECHNICIAN';
+
+  useEffect(() => {
+    const fetchTicketDetails = async () => {
+      if (!ticketId) {
+        setError('No ticket ID provided');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const ticketResponse = await ticketService.getTicketById(ticketId);
+        
+        const ticketDetails: TicketDetails = {
+          id: ticketResponse.id.toString(),
+          category: ticketResponse.category,
+          location: ticketResponse.location,
+          priority: ticketResponse.priority,
+          status: ticketResponse.status,
+          description: ticketResponse.description,
+          createdAt: ticketResponse.createdAt,
+          preferredContact: ticketResponse.preferredContact,
+          createdBy: ticketResponse.createdBy,
+          assignedTechnician: ticketResponse.assignedTechnician || '',
+          technicianType: ticketResponse.technicianType || '',
+          resolutionNotes: ticketResponse.resolutionNotes || '',
+          rejectionReason: ticketResponse.rejectionReason || '',
+          attachments: ticketResponse.attachments?.map(att => ({
+            id: att.id,
+            name: att.originalFileName || att.fileName,
+            url: `/api/tickets/${ticketResponse.id}/attachments/${att.id}`
+          })) || [],
+          comments: [], // TODO: Fetch comments when comment API is ready
+        };
+        
+        setTicket(ticketDetails);
+        setComments(ticketDetails.comments);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch ticket details:', err);
+        setError('Failed to load ticket details. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTicketDetails();
+  }, [ticketId]);
 
   const timelineSteps: { key: Exclude<TicketStatus, 'REJECTED'>; label: string }[] = [
     { key: 'OPEN', label: 'Open' },
@@ -164,6 +195,188 @@ const TicketDetailsPage = () => {
     setComments((prev) => [comment, ...prev]);
     setNewComment('');
   };
+
+  const handleEditTicket = (): void => {
+    if (ticket) {
+      setEditForm({
+        category: ticket.category,
+        location: ticket.location,
+        priority: ticket.priority,
+        description: ticket.description,
+        preferredContact: ticket.preferredContact,
+      });
+      setIsEditing(true);
+    }
+  };
+
+  const handleSaveEdit = async (): Promise<void> => {
+    if (!ticket || !ticketId) return;
+    
+    try {
+      setIsSaving(true);
+      const updatedTicket = await ticketService.updateTicket(ticketId, {
+        category: editForm.category as any,
+        location: editForm.location || '',
+        priority: editForm.priority as any,
+        description: editForm.description || '',
+        preferredContact: editForm.preferredContact || '',
+        createdBy: ticket.createdBy,
+      });
+      
+      // Update local state
+      const ticketDetails: TicketDetails = {
+        id: updatedTicket.id.toString(),
+        category: updatedTicket.category,
+        location: updatedTicket.location,
+        priority: updatedTicket.priority,
+        status: updatedTicket.status,
+        description: updatedTicket.description,
+        createdAt: updatedTicket.createdAt,
+        preferredContact: updatedTicket.preferredContact,
+        createdBy: updatedTicket.createdBy,
+        assignedTechnician: updatedTicket.assignedTechnician || '',
+        technicianType: updatedTicket.technicianType || '',
+        resolutionNotes: updatedTicket.resolutionNotes || '',
+        rejectionReason: updatedTicket.rejectionReason || '',
+        attachments: [],
+        comments: [],
+      };
+      
+      setTicket(ticketDetails);
+      setIsEditing(false);
+      setEditForm({});
+      alert('Ticket updated successfully!');
+    } catch (error) {
+      console.error('Failed to update ticket:', error);
+      alert('Failed to update ticket. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = (): void => {
+    setIsEditing(false);
+    setEditForm({});
+  };
+
+  const handleEditFormChange = (field: string, value: string): void => {
+    setEditForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleStatusUpdate = async (newStatus: TicketStatus): Promise<void> => {
+    if (!ticketId) return;
+    
+    try {
+      const updatedTicket = await ticketService.updateTicketStatus(ticketId, newStatus);
+      
+      // Update local state
+      const ticketDetails: TicketDetails = {
+        ...ticket!,
+        status: updatedTicket.status,
+      };
+      
+      setTicket(ticketDetails);
+      alert('Ticket status updated successfully!');
+    } catch (error) {
+      console.error('Failed to update ticket status:', error);
+      alert('Failed to update ticket status. Please try again.');
+    }
+  };
+
+  const handleDeleteTicket = async (): Promise<void> => {
+    if (!ticketId) return;
+    
+    try {
+      setIsDeleting(true);
+      await ticketService.deleteTicket(ticketId);
+      alert('Ticket deleted successfully!');
+      navigate('/dashboard/my-tickets');
+    } catch (error) {
+      console.error('Failed to delete ticket:', error);
+      alert('Failed to delete ticket. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="ticket-details-page">
+        <style>{`
+          .ticket-details-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+              radial-gradient(circle at 10% 12%, rgba(249, 115, 22, 0.12), transparent 22%),
+              radial-gradient(circle at 88% 18%, rgba(251, 146, 60, 0.12), transparent 20%),
+              linear-gradient(135deg, #ffffff 0%, #fafafa 48%, #fff7ed 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+          }
+          .loading-box {
+            text-align: center;
+            color: #111111;
+          }
+          .spinner {
+            width: 46px;
+            height: 46px;
+            border: 3px solid #fed7aa;
+            border-top-color: #f97316;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+          }
+          @keyframes spin { to { transform: rotate(360deg); } }
+        `}</style>
+        <div className="loading-box">
+          <div className="spinner" />
+          <p>Loading ticket details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !ticket) {
+    return (
+      <div className="ticket-details-page">
+        <style>{`
+          .ticket-details-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+              radial-gradient(circle at 10% 12%, rgba(249, 115, 22, 0.12), transparent 22%),
+              radial-gradient(circle at 88% 18%, rgba(251, 146, 60, 0.12), transparent 20%),
+              linear-gradient(135deg, #ffffff 0%, #fafafa 48%, #fff7ed 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+          }
+          .error-box {
+            text-align: center;
+            color: #111111;
+          }
+          .retry-btn {
+            margin-top: 16px;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ea580c, #fb923c);
+            color: #ffffff;
+            font-weight: 700;
+            cursor: pointer;
+          }
+        `}</style>
+        <div className="error-box">
+          <p>{error || 'Ticket not found'}</p>
+          <button className="retry-btn" onClick={() => window.location.reload()}>
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -280,6 +493,13 @@ const TicketDetailsPage = () => {
 
         .primary-btn:hover {
           transform: translateY(-1px);
+          box-shadow: 0 14px 30px rgba(249, 115, 22, 0.25);
+        }
+
+        .primary-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
         }
 
         .title-row {
@@ -294,7 +514,7 @@ const TicketDetailsPage = () => {
           font-size: 13px;
           font-weight: 700;
           color: #ea580c;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
 
         .page-title {
@@ -316,6 +536,8 @@ const TicketDetailsPage = () => {
           display: flex;
           flex-wrap: wrap;
           gap: 10px;
+          justify-content: flex-end;
+          align-items: center;
         }
 
         .badge {
@@ -329,10 +551,10 @@ const TicketDetailsPage = () => {
         }
 
         .status-open { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
-        .status-progress { background: #fff7ed; color: #ea580c; border-color: #fb923c; }
-        .status-resolved { background: #f4f4f5; color: #18181b; border-color: #d4d4d8; }
-        .status-closed { background: #fafafa; color: #3f3f46; border-color: #d4d4d8; }
-        .status-rejected { background: #111111; color: #ffffff; border-color: #111111; }
+        .status-progress { background: #dbeafe; color: #1e40af; border-color: #60a5fa; }
+        .status-resolved { background: #d1fae5; color: #065f46; border-color: #34d399; }
+        .status-closed { background: #f3f4f6; color: #374151; border-color: #9ca3af; }
+        .status-rejected { background: #fee2e2; color: #991b1b; border-color: #f87171; }
 
         .priority-low { background: #fafafa; color: #52525b; border-color: #d4d4d8; }
         .priority-medium { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
@@ -352,15 +574,7 @@ const TicketDetailsPage = () => {
 
         .details-grid {
           display: grid;
-          grid-template-columns: 1.2fr 0.9fr;
-          gap: 24px;
-          align-items: start;
-        }
-
-        .left-column,
-        .right-column {
-          display: flex;
-          flex-direction: column;
+          grid-template-columns: 2fr 1fr;
           gap: 24px;
         }
 
@@ -368,13 +582,14 @@ const TicketDetailsPage = () => {
           background: rgba(255,255,255,0.92);
           border: 1px solid #e4e4e7;
           border-radius: 22px;
-          padding: 22px;
+          padding: 24px;
           box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+          margin-bottom: 24px;
         }
 
         .card-title {
           font-size: 18px;
-          font-weight: 800;
+          font-weight: 700;
           color: #111111;
           margin-bottom: 16px;
         }
@@ -382,15 +597,14 @@ const TicketDetailsPage = () => {
         .meta-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 14px;
-          margin-bottom: 18px;
+          gap: 16px;
         }
 
         .meta-item {
           background: #fafafa;
           border: 1px solid #e4e4e7;
-          border-radius: 16px;
-          padding: 14px;
+          border-radius: 14px;
+          padding: 16px;
         }
 
         .meta-label {
@@ -399,174 +613,136 @@ const TicketDetailsPage = () => {
           color: #71717a;
           margin-bottom: 6px;
           text-transform: uppercase;
-          letter-spacing: 0.06em;
         }
 
         .meta-value {
           font-size: 14px;
           color: #111111;
-          line-height: 1.6;
+          font-weight: 500;
         }
 
-        .description-box,
-        .resolution-box {
+        .description-box {
           background: #fafafa;
           border: 1px solid #e4e4e7;
-          border-radius: 16px;
+          border-radius: 14px;
           padding: 16px;
-          color: #3f3f46;
-          line-height: 1.8;
           font-size: 14px;
+          line-height: 1.7;
+          color: #3f3f46;
         }
 
         .timeline {
           display: flex;
           justify-content: space-between;
-          gap: 12px;
-          flex-wrap: wrap;
+          position: relative;
+          padding: 20px 0;
+        }
+
+        .timeline::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: #e4e4e7;
+          z-index: 1;
         }
 
         .timeline-step {
-          flex: 1;
-          min-width: 120px;
-          background: #ffffff;
-          border: 1px solid #e4e4e7;
-          border-radius: 16px;
-          padding: 16px;
-          text-align: center;
-        }
-
-        .timeline-step.active {
-          background: #fff7ed;
-          border-color: #fb923c;
-        }
-
-        .timeline-step.done {
-          background: #111111;
-          border-color: #111111;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          position: relative;
+          z-index: 2;
         }
 
         .step-circle {
-          width: 34px;
-          height: 34px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
-          margin: 0 auto 10px;
+          background: #ffffff;
+          border: 2px solid #e4e4e7;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 800;
-          font-size: 13px;
-          background: #f4f4f5;
-          color: #111111;
+          font-size: 12px;
+          font-weight: 700;
+          color: #71717a;
+          margin-bottom: 8px;
+        }
+
+        .timeline-step.done .step-circle {
+          background: #10b981;
+          border-color: #10b981;
+          color: white;
         }
 
         .timeline-step.active .step-circle {
           background: #f97316;
-          color: #ffffff;
-        }
-
-        .timeline-step.done .step-circle {
-          background: #ffffff;
-          color: #111111;
-        }
-
-        .timeline-step.done .step-label {
-          color: #ffffff;
+          border-color: #f97316;
+          color: white;
         }
 
         .step-label {
-          font-size: 13px;
-          font-weight: 700;
-          color: #111111;
+          font-size: 12px;
+          font-weight: 600;
+          color: #52525b;
+          text-align: center;
         }
 
-        .attachments-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 16px;
-        }
-
-        .attachment-card {
-          background: #ffffff;
+        .resolution-box {
+          background: #fafafa;
           border: 1px solid #e4e4e7;
-          border-radius: 16px;
-          padding: 12px;
-        }
-
-        .attachment-image {
-          width: 100%;
-          height: 180px;
-          object-fit: cover;
-          border-radius: 12px;
-          margin-bottom: 10px;
-        }
-
-        .attachment-name {
-          font-size: 13px;
+          border-radius: 14px;
+          padding: 16px;
+          font-size: 14px;
           color: #3f3f46;
-          word-break: break-word;
         }
 
         .comment-box {
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
+          margin-bottom: 20px;
         }
 
         .comment-input {
           width: 100%;
-          min-height: 110px;
-          border-radius: 16px;
+          padding: 12px;
           border: 1px solid #d4d4d8;
-          background: #ffffff;
-          color: #111111;
-          padding: 14px 16px;
+          border-radius: 12px;
           font-size: 14px;
-          outline: none;
           resize: vertical;
-        }
-
-        .comment-input::placeholder {
-          color: #71717a;
-        }
-
-        .comment-input:focus {
-          border-color: #f97316;
-          box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+          min-height: 80px;
+          margin-bottom: 12px;
         }
 
         .comment-btn {
-          align-self: flex-end;
+          padding: 10px 16px;
           border: none;
-          border-radius: 14px;
-          padding: 12px 18px;
+          border-radius: 10px;
           background: linear-gradient(135deg, #ea580c, #fb923c);
-          color: #fff;
-          font-size: 14px;
-          font-weight: 700;
+          color: white;
+          font-weight: 600;
           cursor: pointer;
         }
 
         .comments-list {
           display: flex;
           flex-direction: column;
-          gap: 14px;
-          margin-top: 18px;
+          gap: 12px;
         }
 
         .comment-card {
           background: #fafafa;
           border: 1px solid #e4e4e7;
-          border-radius: 16px;
+          border-radius: 12px;
           padding: 16px;
         }
 
         .comment-top {
           display: flex;
           justify-content: space-between;
-          gap: 12px;
-          flex-wrap: wrap;
-          margin-bottom: 10px;
+          align-items: center;
+          margin-bottom: 8px;
         }
 
         .comment-author {
@@ -591,6 +767,132 @@ const TicketDetailsPage = () => {
           font-size: 14px;
           line-height: 1.7;
           color: #3f3f46;
+        }
+
+        .edit-input,
+        .edit-textarea {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #d4d4d8;
+          border-radius: 8px;
+          background: #ffffff;
+          color: #111111;
+          font-size: 14px;
+          outline: none;
+        }
+
+        .edit-input:focus,
+        .edit-textarea:focus {
+          border-color: #f97316;
+          box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+        }
+
+        .edit-textarea {
+          resize: vertical;
+          min-height: 100px;
+        }
+
+        .edit-description {
+          margin-top: 16px;
+        }
+
+        .edit-actions {
+          display: flex;
+          gap: 12px;
+          margin-top: 20px;
+        }
+
+        .delete-btn {
+          background: linear-gradient(135deg, #dc2626, #ef4444);
+          color: #ffffff;
+          border: none;
+          padding: 13px 16px;
+          border-radius: 14px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .delete-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 10px 24px rgba(220, 38, 38, 0.20);
+        }
+
+        .delete-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .dialog-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .dialog-box {
+          background: #ffffff;
+          border-radius: 16px;
+          padding: 24px;
+          max-width: 400px;
+          width: 90%;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .dialog-title {
+          font-size: 18px;
+          font-weight: 700;
+          color: #111111;
+          margin-bottom: 12px;
+        }
+
+        .dialog-message {
+          font-size: 14px;
+          color: #52525b;
+          margin-bottom: 20px;
+          line-height: 1.6;
+        }
+
+        .dialog-actions {
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+        }
+
+        .attachments-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 16px;
+        }
+
+        .attachment-card {
+          background: #fafafa;
+          border: 1px solid #e4e4e7;
+          border-radius: 12px;
+          padding: 16px;
+          text-align: center;
+        }
+
+        .attachment-image {
+          width: 100%;
+          height: 120px;
+          object-fit: cover;
+          border-radius: 8px;
+          margin-bottom: 8px;
+        }
+
+        .attachment-name {
+          font-size: 12px;
+          color: #52525b;
+          font-weight: 500;
         }
 
         @media (max-width: 1180px) {
@@ -649,7 +951,7 @@ const TicketDetailsPage = () => {
           <div className="header-content">
             <div className="top-actions">
               <button className="nav-btn" onClick={() => navigate('/dashboard/my-tickets')}>
-                ← Back to My Tickets
+                Back to My Tickets
               </button>
               <button className="nav-btn" onClick={() => navigate('/dashboard/notifications')}>
                 Notifications
@@ -675,6 +977,16 @@ const TicketDetailsPage = () => {
                 <span className={`badge ${getStatusClass(ticket.status)}`}>
                   {ticket.status.replace('_', ' ')}
                 </span>
+                {!isEditing && (
+                  <>
+                    <button className="primary-btn" onClick={handleEditTicket}>
+                      Edit Ticket
+                    </button>
+                    <button className="delete-btn" onClick={() => setShowDeleteDialog(true)}>
+                      Delete Ticket
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -682,55 +994,143 @@ const TicketDetailsPage = () => {
 
         <div className="content-section">
           <div className="content-container">
+            <StatusIndicator status={ticket.status} />
+
             <div className="details-grid">
               <div className="left-column">
                 <div className="card">
                   <div className="card-title">Ticket Overview</div>
 
-                  <div className="meta-grid">
-                    <div className="meta-item">
-                      <div className="meta-label">Category</div>
-                      <div className="meta-value">{ticket.category}</div>
-                    </div>
+                  {isEditing ? (
+                    <div className="edit-form">
+                      <div className="meta-grid">
+                        <div className="meta-item">
+                          <div className="meta-label">Category</div>
+                          <select 
+                            className="edit-input"
+                            value={editForm.category || ''}
+                            onChange={(e) => handleEditFormChange('category', e.target.value)}
+                          >
+                            <option value="Electrical">Electrical</option>
+                            <option value="IT Support">IT Support</option>
+                            <option value="Mechanical">Mechanical</option>
+                            <option value="Lab Equipment">Lab Equipment</option>
+                          </select>
+                        </div>
 
-                    <div className="meta-item">
-                      <div className="meta-label">Location</div>
-                      <div className="meta-value">{ticket.location}</div>
-                    </div>
+                        <div className="meta-item">
+                          <div className="meta-label">Location</div>
+                          <input 
+                            type="text"
+                            className="edit-input"
+                            value={editForm.location || ''}
+                            onChange={(e) => handleEditFormChange('location', e.target.value)}
+                            placeholder="Enter location"
+                          />
+                        </div>
 
-                    <div className="meta-item">
-                      <div className="meta-label">Created By</div>
-                      <div className="meta-value">{ticket.createdBy}</div>
-                    </div>
+                        <div className="meta-item">
+                          <div className="meta-label">Priority</div>
+                          <select 
+                            className="edit-input"
+                            value={editForm.priority || ''}
+                            onChange={(e) => handleEditFormChange('priority', e.target.value)}
+                          >
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                          </select>
+                        </div>
 
-                    <div className="meta-item">
-                      <div className="meta-label">Preferred Contact</div>
-                      <div className="meta-value">{ticket.preferredContact}</div>
-                    </div>
+                        <div className="meta-item">
+                          <div className="meta-label">Preferred Contact</div>
+                          <input 
+                            type="text"
+                            className="edit-input"
+                            value={editForm.preferredContact || ''}
+                            onChange={(e) => handleEditFormChange('preferredContact', e.target.value)}
+                            placeholder="Enter contact info"
+                          />
+                        </div>
+                      </div>
 
-                    <div className="meta-item">
-                      <div className="meta-label">Assigned Technician</div>
-                      <div className="meta-value">{ticket.assignedTechnician}</div>
-                    </div>
+                      <div className="edit-description">
+                        <div className="meta-label">Description</div>
+                        <textarea 
+                          className="edit-textarea"
+                          value={editForm.description || ''}
+                          onChange={(e) => handleEditFormChange('description', e.target.value)}
+                          placeholder="Enter description"
+                          rows={4}
+                        />
+                      </div>
 
-                    <div className="meta-item">
-                      <div className="meta-label">Technician Type</div>
-                      <div className="meta-value">{ticket.technicianType}</div>
+                      <div className="edit-actions">
+                        <button 
+                          className="primary-btn" 
+                          onClick={handleSaveEdit}
+                          disabled={isSaving}
+                        >
+                          {isSaving ? 'Saving...' : 'Save Changes'}
+                        </button>
+                        <button 
+                          className="nav-btn" 
+                          onClick={handleCancelEdit}
+                          disabled={isSaving}
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
+                  ) : (
+                    <>
+                      <div className="meta-grid">
+                        <div className="meta-item">
+                          <div className="meta-label">Category</div>
+                          <div className="meta-value">{ticket.category}</div>
+                        </div>
 
-                    <div className="meta-item">
-                      <div className="meta-label">Created At</div>
-                      <div className="meta-value">{formatDate(ticket.createdAt)}</div>
-                    </div>
+                        <div className="meta-item">
+                          <div className="meta-label">Location</div>
+                          <div className="meta-value">{ticket.location}</div>
+                        </div>
 
-                    <div className="meta-item">
-                      <div className="meta-label">Current Status</div>
-                      <div className="meta-value">{ticket.status.replace('_', ' ')}</div>
-                    </div>
-                  </div>
+                        <div className="meta-item">
+                          <div className="meta-label">Created By</div>
+                          <div className="meta-value">{ticket.createdBy}</div>
+                        </div>
 
-                  <div className="card-title" style={{ marginTop: '6px' }}>Issue Description</div>
-                  <div className="description-box">{ticket.description}</div>
+                        <div className="meta-item">
+                          <div className="meta-label">Preferred Contact</div>
+                          <div className="meta-value">{ticket.preferredContact}</div>
+                        </div>
+
+                        <div className="meta-item">
+                          <div className="meta-label">Assigned Technician</div>
+                          <div className="meta-value">{ticket.assignedTechnician}</div>
+                        </div>
+
+                        <div className="meta-item">
+                          <div className="meta-label">Technician Type</div>
+                          <div className="meta-value">{ticket.technicianType}</div>
+                        </div>
+
+                        <div className="meta-item">
+                          <div className="meta-label">Created At</div>
+                          <div className="meta-value">{formatDate(ticket.createdAt)}</div>
+                        </div>
+
+                        <div className="meta-item">
+                          <div className="meta-label">Current Status</div>
+                          <div className="meta-value">{ticket.status.replace('_', ' ')}</div>
+                        </div>
+                      </div>
+
+                      <div className="card-title" style={{ marginTop: '6px' }}>Issue Description</div>
+                      <div className="description-box">{ticket.description}</div>
+                    </>
+                  )}
                 </div>
 
                 <div className="card">
@@ -828,16 +1228,52 @@ const TicketDetailsPage = () => {
                   </div>
                 </div>
 
+                {ticket.assignedTechnician && (
+                  <div className="card">
+                    <div className="card-title">Direct Messages</div>
+                    <MessageChat
+                      ticketId={ticket.id}
+                      currentUserName={currentUserName}
+                      currentUserRole={currentUserRole}
+                      recipientName={isCurrentUserTechnician ? ticket.createdBy : ticket.assignedTechnician}
+                      isTechnician={isCurrentUserTechnician}
+                    />
+                  </div>
+                )}
+
                 <button
                   className="primary-btn"
                   onClick={() => navigate('/dashboard/technician/tickets')}
                 >
-                  Open Technician Dashboard
+                  Technician Dashboard
                 </button>
               </div>
             </div>
           </div>
         </div>
+
+        {showDeleteDialog && (
+          <div className="dialog-overlay">
+            <div className="dialog-box">
+              <div className="dialog-title">Delete Ticket</div>
+              <div className="dialog-message">
+                Are you sure you want to delete this ticket? This action cannot be undone.
+              </div>
+              <div className="dialog-actions">
+                <button className="nav-btn" onClick={() => setShowDeleteDialog(false)}>
+                  Cancel
+                </button>
+                <button 
+                  className="delete-btn" 
+                  onClick={handleDeleteTicket}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

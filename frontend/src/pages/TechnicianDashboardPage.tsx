@@ -1,13 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ticketService, type TicketStatus, type TicketPriority, type TicketCategory } from '../services/ticketService';
 
-type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'REJECTED';
-type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-type TicketCategory = 'Electrical' | 'IT Support' | 'Mechanical' | 'Lab Equipment';
 type DashboardTab = 'assigned' | 'open' | 'in_progress' | 'resolved';
 
 type TechnicianTicket = {
   id: string;
+  ticketCode: string;
   category: TicketCategory;
   location: string;
   priority: TicketPriority;
@@ -17,8 +16,27 @@ type TechnicianTicket = {
   createdAt: string;
 };
 
+const TECHNICIAN_LIST = [
+  'Nimal Perera',
+  'Kasun Madusha',
+  'Ayesha Fernando',
+  'Sanjeewa Silva',
+  'Rohan Perera',
+  'Thilini Perera',
+  'Chamath Perera',
+];
+
 const TechnicianDashboardPage = () => {
   const navigate = useNavigate();
+
+  const [currentTechnician, setCurrentTechnician] = useState<string>(
+    () => localStorage.getItem('selectedTechnician') || TECHNICIAN_LIST[0]
+  );
+
+  const handleTechnicianChange = (name: string) => {
+    setCurrentTechnician(name);
+    localStorage.setItem('selectedTechnician', name);
+  };
 
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | TicketStatus>('ALL');
@@ -26,64 +44,66 @@ const TechnicianDashboardPage = () => {
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | TicketCategory>('ALL');
   const [tab, setTab] = useState<DashboardTab>('assigned');
 
-  const tickets: TechnicianTicket[] = [
-    {
-      id: 'TKT-001',
-      category: 'Electrical',
-      location: 'Lab Building - Room 203',
-      priority: 'HIGH',
-      status: 'IN_PROGRESS',
-      assignedTo: 'Nimal Perera',
-      description: 'Power outage in computer lab affecting multiple workstations.',
-      createdAt: '2026-03-30T10:30:00Z',
-    },
-    {
-      id: 'TKT-002',
-      category: 'IT Support',
-      location: 'Library - Digital Section',
-      priority: 'MEDIUM',
-      status: 'OPEN',
-      assignedTo: 'Nimal Perera',
-      description: 'Student terminals are unable to connect to the campus network.',
-      createdAt: '2026-03-30T09:15:00Z',
-    },
-    {
-      id: 'TKT-003',
-      category: 'Mechanical',
-      location: 'Student Center - Main Hall',
-      priority: 'LOW',
-      status: 'RESOLVED',
-      assignedTo: 'Nimal Perera',
-      description: 'Air conditioning unit is making noise and cooling poorly.',
-      createdAt: '2026-03-29T14:20:00Z',
-    },
-    {
-      id: 'TKT-004',
-      category: 'Lab Equipment',
-      location: 'Physics Lab 02',
-      priority: 'CRITICAL',
-      status: 'OPEN',
-      assignedTo: 'Nimal Perera',
-      description: 'Oscilloscope and measuring equipment failing during practical.',
-      createdAt: '2026-03-30T08:45:00Z',
-    },
-    {
-      id: 'TKT-005',
-      category: 'Electrical',
-      location: 'Lecture Hall A',
-      priority: 'MEDIUM',
-      status: 'CLOSED',
-      assignedTo: 'Nimal Perera',
-      description: 'Faulty ceiling lights near the podium area were reported and repaired.',
-      createdAt: '2026-03-29T11:30:00Z',
-    },
-  ];
+  const [tickets, setTickets] = useState<TechnicianTicket[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleStatusUpdate = async (ticketId: string, newStatus: TicketStatus) => {
+    try {
+      await ticketService.updateTicketStatus(ticketId, newStatus);
+      
+      // Update local state to reflect the change
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId 
+            ? { ...ticket, status: newStatus }
+            : ticket
+        )
+      );
+      
+      alert('Ticket status updated successfully!');
+    } catch (error) {
+      console.error('Failed to update ticket status:', error);
+      alert('Failed to update ticket status. Please try again.');
+    }
+  };
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        setLoading(true);
+        const ticketResponses = await ticketService.getAllTickets();
+        
+        const technicianTickets: TechnicianTicket[] = ticketResponses.map(response => ({
+          id: response.id.toString(),
+          ticketCode: response.ticketCode,
+          category: response.category,
+          location: response.location,
+          priority: response.priority,
+          status: response.status,
+          assignedTo: response.assignedTechnician || '',
+          description: response.description,
+          createdAt: response.createdAt,
+        }));
+        
+        setTickets(technicianTickets);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch tickets:', err);
+        setError('Failed to load tickets. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
+  }, []);
 
   const filteredTickets = useMemo(() => {
     let filtered = [...tickets];
 
     if (tab === 'assigned') {
-      filtered = filtered.filter((ticket) => ticket.assignedTo === 'Nimal Perera');
+      filtered = filtered.filter((ticket) => ticket.assignedTo === currentTechnician);
     } else if (tab === 'open') {
       filtered = filtered.filter((ticket) => ticket.status === 'OPEN');
     } else if (tab === 'in_progress') {
@@ -515,6 +535,75 @@ const TechnicianDashboardPage = () => {
           border-top: 1px solid #e4e4e7;
         }
 
+        .ticket-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .status-buttons {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .status-btn {
+          padding: 8px 12px;
+          border-radius: 10px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border: none;
+        }
+
+        .status-btn:hover {
+          transform: translateY(-1px);
+        }
+
+        .status-btn.status-progress {
+          background: linear-gradient(135deg, #3b82f6, #60a5fa);
+          color: white;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .status-btn.status-resolved {
+          background: linear-gradient(135deg, #10b981, #34d399);
+          color: white;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .status-btn.status-closed {
+          background: linear-gradient(135deg, #6b7280, #9ca3af);
+          color: white;
+          box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+        }
+
+        .status-btn.status-open {
+          background: linear-gradient(135deg, #f59e0b, #fbbf24);
+          color: white;
+          box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .message-btn {
+          padding: 8px 12px;
+          border-radius: 10px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border: none;
+          background: linear-gradient(135deg, #10b981, #34d399);
+          color: white;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .message-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
         .ticket-date {
           font-size: 13px;
           color: #71717a;
@@ -615,18 +704,34 @@ const TechnicianDashboardPage = () => {
             </div>
 
             <div className="header-right">
-              <div className="summary-chip">Assigned Technician: Nimal Perera</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px',
+                  background: '#ffffff', border: '1px solid #e4e4e7', borderRadius: '16px',
+                  padding: '10px 16px', boxShadow: '0 6px 16px rgba(0,0,0,0.04)' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#52525b' }}>Viewing as:</span>
+                  <select
+                    value={currentTechnician}
+                    onChange={(e) => handleTechnicianChange(e.target.value)}
+                    style={{ border: 'none', background: 'transparent', fontWeight: 700,
+                      fontSize: '14px', color: '#ea580c', outline: 'none', cursor: 'pointer' }}
+                  >
+                    {TECHNICIAN_LIST.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="quick-links">
-                <button className="quick-btn" onClick={() => navigate('/dashboard/my-tickets')}>
-                  My Tickets
-                </button>
-                <button className="quick-btn" onClick={() => navigate('/dashboard/notifications')}>
-                  Notifications
-                </button>
-                <button className="quick-btn" onClick={() => navigate('/dashboard/admin/tickets')}>
-                  Admin View
-                </button>
+                <div className="quick-links">
+                  <button className="quick-btn" onClick={() => navigate('/dashboard/my-tickets')}>
+                    My Tickets
+                  </button>
+                  <button className="quick-btn" onClick={() => navigate('/dashboard/notifications')}>
+                    Notifications
+                  </button>
+                  <button className="quick-btn" onClick={() => navigate('/dashboard/admin/tickets')}>
+                    Admin View
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -767,12 +872,76 @@ const TechnicianDashboardPage = () => {
 
                     <div className="ticket-footer">
                       <div className="ticket-date">Ready for technician update</div>
-                      <button
-                        className="details-btn"
-                        onClick={() => navigate(`/dashboard/tickets/${ticket.id}`)}
-                      >
-                        Open Ticket
-                      </button>
+                      <div className="ticket-actions">
+                        {/* Show status update buttons only for assigned tickets */}
+                        {ticket.assignedTo === currentTechnician && (
+                          <div className="status-buttons">
+                            {ticket.status === 'OPEN' && (
+                              <button
+                                className="status-btn status-progress"
+                                onClick={() => handleStatusUpdate(ticket.id, 'IN_PROGRESS')}
+                              >
+                                Accept & Start Work
+                              </button>
+                            )}
+                            {ticket.status === 'IN_PROGRESS' && (
+                              <>
+                                <button
+                                  className="status-btn status-resolved"
+                                  onClick={() => handleStatusUpdate(ticket.id, 'RESOLVED')}
+                                >
+                                  Mark as Resolved
+                                </button>
+                                <button
+                                  className="status-btn status-open"
+                                  onClick={() => handleStatusUpdate(ticket.id, 'OPEN')}
+                                >
+                                  Reopen Ticket
+                                </button>
+                              </>
+                            )}
+                            {ticket.status === 'RESOLVED' && (
+                              <>
+                                <button
+                                  className="status-btn status-closed"
+                                  onClick={() => handleStatusUpdate(ticket.id, 'CLOSED')}
+                                >
+                                  Close Ticket
+                                </button>
+                                <button
+                                  className="status-btn status-progress"
+                                  onClick={() => handleStatusUpdate(ticket.id, 'IN_PROGRESS')}
+                                >
+                                  Reopen for More Work
+                                </button>
+                              </>
+                            )}
+                            {ticket.status === 'CLOSED' && (
+                              <button
+                                className="status-btn status-progress"
+                                onClick={() => handleStatusUpdate(ticket.id, 'IN_PROGRESS')}
+                              >
+                                Reopen Ticket
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {/* Quick message button for assigned tickets */}
+                        {ticket.assignedTo === currentTechnician && (
+                          <button
+                            className="message-btn"
+                            onClick={() => navigate(`/dashboard/tickets/${ticket.id}`)}
+                          >
+                            Send Message
+                          </button>
+                        )}
+                        <button
+                          className="details-btn"
+                          onClick={() => navigate(`/dashboard/tickets/${ticket.id}`)}
+                        >
+                          Open Ticket
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
