@@ -11,11 +11,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AttachmentResponse {
+public class TicketAttachmentResponse {
 
     private Long id;
     private String fileName;
-    private String fileType;
+    private String originalFileName;
+    private String contentType;
+    private Long fileSize;
     private String filePath;
     private LocalDateTime uploadedAt;
 }
