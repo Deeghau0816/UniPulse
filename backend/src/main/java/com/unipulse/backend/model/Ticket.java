@@ -49,6 +49,9 @@ public class Ticket {
     @Column(name = "created_by", nullable = false, length = 150)
     private String createdBy;
 
+    @Column(name = "created_by_user_id", nullable = true)
+    private Long createdById;
+
     @Column(name = "assigned_technician", length = 150)
     private String assignedTechnician;
 
@@ -72,9 +75,14 @@ public class Ticket {
     public void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-
+        
         if (this.status == null) {
             this.status = TicketStatus.OPEN;
+        }
+        
+        // Set default values for nullable fields
+        if (this.createdBy == null) {
+            this.createdBy = "Unknown"; // Default created by value
         }
     }
 
