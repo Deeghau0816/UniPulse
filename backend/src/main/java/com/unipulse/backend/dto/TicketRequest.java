@@ -30,4 +30,6 @@ public class TicketRequest {
     private String assignedTechnician;
 
     private TechnicianType technicianType;
+
+    private Long createdByUserId;
 }
