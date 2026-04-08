@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Attachment Upload</title>
+</head>
+<body>
+    <h1>Test Attachment Upload</h1>
+    <form action="http://localhost:8083/api/tickets/1/attachments" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">Upload</button>
+    </form>
+    
+    <h2>Current Attachments for Ticket 1:</h2>
+    <div id="attachments"></div>
+    
+    <script>
+        // Fetch current attachments
+        fetch('http://localhost:8083/api/tickets/1')
+            .then(response => response.json())
+            .then(data => {
+                const attachmentsDiv = document.getElementById('attachments');
+                if (data.attachments && data.attachments.length > 0) {
+                    attachmentsDiv.innerHTML = '<ul>' + 
+                        data.attachments.map(att => 
+                            `<li>${att.fileName} (${att.contentType}) - <a href="http://localhost:8083/api/attachments/${att.id}/download">Download</a></li>`
+                        ).join('') + '</ul>';
+                } else {
+                    attachmentsDiv.innerHTML = '<p>No attachments available.</p>';
+                }
+            })
+            .catch(error => {
+                attachmentsDiv.innerHTML = '<p>Error loading attachments: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>
