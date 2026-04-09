@@ -52,7 +52,7 @@ const mockResources: ResourceResponse[] = [
     description: 'Large lecture hall with projector, sound system, and air conditioning. Perfect for lectures and presentations.',
     availabilityWindows: 'Mon-Fri 8AM-10PM, Sat 9AM-5PM',
     status: 'ACTIVE',
-    imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=500&fit=crop',
+    imageUrl: 'https://images.unsplash.com/photo-1544531586-fde5298cdd40?w=800&h=500&fit=crop',
     createdAt: '2026-01-15T10:00:00',
     updatedAt: '2026-01-15T10:00:00',
   },
