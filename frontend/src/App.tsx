@@ -8,6 +8,11 @@ import TicketDetailsPage from './pages/TicketDetailsPage';
 import TechnicianDashboardPage from './pages/TechnicianDashboardPage';
 import NotificationsPage from './pages/NotificationsPage';
 import AdminTicketsPage from './pages/AdminTicketsPage';
+import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
+import ResourceDetailsPage from './pages/ResourceDetailsPage';
+import AddResourcePage from './pages/AddResourcePage';
+import CustomerFacilitiesPage from './pages/CustomerFacilitiesPage';
+import CustomerResourceDetailsPage from './pages/CustomerResourceDetailsPage';
 
 function App() {
   return (
@@ -27,6 +32,15 @@ function App() {
 
         <Route path="/dashboard/notifications" element={<NotificationsPage />} />
         <Route path="/dashboard/admin/tickets" element={<AdminTicketsPage />} />
+
+        {/* Admin-only facilities management routes */}
+        <Route path="/dashboard/resources" element={<FacilitiesCataloguePage />} />
+        <Route path="/dashboard/resources/new" element={<AddResourcePage />} />
+        <Route path="/dashboard/resources/:resourceId" element={<ResourceDetailsPage />} />
+
+        {/* Customer-facing facilities routes */}
+        <Route path="/customer/resources" element={<CustomerFacilitiesPage />} />
+        <Route path="/customer/resources/:resourceId" element={<CustomerResourceDetailsPage />} />
       </Routes>
     </BrowserRouter>
   );
