@@ -41,56 +41,6 @@ const TicketDetailsPage = () => {
   const { ticketId } = useParams<{ ticketId: string }>();
   const [newComment, setNewComment] = useState<string>('');
 
-  const ticket = useMemo<TicketDetails>(
-    () => ({
-      id: ticketId || 'TKT-001',
-      category: 'Electrical',
-      location: 'Lab Building - Room 203',
-      priority: 'HIGH',
-      status: 'IN_PROGRESS',
-      description:
-        'Power outage in computer lab affecting multiple workstations and projector access. Students are unable to continue practical sessions properly, and the room needs urgent technician attention.',
-      createdAt: '2026-03-30T10:30:00Z',
-      preferredContact: 'student@sliit.lk',
-      createdBy: 'Kavindi Perera',
-      assignedTechnician: 'Nimal Perera',
-      technicianType: 'Electrical Technician',
-      resolutionNotes:
-        'Main circuit line inspection has been completed. A damaged power distribution point was identified and temporary restoration has been done. Full replacement is scheduled.',
-      rejectionReason: '',
-      attachments: [
-        {
-          id: 1,
-          name: 'lab-power-issue-1.jpg',
-          url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
-        },
-        {
-          id: 2,
-          name: 'lab-power-issue-2.jpg',
-          url: 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=900&q=80',
-        },
-      ],
-      comments: [
-        {
-          id: 1,
-          author: 'Kavindi Perera',
-          role: 'USER',
-          message: 'The issue started around 9.30 AM during our lab session.',
-          createdAt: '2026-03-30T10:40:00Z',
-        },
-        {
-          id: 2,
-          author: 'Nimal Perera',
-          role: 'TECHNICIAN',
-          message: 'Initial inspection completed. I am checking the affected power line now.',
-          createdAt: '2026-03-30T11:20:00Z',
-        },
-      ],
-    }),
-    [ticketId]
-  );
-
-  const [comments, setComments] = useState<CommentItem[]>(ticket.comments);
   const [ticket, setTicket] = useState<TicketDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -586,6 +536,8 @@ const TicketDetailsPage = () => {
           display: flex;
           flex-wrap: wrap;
           gap: 10px;
+          justify-content: flex-end;
+          align-items: center;
         }
 
         .badge {
@@ -622,15 +574,7 @@ const TicketDetailsPage = () => {
 
         .details-grid {
           display: grid;
-          grid-template-columns: 1.2fr 0.9fr;
-          gap: 24px;
-          align-items: start;
-        }
-
-        .left-column,
-        .right-column {
-          display: flex;
-          flex-direction: column;
+          grid-template-columns: 2fr 1fr;
           gap: 24px;
         }
 
@@ -674,18 +618,17 @@ const TicketDetailsPage = () => {
         .meta-value {
           font-size: 14px;
           color: #111111;
-          line-height: 1.6;
+          font-weight: 500;
         }
 
-        .description-box,
-        .resolution-box {
+        .description-box {
           background: #fafafa;
           border: 1px solid #e4e4e7;
-          border-radius: 16px;
+          border-radius: 14px;
           padding: 16px;
-          color: #3f3f46;
-          line-height: 1.8;
           font-size: 14px;
+          line-height: 1.7;
+          color: #3f3f46;
         }
 
         .timeline {
@@ -763,58 +706,43 @@ const TicketDetailsPage = () => {
 
         .comment-input {
           width: 100%;
-          min-height: 110px;
-          border-radius: 16px;
+          padding: 12px;
           border: 1px solid #d4d4d8;
-          background: #ffffff;
-          color: #111111;
-          padding: 14px 16px;
+          border-radius: 12px;
           font-size: 14px;
-          outline: none;
           resize: vertical;
-        }
-
-        .comment-input::placeholder {
-          color: #71717a;
-        }
-
-        .comment-input:focus {
-          border-color: #f97316;
-          box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+          min-height: 80px;
+          margin-bottom: 12px;
         }
 
         .comment-btn {
-          align-self: flex-end;
+          padding: 10px 16px;
           border: none;
-          border-radius: 14px;
-          padding: 12px 18px;
+          border-radius: 10px;
           background: linear-gradient(135deg, #ea580c, #fb923c);
-          color: #fff;
-          font-size: 14px;
-          font-weight: 700;
+          color: white;
+          font-weight: 600;
           cursor: pointer;
         }
 
         .comments-list {
           display: flex;
           flex-direction: column;
-          gap: 14px;
-          margin-top: 18px;
+          gap: 12px;
         }
 
         .comment-card {
           background: #fafafa;
           border: 1px solid #e4e4e7;
-          border-radius: 16px;
+          border-radius: 12px;
           padding: 16px;
         }
 
         .comment-top {
           display: flex;
           justify-content: space-between;
-          gap: 12px;
-          flex-wrap: wrap;
-          margin-bottom: 10px;
+          align-items: center;
+          margin-bottom: 8px;
         }
 
         .comment-author {
@@ -839,6 +767,132 @@ const TicketDetailsPage = () => {
           font-size: 14px;
           line-height: 1.7;
           color: #3f3f46;
+        }
+
+        .edit-input,
+        .edit-textarea {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #d4d4d8;
+          border-radius: 8px;
+          background: #ffffff;
+          color: #111111;
+          font-size: 14px;
+          outline: none;
+        }
+
+        .edit-input:focus,
+        .edit-textarea:focus {
+          border-color: #f97316;
+          box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+        }
+
+        .edit-textarea {
+          resize: vertical;
+          min-height: 100px;
+        }
+
+        .edit-description {
+          margin-top: 16px;
+        }
+
+        .edit-actions {
+          display: flex;
+          gap: 12px;
+          margin-top: 20px;
+        }
+
+        .delete-btn {
+          background: linear-gradient(135deg, #dc2626, #ef4444);
+          color: #ffffff;
+          border: none;
+          padding: 13px 16px;
+          border-radius: 14px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .delete-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 10px 24px rgba(220, 38, 38, 0.20);
+        }
+
+        .delete-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .dialog-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .dialog-box {
+          background: #ffffff;
+          border-radius: 16px;
+          padding: 24px;
+          max-width: 400px;
+          width: 90%;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .dialog-title {
+          font-size: 18px;
+          font-weight: 700;
+          color: #111111;
+          margin-bottom: 12px;
+        }
+
+        .dialog-message {
+          font-size: 14px;
+          color: #52525b;
+          margin-bottom: 20px;
+          line-height: 1.6;
+        }
+
+        .dialog-actions {
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+        }
+
+        .attachments-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 16px;
+        }
+
+        .attachment-card {
+          background: #fafafa;
+          border: 1px solid #e4e4e7;
+          border-radius: 12px;
+          padding: 16px;
+          text-align: center;
+        }
+
+        .attachment-image {
+          width: 100%;
+          height: 120px;
+          object-fit: cover;
+          border-radius: 8px;
+          margin-bottom: 8px;
+        }
+
+        .attachment-name {
+          font-size: 12px;
+          color: #52525b;
+          font-weight: 500;
         }
 
         @media (max-width: 1180px) {
@@ -923,6 +977,16 @@ const TicketDetailsPage = () => {
                 <span className={`badge ${getStatusClass(ticket.status)}`}>
                   {ticket.status.replace('_', ' ')}
                 </span>
+                {!isEditing && (
+                  <>
+                    <button className="primary-btn" onClick={handleEditTicket}>
+                      Edit Ticket
+                    </button>
+                    <button className="delete-btn" onClick={() => setShowDeleteDialog(true)}>
+                      Delete Ticket
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -1,18 +1,3 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
-type NotificationType = 'STATUS_CHANGE' | 'NEW_COMMENT' | 'ASSIGNMENT';
-type FilterType = 'ALL' | 'UNREAD' | NotificationType;
-
-type NotificationItem = {
-  id: number;
-  type: NotificationType;
-  title: string;
-  message: string;
-  relatedTicketId: string;
-  isRead: boolean;
-  createdAt: string;
-};
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationService, type NotificationItem, type NotificationType, type FilterType } from '../services/notificationService';
@@ -21,53 +6,6 @@ const NotificationsPage = () => {
   const navigate = useNavigate();
 
   const [filter, setFilter] = useState<FilterType>('ALL');
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 1,
-      type: 'STATUS_CHANGE',
-      title: 'Ticket status updated',
-      message: 'Your ticket TKT-001 has been moved to IN_PROGRESS.',
-      relatedTicketId: 'TKT-001',
-      isRead: false,
-      createdAt: '2026-03-31T09:10:00Z',
-    },
-    {
-      id: 2,
-      type: 'NEW_COMMENT',
-      title: 'New technician comment',
-      message: 'A technician added a new comment to ticket TKT-002.',
-      relatedTicketId: 'TKT-002',
-      isRead: false,
-      createdAt: '2026-03-31T08:20:00Z',
-    },
-    {
-      id: 3,
-      type: 'STATUS_CHANGE',
-      title: 'Ticket resolved',
-      message: 'Your ticket TKT-003 has been marked as RESOLVED.',
-      relatedTicketId: 'TKT-003',
-      isRead: true,
-      createdAt: '2026-03-30T17:45:00Z',
-    },
-    {
-      id: 4,
-      type: 'ASSIGNMENT',
-      title: 'Technician assigned',
-      message: 'Technician Nimal Perera has been assigned to ticket TKT-004.',
-      relatedTicketId: 'TKT-004',
-      isRead: true,
-      createdAt: '2026-03-30T15:30:00Z',
-    },
-    {
-      id: 5,
-      type: 'STATUS_CHANGE',
-      title: 'Ticket closed',
-      message: 'Your ticket TKT-005 has been closed successfully.',
-      relatedTicketId: 'TKT-005',
-      isRead: false,
-      createdAt: '2026-03-29T11:40:00Z',
-    },
-  ]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 

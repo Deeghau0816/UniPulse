@@ -1,9 +1,3 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
-type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'REJECTED';
-type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-type TicketCategory = 'Electrical' | 'IT Support' | 'Mechanical' | 'Lab Equipment';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ticketService, type TicketStatus, type TicketPriority, type TicketCategory } from '../services/ticketService';
@@ -21,9 +15,6 @@ type TechnicianTicket = {
   description: string;
   createdAt: string;
 };
-
-const TechnicianDashboardPage = () => {
-  const navigate = useNavigate();
 
 const TECHNICIAN_LIST = [
   'Nimal Perera',
@@ -53,58 +44,6 @@ const TechnicianDashboardPage = () => {
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | TicketCategory>('ALL');
   const [tab, setTab] = useState<DashboardTab>('assigned');
 
-  const tickets: TechnicianTicket[] = [
-    {
-      id: 'TKT-001',
-      category: 'Electrical',
-      location: 'Lab Building - Room 203',
-      priority: 'HIGH',
-      status: 'IN_PROGRESS',
-      assignedTo: 'Nimal Perera',
-      description: 'Power outage in computer lab affecting multiple workstations.',
-      createdAt: '2026-03-30T10:30:00Z',
-    },
-    {
-      id: 'TKT-002',
-      category: 'IT Support',
-      location: 'Library - Digital Section',
-      priority: 'MEDIUM',
-      status: 'OPEN',
-      assignedTo: 'Nimal Perera',
-      description: 'Student terminals are unable to connect to the campus network.',
-      createdAt: '2026-03-30T09:15:00Z',
-    },
-    {
-      id: 'TKT-003',
-      category: 'Mechanical',
-      location: 'Student Center - Main Hall',
-      priority: 'LOW',
-      status: 'RESOLVED',
-      assignedTo: 'Nimal Perera',
-      description: 'Air conditioning unit is making noise and cooling poorly.',
-      createdAt: '2026-03-29T14:20:00Z',
-    },
-    {
-      id: 'TKT-004',
-      category: 'Lab Equipment',
-      location: 'Physics Lab 02',
-      priority: 'CRITICAL',
-      status: 'OPEN',
-      assignedTo: 'Nimal Perera',
-      description: 'Oscilloscope and measuring equipment failing during practical.',
-      createdAt: '2026-03-30T08:45:00Z',
-    },
-    {
-      id: 'TKT-005',
-      category: 'Electrical',
-      location: 'Lecture Hall A',
-      priority: 'MEDIUM',
-      status: 'CLOSED',
-      assignedTo: 'Nimal Perera',
-      description: 'Faulty ceiling lights near the podium area were reported and repaired.',
-      createdAt: '2026-03-29T11:30:00Z',
-    },
-  ];
   const [tickets, setTickets] = useState<TechnicianTicket[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -765,18 +704,6 @@ const TechnicianDashboardPage = () => {
             </div>
 
             <div className="header-right">
-              <div className="summary-chip">Assigned Technician: Nimal Perera</div>
-
-              <div className="quick-links">
-                <button className="quick-btn" onClick={() => navigate('/dashboard/my-tickets')}>
-                  My Tickets
-                </button>
-                <button className="quick-btn" onClick={() => navigate('/dashboard/notifications')}>
-                  Notifications
-                </button>
-                <button className="quick-btn" onClick={() => navigate('/dashboard/admin/tickets')}>
-                  Admin View
-                </button>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px',
                   background: '#ffffff', border: '1px solid #e4e4e7', borderRadius: '16px',
@@ -945,12 +872,6 @@ const TechnicianDashboardPage = () => {
 
                     <div className="ticket-footer">
                       <div className="ticket-date">Ready for technician update</div>
-                      <button
-                        className="details-btn"
-                        onClick={() => navigate(`/dashboard/tickets/${ticket.id}`)}
-                      >
-                        Open Ticket
-                      </button>
                       <div className="ticket-actions">
                         {/* Show status update buttons only for assigned tickets */}
                         {ticket.assignedTo === currentTechnician && (

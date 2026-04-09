@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'REJECTED';
-type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-type TicketCategory = 'Electrical' | 'IT Support' | 'Mechanical' | 'Lab Equipment';
-
-type Ticket = {
-  id: string;
 import { ticketService, type TicketStatus, type TicketPriority, type TicketCategory } from '../services/ticketService';
 
 type Ticket = {
@@ -32,81 +25,6 @@ const MyTicketsPage = () => {
   const [priorityFilter, setPriorityFilter] = useState<'ALL' | TicketPriority>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | TicketCategory>('ALL');
 
-  const dummyTickets: Ticket[] = [
-    {
-      id: 'TKT-001',
-      category: 'Electrical',
-      location: 'Lab Building - Room 203',
-      priority: 'HIGH',
-      status: 'IN_PROGRESS',
-      description:
-        'Power outage in computer lab affecting multiple workstations and projector access.',
-      createdAt: '2026-03-30T10:30:00Z',
-    },
-    {
-      id: 'TKT-002',
-      category: 'IT Support',
-      location: 'Library - Digital Section',
-      priority: 'MEDIUM',
-      status: 'OPEN',
-      description:
-        'Student access terminals are unable to connect to the campus network.',
-      createdAt: '2026-03-30T09:15:00Z',
-    },
-    {
-      id: 'TKT-003',
-      category: 'Mechanical',
-      location: 'Student Center - Main Hall',
-      priority: 'LOW',
-      status: 'RESOLVED',
-      description:
-        'Air conditioning unit is making noise and cooling efficiency is reduced.',
-      createdAt: '2026-03-29T14:20:00Z',
-    },
-    {
-      id: 'TKT-004',
-      category: 'Lab Equipment',
-      location: 'Physics Lab 02',
-      priority: 'CRITICAL',
-      status: 'OPEN',
-      description:
-        'Oscilloscope and measuring equipment are failing during practical sessions.',
-      createdAt: '2026-03-30T08:45:00Z',
-    },
-    {
-      id: 'TKT-005',
-      category: 'Electrical',
-      location: 'Lecture Hall A',
-      priority: 'MEDIUM',
-      status: 'CLOSED',
-      description:
-        'Faulty ceiling lights near the front podium area were reported and repaired.',
-      createdAt: '2026-03-29T11:30:00Z',
-    },
-    {
-      id: 'TKT-006',
-      category: 'IT Support',
-      location: 'Computer Lab B',
-      priority: 'HIGH',
-      status: 'REJECTED',
-      description:
-        'Projector display issue was reported, but the submitted details were incomplete.',
-      createdAt: '2026-03-28T13:20:00Z',
-    },
-  ];
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        setTickets(dummyTickets);
-        setLoading(false);
-      } catch {
-        setError('Failed to load tickets.');
-        setLoading(false);
-      }
-    }, 800);
-
-    return () => clearTimeout(timer);
   useEffect(() => {
     const fetchTickets = async () => {
       try {

@@ -1,8 +1,5 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-type TicketCategory = 'Electrical' | 'IT Support' | 'Mechanical' | 'Lab Equipment';
 import { ticketService, type TicketPriority, type TicketCategory } from '../services/ticketService';
 
 type FormDataState = {
@@ -182,12 +179,6 @@ const CreateTicketPage = () => {
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      console.log('Submitted ticket data:', formData);
-      console.log('Submitted attachments:', attachments);
-
-      setSubmitMessage('Incident ticket submitted successfully.');
-
     try {
       const ticketRequest = {
         category: formData.category as TicketCategory,
@@ -223,10 +214,6 @@ const CreateTicketPage = () => {
       setErrors({});
       setIsSubmitting(false);
 
-      setTimeout(() => {
-        navigate('/dashboard/my-tickets');
-      }, 1000);
-    }, 1200);
       // Navigate to tickets page after a short delay
       setTimeout(() => {
         navigate('/dashboard/my-tickets');

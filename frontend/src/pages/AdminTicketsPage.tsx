@@ -1,9 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ticketService, type TicketStatus, type TicketPriority, type TicketCategory } from '../services/ticketService';
 
-type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'REJECTED';
-type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-type TicketCategory = 'Electrical' | 'IT Support' | 'Mechanical' | 'Lab Equipment';
 type TechnicianFilter = 'ALL' | 'UNASSIGNED' | string;
 
 type AdminTicket = {
@@ -27,84 +25,6 @@ const AdminTicketsPage = () => {
   const [priorityFilter, setPriorityFilter] = useState<'ALL' | TicketPriority>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | TicketCategory>('ALL');
   const [technicianFilter, setTechnicianFilter] = useState<TechnicianFilter>('ALL');
-
-  const initialTickets: AdminTicket[] = [
-    {
-      id: 'TKT-001',
-      category: 'Electrical',
-      location: 'Lab Building - Room 203',
-      priority: 'HIGH',
-      status: 'IN_PROGRESS',
-      createdBy: 'Kavindi Perera',
-      assignedTo: 'Nimal Perera',
-      description: 'Power outage in computer lab affecting multiple workstations.',
-      createdAt: '2026-03-30T10:30:00Z',
-    },
-    {
-      id: 'TKT-002',
-      category: 'IT Support',
-      location: 'Library - Digital Section',
-      priority: 'MEDIUM',
-      status: 'OPEN',
-      createdBy: 'Sahan Fernando',
-      assignedTo: '',
-      description: 'Student terminals are unable to connect to the campus network.',
-      createdAt: '2026-03-30T09:15:00Z',
-    },
-    {
-      id: 'TKT-003',
-      category: 'Mechanical',
-      location: 'Student Center - Main Hall',
-      priority: 'LOW',
-      status: 'RESOLVED',
-      createdBy: 'Dinithi Silva',
-      assignedTo: 'Nimal Perera',
-      description: 'Air conditioning unit is making noise and cooling poorly.',
-      createdAt: '2026-03-29T14:20:00Z',
-    },
-    {
-      id: 'TKT-004',
-      category: 'Lab Equipment',
-      location: 'Physics Lab 02',
-      priority: 'CRITICAL',
-      status: 'OPEN',
-      createdBy: 'Ashen Jayawardena',
-      assignedTo: 'Kasun Madusha',
-      description: 'Oscilloscope and measuring equipment failing during practical.',
-      createdAt: '2026-03-30T08:45:00Z',
-    },
-    {
-      id: 'TKT-005',
-      category: 'Electrical',
-      location: 'Lecture Hall A',
-      priority: 'MEDIUM',
-      status: 'CLOSED',
-      createdBy: 'Madhavi Senanayake',
-      assignedTo: 'Nimal Perera',
-      description: 'Faulty ceiling lights near the podium area were reported and repaired.',
-      createdAt: '2026-03-29T11:30:00Z',
-    },
-    {
-      id: 'TKT-006',
-      category: 'IT Support',
-      location: 'Computer Lab B',
-      priority: 'HIGH',
-      status: 'REJECTED',
-      createdBy: 'Ravindu Peris',
-      assignedTo: '',
-      description: 'Projector display issue reported with missing supporting details.',
-      createdAt: '2026-03-28T13:20:00Z',
-    },
-  ];
-
-  const [tickets, setTickets] = useState<AdminTicket[]>(initialTickets);
-
-  const technicianOptions: string[] = [
-    'Nimal Perera',
-    'Kasun Madusha',
-    'Ayesha Fernando',
-    'Sanjeewa Silva',
-  ];
 
   const [tickets, setTickets] = useState<AdminTicket[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -203,14 +123,6 @@ const AdminTicketsPage = () => {
     setTechnicianFilter('ALL');
   };
 
-  const handleAssignTechnician = (ticketId: string, technicianName: string): void => {
-    setTickets((prev) =>
-      prev.map((ticket) =>
-        ticket.id === ticketId
-          ? { ...ticket, assignedTo: technicianName }
-          : ticket
-      )
-    );
   const handleAssignTechnician = async (ticketId: string, technicianName: string): Promise<void> => {
     try {
       const techEntry = technicianList.find(t => t.name === technicianName);
@@ -871,7 +783,6 @@ const AdminTicketsPage = () => {
                     </div>
 
                     <div className="assign-row">
-                      <div className="assign-label">Assign Technician</div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                         <div className="assign-label">Assign Technician</div>
                         {assignSuccess === ticket.id && (
@@ -887,10 +798,6 @@ const AdminTicketsPage = () => {
                           handleAssignTechnician(ticket.id, e.target.value)
                         }
                       >
-                        <option value="">Unassigned</option>
-                        {technicianOptions.map((tech) => (
-                          <option key={tech} value={tech}>
-                            {tech}
                         <option value="">— Unassigned —</option>
                         {technicianList.map((tech) => (
                           <option key={tech.name} value={tech.name}>
@@ -902,7 +809,6 @@ const AdminTicketsPage = () => {
 
                     <div className="ticket-footer">
                       <div className="ticket-date">
-                        {ticket.assignedTo ? `Assigned to ${ticket.assignedTo}` : 'Currently unassigned'}
                         {ticket.assignedTo
                           ? <span style={{ color: '#16a34a', fontWeight: 600 }}>✓ {ticket.assignedTo}</span>
                           : <span style={{ color: '#ea580c' }}>⚠ Unassigned</span>}
