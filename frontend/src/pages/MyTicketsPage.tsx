@@ -7,6 +7,11 @@ type TicketCategory = 'Electrical' | 'IT Support' | 'Mechanical' | 'Lab Equipmen
 
 type Ticket = {
   id: string;
+import { ticketService, type TicketStatus, type TicketPriority, type TicketCategory } from '../services/ticketService';
+
+type Ticket = {
+  id: string;
+  ticketCode: string;
   category: TicketCategory;
   location: string;
   priority: TicketPriority;
@@ -102,6 +107,34 @@ const MyTicketsPage = () => {
     }, 800);
 
     return () => clearTimeout(timer);
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        setLoading(true);
+        const ticketResponses = await ticketService.getAllTickets();
+        
+        const tickets: Ticket[] = ticketResponses.map(response => ({
+          id: response.id.toString(),
+          ticketCode: response.ticketCode,
+          category: response.category,
+          location: response.location,
+          priority: response.priority,
+          status: response.status,
+          description: response.description,
+          createdAt: response.createdAt,
+        }));
+        
+        setTickets(tickets);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch tickets:', err);
+        setError('Failed to load tickets. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
   }, []);
 
   const filteredTickets = useMemo(() => {

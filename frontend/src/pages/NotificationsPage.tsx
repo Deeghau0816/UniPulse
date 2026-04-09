@@ -13,6 +13,9 @@ type NotificationItem = {
   isRead: boolean;
   createdAt: string;
 };
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { notificationService, type NotificationItem, type NotificationType, type FilterType } from '../services/notificationService';
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
@@ -65,6 +68,24 @@ const NotificationsPage = () => {
       createdAt: '2026-03-29T11:40:00Z',
     },
   ]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true);
+        const notificationData = await notificationService.getAllNotifications();
+        setNotifications(notificationData);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
 
   const filteredNotifications = useMemo(() => {
     if (filter === 'ALL') return notifications;

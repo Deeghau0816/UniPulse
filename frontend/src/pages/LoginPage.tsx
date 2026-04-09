@@ -16,6 +16,7 @@ type StatItem = {
 
 import { useEffect } from 'react';
 
+
 // Inside your LoginPage component, before the return:
 
 
@@ -57,6 +58,9 @@ const LoginPage = () => {
     { num: '500+', label: 'Active Users' },
     { num: '98%', label: 'Resolution Rate' },
     { num: '4.8★', label: 'User Rating' },
+    { num: '0', label: 'Active Users' },
+    { num: '0%', label: 'Resolution Rate' },
+    { num: '0.0', label: 'User Rating' },
   ];
 
   const selectedTechnicianLabel =

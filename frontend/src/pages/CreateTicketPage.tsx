@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 type TicketCategory = 'Electrical' | 'IT Support' | 'Mechanical' | 'Lab Equipment';
+import { ticketService, type TicketPriority, type TicketCategory } from '../services/ticketService';
 
 type FormDataState = {
   category: TicketCategory | '';
@@ -172,7 +173,7 @@ const CreateTicketPage = () => {
     navigate('/dashboard/my-tickets');
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setSubmitMessage('');
 
@@ -187,6 +188,22 @@ const CreateTicketPage = () => {
 
       setSubmitMessage('Incident ticket submitted successfully.');
 
+    try {
+      const ticketRequest = {
+        category: formData.category as TicketCategory,
+        location: formData.location,
+        priority: formData.priority as TicketPriority,
+        description: formData.description,
+        preferredContact: formData.preferredContact,
+        createdBy: 'Current User', // You can update this with actual user data
+      };
+
+      const createdTicket = await ticketService.createTicket(ticketRequest);
+      
+      console.log('Created ticket:', createdTicket);
+      setSubmitMessage('Incident ticket submitted successfully!');
+
+      // Reset form
       setFormData({
         category: '',
         location: '',
@@ -195,6 +212,7 @@ const CreateTicketPage = () => {
         description: '',
       });
 
+      // Clean up attachments
       attachments.forEach((item) => {
         if (item.preview) {
           URL.revokeObjectURL(item.preview);
@@ -209,6 +227,32 @@ const CreateTicketPage = () => {
         navigate('/dashboard/my-tickets');
       }, 1000);
     }, 1200);
+      // Navigate to tickets page after a short delay
+      setTimeout(() => {
+        navigate('/dashboard/my-tickets');
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Failed to create ticket:', error);
+      
+      // Show more detailed error information
+      let errorMessage = 'Failed to submit ticket. Please try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Backend server is not responding. Please check if backend is running on http://localhost:8081';
+        } else if (error.message.includes('Network error')) {
+          errorMessage = 'Network connection failed. Please check your internet connection';
+        } else if (error.message.includes('HTTP error')) {
+          errorMessage = `Server error occurred: ${error.message}`;
+        } else if (error.message.includes('500')) {
+          errorMessage = 'Server error occurred. Please check the form data and try again.';
+        }
+      }
+      
+      setSubmitMessage(errorMessage);
+      setIsSubmitting(false);
+    }
   };
 
   return (

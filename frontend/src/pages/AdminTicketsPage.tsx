@@ -8,6 +8,7 @@ type TechnicianFilter = 'ALL' | 'UNASSIGNED' | string;
 
 type AdminTicket = {
   id: string;
+  ticketCode: string;
   category: TicketCategory;
   location: string;
   priority: TicketPriority;
@@ -105,6 +106,58 @@ const AdminTicketsPage = () => {
     'Sanjeewa Silva',
   ];
 
+  const [tickets, setTickets] = useState<AdminTicket[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  type TechnicianEntry = { name: string; type: string };
+
+  const technicianList: TechnicianEntry[] = [
+    { name: 'Nimal Perera',    type: 'ELECTRICAL' },
+    { name: 'Kasun Madusha',   type: 'IT_SUPPORT' },
+    { name: 'Ayesha Fernando', type: 'IT_SUPPORT' },
+    { name: 'Sanjeewa Silva',  type: 'MECHANICAL' },
+    { name: 'Rohan Perera',    type: 'MECHANICAL' },
+    { name: 'Thilini Perera',  type: 'LAB_EQUIPMENT' },
+    { name: 'Chamath Perera',  type: 'ELECTRICAL' },
+  ];
+
+  const technicianOptions: string[] = technicianList.map(t => t.name);
+
+  const [assignSuccess, setAssignSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        setLoading(true);
+        const ticketResponses = await ticketService.getAllTickets();
+        
+        const adminTickets: AdminTicket[] = ticketResponses.map(response => ({
+          id: response.id.toString(),
+          ticketCode: response.ticketCode,
+          category: response.category,
+          location: response.location,
+          priority: response.priority,
+          status: response.status,
+          createdBy: response.createdBy,
+          assignedTo: response.assignedTechnician || '',
+          description: response.description,
+          createdAt: response.createdAt,
+        }));
+        
+        setTickets(adminTickets);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch tickets:', err);
+        setError('Failed to load tickets. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
+  }, []);
+
   const filteredTickets = useMemo(() => {
     let filtered = [...tickets];
 
@@ -158,6 +211,23 @@ const AdminTicketsPage = () => {
           : ticket
       )
     );
+  const handleAssignTechnician = async (ticketId: string, technicianName: string): Promise<void> => {
+    try {
+      const techEntry = technicianList.find(t => t.name === technicianName);
+      const technicianType = techEntry?.type;
+      await ticketService.assignTechnician(ticketId, technicianName, technicianType);
+      setTickets((prev) =>
+        prev.map((ticket) =>
+          ticket.id === ticketId
+            ? { ...ticket, assignedTo: technicianName }
+            : ticket
+        )
+      );
+      setAssignSuccess(ticketId);
+      setTimeout(() => setAssignSuccess(null), 2500);
+    } catch (error) {
+      console.error('Failed to assign technician:', error);
+    }
   };
 
   const getStatusClass = (status: TicketStatus): string => {
@@ -744,6 +814,17 @@ const AdminTicketsPage = () => {
               </div>
             </div>
 
+            {loading && (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#52525b', fontSize: '15px' }}>
+                Loading tickets...
+              </div>
+            )}
+            {error && (
+              <div style={{ textAlign: 'center', padding: '16px', color: '#dc2626', fontSize: '14px',
+                background: '#fef2f2', borderRadius: '14px', border: '1px solid #fca5a5', marginBottom: '16px' }}>
+                {error}
+              </div>
+            )}
             <div className="results-text">
               Showing {filteredTickets.length} ticket{filteredTickets.length !== 1 ? 's' : ''}
             </div>
@@ -791,6 +872,14 @@ const AdminTicketsPage = () => {
 
                     <div className="assign-row">
                       <div className="assign-label">Assign Technician</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div className="assign-label">Assign Technician</div>
+                        {assignSuccess === ticket.id && (
+                          <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 700,
+                            background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '999px',
+                            padding: '4px 10px' }}>✓ Assigned!</span>
+                        )}
+                      </div>
                       <select
                         className="assign-select"
                         value={ticket.assignedTo}
@@ -802,6 +891,10 @@ const AdminTicketsPage = () => {
                         {technicianOptions.map((tech) => (
                           <option key={tech} value={tech}>
                             {tech}
+                        <option value="">— Unassigned —</option>
+                        {technicianList.map((tech) => (
+                          <option key={tech.name} value={tech.name}>
+                            {tech.name} ({tech.type.replace('_', ' ')})
                           </option>
                         ))}
                       </select>
@@ -810,6 +903,9 @@ const AdminTicketsPage = () => {
                     <div className="ticket-footer">
                       <div className="ticket-date">
                         {ticket.assignedTo ? `Assigned to ${ticket.assignedTo}` : 'Currently unassigned'}
+                        {ticket.assignedTo
+                          ? <span style={{ color: '#16a34a', fontWeight: 600 }}>✓ {ticket.assignedTo}</span>
+                          : <span style={{ color: '#ea580c' }}>⚠ Unassigned</span>}
                       </div>
 
                       <button
