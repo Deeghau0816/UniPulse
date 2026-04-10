@@ -1,8 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 
 import { useNavigate } from 'react-router-dom';
-
-
+import { useAuth, type UserRole } from '../contexts/AuthContext';
 
 type LoginType = 'student' | 'staff' | 'admin' | 'technician';
 
@@ -53,34 +52,52 @@ const LoginPage = () => {
 
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
+  const handleLogin = (role: UserRole) => {
+    // Create mock user data based on selected role
+    const userData = {
+      id: '1',
+      name: role === 'ADMIN' ? 'Admin User' : role === 'TECHNICIAN' ? 'Technician User' : 'Regular User',
+      email: role === 'ADMIN' ? 'admin@unipulse.com' : role === 'TECHNICIAN' ? 'tech@unipulse.com' : 'user@unipulse.com',
+      role: role,
+    };
 
+    login(userData);
 
-  const navBtnStyle: CSSProperties = {
-
-    width: '100%',
-
-    padding: '13px 16px',
-
-    borderRadius: '14px',
-
-    border: '1px solid #d4d4d8',
-
-    background: '#ffffff',
-
-    color: '#111111',
-
-    fontSize: '14px',
-
-    fontWeight: 700,
-
-    cursor: 'pointer',
-
-    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-
+    // Navigate to appropriate dashboard based on role
+    switch (role) {
+      case 'ADMIN':
+        navigate('/dashboard/admin/tickets');
+        break;
+      case 'TECHNICIAN':
+        navigate('/dashboard/technician/tickets');
+        break;
+      case 'USER':
+        navigate('/dashboard/my-tickets');
+        break;
+      default:
+        navigate('/dashboard/my-tickets');
+    }
   };
 
+  const handleGoogleLogin = (): void => {
+    setIsLoading(true);
+    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+  };
 
+  const navBtnStyle: CSSProperties = {
+    width: '100%',
+    padding: '13px 16px',
+    borderRadius: '14px',
+    border: '1px solid #d4d4d8',
+    background: '#ffffff',
+    color: '#111111',
+    fontSize: '14px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+  };
 
   const technicianTypes: TechnicianOption[] = [
 
@@ -93,16 +110,6 @@ const LoginPage = () => {
     { value: 'lab-equipment', label: 'Lab Equipment Technician' },
 
   ];
-
-
-
-  const handleGoogleLogin = (): void => {
-
-    setIsLoading(true);
-
-    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
-
-  };
 
 
 
@@ -1409,35 +1416,20 @@ const LoginPage = () => {
 
 
             <div style={{ display: 'grid', gap: '10px', marginTop: '14px' }}>
-
-              <button onClick={() => navigate('/dashboard/my-tickets')} style={navBtnStyle}>
-
-                Open My Tickets
-
+              <button onClick={() => handleLogin('USER')} style={navBtnStyle}>
+                Login as User
               </button>
 
-
-
-              <button onClick={() => navigate('/dashboard/technician/tickets')} style={navBtnStyle}>
-
-                Open Technician Dashboard
-
+              <button onClick={() => handleLogin('TECHNICIAN')} style={navBtnStyle}>
+                Login as Technician
               </button>
 
-
-
-              <button onClick={() => navigate('/dashboard/admin/tickets')} style={navBtnStyle}>
-
-                Open Admin Tickets
-
+              <button onClick={() => handleLogin('ADMIN')} style={navBtnStyle}>
+                Login as Admin
               </button>
-
-
 
               <button onClick={() => navigate('/dashboard/notifications')} style={navBtnStyle}>
-
                 Open Notifications
-
               </button>
 
             </div>
