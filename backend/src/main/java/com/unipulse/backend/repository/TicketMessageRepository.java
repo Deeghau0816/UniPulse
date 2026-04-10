@@ -1,4 +1,4 @@
-package com.unipulse.backend.repository;
+package com.unipulse.backend.Repository;
 
 import com.unipulse.backend.entity.TicketMessage;
 import org.springframework.data.jpa.repository.JpaRepository;
