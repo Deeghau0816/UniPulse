@@ -624,12 +624,6 @@ const MyTicketsPage = () => {
               <button className="secondary-btn" onClick={() => navigate('/dashboard/notifications')}>
                 Notifications
               </button>
-              <button
-                className="secondary-btn"
-                onClick={() => navigate('/dashboard/technician/tickets')}
-              >
-                Technician View
-              </button>
             </div>
           </div>
         </div>
