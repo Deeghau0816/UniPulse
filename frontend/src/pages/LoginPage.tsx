@@ -168,6 +168,44 @@ const LoginPage = () => {
           color: #18181b;
         }
 
+        .nav-links {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-top: 32px;
+        }
+
+        .nav-link-btn {
+          padding: 12px 20px;
+          border-radius: 14px;
+          border: 1px solid #d4d4d8;
+          background: rgba(255,255,255,0.88);
+          color: #111111;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .nav-link-btn:hover {
+          transform: translateY(-2px);
+          border-color: #fdba74;
+          background: #fff7ed;
+        }
+
+        .nav-link-btn.primary {
+          background: linear-gradient(135deg, #ea580c, #fb923c);
+          color: #ffffff;
+          border-color: transparent;
+          box-shadow: 0 10px 24px rgba(249, 115, 22, 0.20);
+        }
+
+        .nav-link-btn.primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 14px 30px rgba(249, 115, 22, 0.28);
+        }
+
         .hero-title {
           font-size: 64px;
           line-height: 1.05;
@@ -508,6 +546,14 @@ const LoginPage = () => {
             font-size: 26px;
           }
 
+          .nav-links {
+            flex-direction: column;
+          }
+
+          .nav-link-btn {
+            width: 100%;
+          }
+
           .right-panel {
             padding: 20px;
           }
@@ -555,6 +601,21 @@ const LoginPage = () => {
                 <div className="stat-label">{item.label}</div>
               </div>
             ))}
+          </div>
+
+          <div className="nav-links">
+            <button className="nav-link-btn primary" onClick={() => navigate('/dashboard/resources')}>
+              🏢 Admin Facilities
+            </button>
+            <button className="nav-link-btn" onClick={() => navigate('/customer/resources')}>
+              🌐 Browse Resources
+            </button>
+            <button className="nav-link-btn" onClick={() => navigate('/dashboard/my-tickets')}>
+              📋 My Tickets
+            </button>
+            <button className="nav-link-btn" onClick={() => navigate('/dashboard/notifications')}>
+              🔔 Notifications
+            </button>
           </div>
         </div>
 
@@ -718,6 +779,14 @@ const LoginPage = () => {
 
               <button onClick={() => navigate('/dashboard/notifications')} style={navBtnStyle}>
                 Open Notifications
+              </button>
+
+              <button onClick={() => navigate('/dashboard/resources')} style={navBtnStyle}>
+                Open Admin Facilities
+              </button>
+
+              <button onClick={() => navigate('/customer/resources')} style={navBtnStyle}>
+                Browse Resources (Customer View)
               </button>
             </div>
 
