@@ -1,4 +1,4 @@
-package com.unipulse.backend.repository;
+package com.unipulse.backend.Repository;
 
 import com.unipulse.backend.enums.TicketPriority;
 import com.unipulse.backend.enums.TicketStatus;

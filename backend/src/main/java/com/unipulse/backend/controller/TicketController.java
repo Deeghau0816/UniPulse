@@ -1,4 +1,4 @@
-package com.unipulse.backend.controller;
+package com.unipulse.backend.Controller;
 
 import com.unipulse.backend.dto.AssignTechnicianRequest;
 import com.unipulse.backend.dto.MessageRequest;
