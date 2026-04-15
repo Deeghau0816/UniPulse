@@ -26,7 +26,7 @@ public class TicketAttachmentServiceImpl implements TicketAttachmentService {
     private final TicketAttachmentRepository ticketAttachmentRepository;
     private final TicketRepository ticketRepository;
 
-    @Value("${file.upload-dir}")
+    @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
     @Override
