@@ -788,6 +788,14 @@ const LoginPage = () => {
               <button onClick={() => navigate('/customer/resources')} style={navBtnStyle}>
                 Browse Resources (Customer View)
               </button>
+
+               <button onClick={() => navigate('/reservations/user')} style={navBtnStyle}>
+                User Bookings
+              </button>
+
+               <button onClick={() => navigate('/reservations/admin')} style={navBtnStyle}>
+                Admin Dashboard (Booking Management)
+              </button>
             </div>
 
             <div className="footer-note">

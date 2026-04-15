@@ -25,7 +25,7 @@ export const MyReservationsList: React.FC<MyReservationsListProps> = ({ userId, 
       const data = await reservationService.getByUser(userId);
       setReservations(data);
     } catch {
-      showToast('Failed to load reservations', 'error');
+      showToast('Failed to load bookings', 'error');
     } finally {
       setLoading(false);
     }
@@ -34,11 +34,11 @@ export const MyReservationsList: React.FC<MyReservationsListProps> = ({ userId, 
   useEffect(() => { load(); }, [load, refreshKey]);
 
   const handleCancel = async (id: number) => {
-    if (!window.confirm('Are you sure you want to cancel this reservation?')) return;
+    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
     setCancelling(id);
     try {
       await reservationService.cancelOwn(id, userId);
-      showToast('Reservation cancelled successfully', 'success');
+      showToast('Booking cancelled successfully', 'success');
       load();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Failed to cancel', 'error');
@@ -156,7 +156,7 @@ export const MyReservationsList: React.FC<MyReservationsListProps> = ({ userId, 
           <div style={{ fontSize: '48px', marginBottom: '16px' }}></div>
           <h3 style={{ margin: '0 0 8px', color: '#374151', fontSize: '18px' }}>No Bookings Found</h3>
           <p style={{ margin: 0, fontSize: '14px' }}>
-            {filter === 'ALL' ? "You haven't made any reservation requests yet." : `No ${filter.toLowerCase()} reservations.`}
+            {filter === 'ALL' ? "You haven't made any booking requests yet." : `No ${filter.toLowerCase()} reservations.`}
           </p>
         </div>
       )}
@@ -206,14 +206,14 @@ export const MyReservationsList: React.FC<MyReservationsListProps> = ({ userId, 
                   </span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '100px' }}>
-                  <InfoChip icon="• Resource: " label={r.resourceLocation} />
-                  <InfoChip icon="• Date: " label={new Date(r.reservationDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} />
-                  <InfoChip icon="• Time: " label={`${formatTimeWithAMPM(r.startTime)} – ${formatTimeWithAMPM(r.endTime)}`} />
-                  {r.expectedAttendees && <InfoChip icon="• Attendees: " label={r.expectedAttendees.toString()} />}
+                  <InfoChip icon="📍 Resource: " label={r.resourceLocation} />
+                  <InfoChip icon="📅 Date: " label={new Date(r.reservationDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} />
+                  <InfoChip icon="⏰ Time: " label={`${formatTimeWithAMPM(r.startTime)} – ${formatTimeWithAMPM(r.endTime)}`} />
+                  {r.expectedAttendees && <InfoChip icon="👥 Attendees: " label={r.expectedAttendees.toString()} />}
                 </div>
                 {r.purpose && (
                   <p style={{ margin: '10px 0 0', fontSize: '16px', color: '#162339', lineHeight: 1.5, fontFamily: 'Arial, sans-serif' }}>
-                    • Purpose: {r.purpose.length > 80 ? r.purpose.slice(0, 80) + '...' : r.purpose}
+                    📋 Purpose: {r.purpose.length > 80 ? r.purpose.slice(0, 80) + '...' : r.purpose}
                   </p>
                 )}
                 {(r.status === 'REJECTED' || r.status === 'CANCELLED') && r.adminReason && (
@@ -245,6 +245,16 @@ export const MyReservationsList: React.FC<MyReservationsListProps> = ({ userId, 
                       fontSize: '13px',
                       fontWeight: 600,
                       cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#DBEAFE';
+                      e.currentTarget.style.borderColor = '#60A5FA';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#EFF6FF';
+                      e.currentTarget.style.borderColor = '#93C5FD';
+                      e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
                     Update

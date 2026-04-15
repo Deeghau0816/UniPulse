@@ -11,12 +11,20 @@ const DEMO_USER = { id: 'user-001', name: 'Alice Johnson' };
 
 type Tab = 'dashboard' | 'request' | 'reservations' | 'notifications';
 
+const navColors: Record<Tab, { active: string; glow: string; hover: string }> = {
+  dashboard:     { active: '#002d75', glow: 'rgba(0, 35, 92, 0.45)',  hover: '#002679' },
+  request:       { active: '#002d75', glow: 'rgba(0, 35, 92, 0.45)',  hover: '#002679'},
+  reservations:  { active: '#002d75', glow: 'rgba(0, 35, 92, 0.45)',  hover: '#002679'},
+  notifications: { active: '#002d75', glow: 'rgba(0, 35, 92, 0.45)',  hover: '#002679'},
+};
+
 const UserPanel: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [summary, setSummary] = useState<ReservationSummary | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [updatingReservation, setUpdatingReservation] = useState<ReservationRecord | null>(null);
+  const [hoveredNav, setHoveredNav] = useState<Tab | null>(null);
 
   const loadSummary = useCallback(async () => {
     try {
@@ -39,10 +47,10 @@ const UserPanel: React.FC = () => {
   };
 
   const navItems: Array<{ id: Tab; label: string; icon: string }> = [
-    { id: 'dashboard',     label: 'Dashboard',        icon: '' },
-    { id: 'request',      label: 'New Booking Request',       icon: '' },
-    { id: 'reservations', label: 'My Bookings',   icon: '' },
-    { id: 'notifications',label: 'Notifications',     icon: '' },
+    { id: 'dashboard',     label: 'Booking Dashboard',   icon: '' },
+    { id: 'request',      label: 'New Booking Request',  icon: '' },
+    { id: 'reservations', label: 'My Bookings',          icon: '' },
+    { id: 'notifications',label: 'Notifications',        icon: '' },
   ];
 
   const summaryCards = [
@@ -55,87 +63,108 @@ const UserPanel: React.FC = () => {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', fontFamily: "'Inter','Segoe UI',sans-serif", display: 'flex', fontSize: '16px' }}>
 
-      {/* Sidebar */}
+      {/* ── Sidebar ── */}
       <aside style={{
         width: '240px',
         flexShrink: 0,
-        background: '#606060',
+        /* light ash gradient */
+        background: 'linear-gradient(160deg, #d6d8db 0%, #b8bcc2 35%, #9ea3ab 65%, #8a9099 100%)',
         display: 'flex',
         flexDirection: 'column',
         padding: '24px 0',
-        boxShadow: '4px 0 20px rgba(0,0,0,0.15)',
+        boxShadow: '4px 0 24px rgba(0,0,0,0.18)',
       }}>
+
         {/* Brand */}
-        <div style={{ padding: '0 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ padding: '0 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.25)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
             <span style={{ fontSize: '24px' }}>🏛️</span>
-            <span style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '18px' }}>UniPulse</span>
+            <span style={{ color: '#1a1a2e', fontWeight: 800, fontSize: '18px' }}>UniPulse</span>
           </div>
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginLeft: '34px' }}>Admin Control Panel</div>
+          <div style={{ fontSize: '11px', color: 'rgb(0, 0, 0)', marginLeft: '34px' }}>User Control Panel</div>
         </div>
 
         {/* User Info */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.25)' }}>
           <div style={{
             width: '48px', height: '48px',
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #3B82F6, #6366F1)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '22px', marginBottom: '10px',
+            boxShadow: '0 4px 12px rgba(59,130,246,0.4)',
           }}>👤</div>
-          <div style={{ color: '#FFFFFF', fontWeight: 600, fontSize: '16px' }}>{DEMO_USER.name}</div>
-          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>Student – USER role</div>
+          <div style={{ color: '#1a1a2e', fontWeight: 700, fontSize: '16px' }}>{DEMO_USER.name}</div>
+          <div style={{ color: 'rgba(20,20,40,0.55)', fontSize: '13px' }}>Student – USER role</div>
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1, padding: '12px 0' }}>
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              style={{
-                width: '100%',
-                padding: '14px 20px',
-                background: activeTab === item.id
-                  ? 'rgba(0,0,0,0.1)'
-                  : 'none',
-                border: 'none',
-                borderLeft: activeTab === item.id ? '3px solid #3B82F6' : '3px solid transparent',
-                color: activeTab === item.id ? '#FFFFFF' : 'rgba(255,255,255,0.7)',
-                textAlign: 'left',
-                cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: activeTab === item.id ? 700 : 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                transition: 'all 0.15s',
-                fontFamily: 'inherit',
-                transform: 'translateZ(0)',
-                boxShadow: activeTab === item.id 
-                  ? '0 4px 8px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1)' 
-                  : '0 2px 4px rgba(0,0,0,0.1)',
-                borderRadius: '8px',
-                transformStyle: 'preserve-3d',
-              }}
-                          >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          ))}
+        <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {navItems.map(item => {
+            const isActive  = activeTab === item.id;
+            const isHovered = hoveredNav === item.id;
+            const c = navColors[item.id];
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                onMouseEnter={() => setHoveredNav(item.id)}
+                onMouseLeave={() => setHoveredNav(null)}
+                style={{
+                  width: '100%',
+                  padding: '13px 16px',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  fontSize: '14px',
+                  fontWeight: isActive ? 700 : 600,
+                  fontFamily: 'inherit',
+                  color: isActive ? '#ffffff' : '#1a1a2e',
+                  textAlign: 'left',
+
+                  /* 3-D transform */
+                  transform: isActive
+                    ? 'perspective(600px) rotateX(0deg) translateZ(8px) scale(1.04)'
+                    : isHovered
+                      ? 'perspective(600px) rotateX(-4deg) translateZ(6px) scale(1.03)'
+                      : 'perspective(600px) rotateX(4deg) translateZ(0px) scale(1)',
+
+                  /* background */
+                  background: isActive
+                    ? `linear-gradient(135deg, ${c.active}, ${c.hover})`
+                    : isHovered
+                      ? 'rgba(255,255,255,0.55)'
+                      : 'rgba(255,255,255,0.22)',
+
+                  /* shadow / glow */
+                  boxShadow: isActive
+                    ? `0 8px 20px ${c.glow}, 0 3px 8px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.25)`
+                    : isHovered
+                      ? `0 6px 16px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5)`
+                      : `0 2px 6px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.35)`,
+
+                  /* left accent bar */
+                  borderLeft: isActive ? `4px solid rgba(255,255,255,0.6)` : '4px solid transparent',
+
+                  transition: 'all 0.22s cubic-bezier(0.34,1.56,0.64,1)',
+                }}
+              >
+                <span style={{ fontSize: '18px', lineHeight: 1 }}>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
 
-        {/* Back & Admin links */}
-        <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button
-            onClick={() => navigate('/reservations/admin')}
-            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.6)', padding: '10px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', textAlign: 'left', fontFamily: 'inherit' }}
-          >
-            Switch to Admin
-          </button>
+        {/* Back to home link */}
+        <div style={{ padding: '16px 20px', borderTop: '1px solid rgb(0, 0, 0)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button
             onClick={() => navigate('/')}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: '14px', cursor: 'pointer', textAlign: 'left', padding: '6px 0', fontFamily: 'inherit' }}
+            style={{ background: 'none', border: 'none', color: 'rgb(0, 0, 0)', fontSize: '14px', cursor: 'pointer', textAlign: 'left', padding: '6px 0', fontFamily: 'Arial, sans-serif' }}
           >
             Back to Home
           </button>
@@ -349,7 +378,7 @@ const UserPanel: React.FC = () => {
           {activeTab === 'request' && (
             <div style={{ backgroundColor: '#f3f3f3', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '28px' }}>
               <h3 style={{ margin: '0 0 24px', fontSize: '22px', fontWeight: 700, color: '#111827' }}>
-                 {updatingReservation ? 'Update Reservation Request' : 'New Booking Request'}
+                 {updatingReservation ? 'Update Booking Request' : 'New Booking Request'}
               </h3>
               <ReservationRequestForm
                 userId={DEMO_USER.id}
