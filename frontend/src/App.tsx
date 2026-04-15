@@ -13,6 +13,8 @@ import ResourceDetailsPage from './pages/ResourceDetailsPage';
 import AddResourcePage from './pages/AddResourcePage';
 import CustomerFacilitiesPage from './pages/CustomerFacilitiesPage';
 import CustomerResourceDetailsPage from './pages/CustomerResourceDetailsPage';
+import UserPanel from './pages/reservation/UserPanel';
+import AdminPanel from './pages/reservation/ReservationAdminPanel';
 
 function App() {
   return (
@@ -41,6 +43,10 @@ function App() {
         {/* Customer-facing facilities routes */}
         <Route path="/customer/resources" element={<CustomerFacilitiesPage />} />
         <Route path="/customer/resources/:resourceId" element={<CustomerResourceDetailsPage />} />
+
+         {/* Reservation Module Routes */}
+        <Route path="/reservations/user"   element={<UserPanel />} />
+        <Route path="/reservations/admin"  element={<AdminPanel />} />
       </Routes>
     </BrowserRouter>
   );

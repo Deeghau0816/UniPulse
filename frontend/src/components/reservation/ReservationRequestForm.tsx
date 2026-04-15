@@ -17,13 +17,13 @@ const inputStyle: React.CSSProperties = {
   padding: '10px 14px',
   border: '1px solid #D1D5DB',
   borderRadius: '8px',
-  fontSize: '14px',
-  color: '#7a7a7a',
+  fontSize: '16px',
+  color: '#424242',
   backgroundColor: '#FFFFFF',
   outline: 'none',
   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   boxSizing: 'border-box',
-  fontFamily: 'Inter, sans-serif',
+  fontFamily: 'Roboto, sans-serif',
   transform: 'translateZ(0)',
   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
 };
@@ -34,7 +34,7 @@ const labelStyle: React.CSSProperties = {
   fontWeight: 600,
   color: '#161d2a',
   marginBottom: '6px',
-  fontFamily: 'Inter, sans-serif',
+  fontFamily: 'Arial, sans-serif',
 };
 
 const fieldGroupStyle: React.CSSProperties = {
@@ -84,7 +84,38 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
   const [selectedType, setSelectedType] = useState<ResourceType | ''>('');
   const [submitting, setSubmitting] = useState(false);
   const [loadingResources, setLoadingResources] = useState(true);
+  const [remainingTime, setRemainingTime] = useState<string>('');
+  const [isExpired, setIsExpired] = useState(false);
   const { showToast, ToastRenderer } = useToast();
+
+  // Calculate remaining time for updates
+  useEffect(() => {
+    if (isUpdate && initialData) {
+      const calculateRemainingTime = () => {
+        const now = new Date();
+        const createdAt = new Date(initialData.createdAt);
+        const twoHoursInMs = 2 * 60 * 60 * 1000;
+        const timeDiff = twoHoursInMs - (now.getTime() - createdAt.getTime());
+        
+        if (timeDiff <= 0) {
+          setIsExpired(true);
+          setRemainingTime('Expired');
+        } else {
+          const hours = Math.floor(timeDiff / (60 * 60 * 1000));
+          const minutes = Math.floor((timeDiff % (60 * 60 * 1000)) / (60 * 1000));
+          const seconds = Math.floor((timeDiff % (60 * 1000)) / 1000);
+          
+          setRemainingTime(`${hours}h ${minutes}m ${seconds}s`);
+          setIsExpired(false);
+        }
+      };
+
+      calculateRemainingTime();
+      const interval = setInterval(calculateRemainingTime, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isUpdate, initialData]);
 
   const [form, setForm] = useState<Partial<ReservationRequest>>({
     userId,
@@ -230,15 +261,44 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
 }}>
         {isUpdate && (
           <div style={{
-            padding: '12px 16px',
-            backgroundColor: '#EFF6FF',
-            border: '1px solid #93C5FD',
-            borderRadius: '8px',
-            color: '#1E40AF',
+            padding: '16px 20px',
+            backgroundColor: isExpired ? '#FEF2F2' : '#EFF6FF',
+            border: `1px solid ${isExpired ? '#FCA5A5' : '#93C5FD'}`,
+            borderRadius: '12px',
+            color: isExpired ? '#991B1B' : '#1E40AF',
             fontSize: '14px',
             fontWeight: 600,
+            marginBottom: '8px',
           }}>
-            Updating Reservation #{initialData?.id}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span>Updating Booking #{initialData?.id}</span>
+              {!isExpired && (
+                <span style={{ 
+                  backgroundColor: '#DBEAFE', 
+                  color: '#1E40AF', 
+                  padding: '4px 8px', 
+                  borderRadius: '6px', 
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  fontFamily: 'monospace'
+                }}>
+                  {remainingTime} remaining
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.4 }}>
+              {isExpired ? (
+                <span> 
+                  <span style={{ fontSize: '16px', marginRight: '6px' }}>×</span>
+                  Update window has expired. You can only update bookings within 2 hours of submission.
+                </span>
+              ) : (
+                <span>
+                  <span style={{ fontSize: '16px', marginRight: '6px' }}>!</span>
+                  You can update this booking within 2 hours of submission. After that, updates will be disabled.
+                </span>
+              )}
+            </div>
           </div>
         )}
 
@@ -269,9 +329,10 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
                 setErrors(prev => ({ ...prev, selectedType: '' }));
               }
             }}
-            style={inputStyle}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
+            style={{...inputStyle, opacity: (isUpdate && isExpired) ? 0.6 : 1}}
+            disabled={isUpdate && isExpired}
+            onFocus={!isExpired ? handleInputFocus : undefined}
+            onBlur={!isExpired ? handleInputBlur : undefined}
           >
             <option value="">— All Types —</option>
             {(Object.keys(resourceTypeLabels) as ResourceType[]).map(type => (
@@ -287,9 +348,10 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
           <select
             value={form.resourceId || ''}
             onChange={e => setForm(prev => ({ ...prev, resourceId: Number(e.target.value) || undefined }))}
-            style={{ ...inputStyle, borderColor: errors.resourceId ? '#EF4444' : '#D1D5DB' }}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
+            style={{ ...inputStyle, borderColor: errors.resourceId ? '#EF4444' : '#D1D5DB', opacity: (isUpdate && isExpired) ? 0.6 : 1 }}
+            disabled={isUpdate && isExpired}
+            onFocus={!isExpired ? handleInputFocus : undefined}
+            onBlur={!isExpired ? handleInputBlur : undefined}
           >
             <option value="">Choose a resource...</option>
             {filtered.map(r => (
@@ -310,9 +372,10 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
               min={today}
               value={form.reservationDate || ''}
               onChange={e => setForm(prev => ({ ...prev, reservationDate: e.target.value }))}
-              style={{ ...inputStyle, borderColor: errors.reservationDate ? '#EF4444' : '#D1D5DB' }}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
+              style={{ ...inputStyle, borderColor: errors.reservationDate ? '#EF4444' : '#D1D5DB', opacity: (isUpdate && isExpired) ? 0.6 : 1 }}
+              disabled={isUpdate && isExpired}
+              onFocus={!isExpired ? handleInputFocus : undefined}
+              onBlur={!isExpired ? handleInputBlur : undefined}
             />
             {errors.reservationDate && <span style={errorStyle}>{errors.reservationDate}</span>}
           </div>
@@ -337,9 +400,10 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
                 const target = e.target as HTMLInputElement;
                 target.setCustomValidity('Time must be between 7:00 AM and 8:00 PM');
               }}
-              style={{ ...inputStyle, borderColor: errors.startTime ? '#EF4444' : '#D1D5DB' }}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
+              style={{ ...inputStyle, borderColor: errors.startTime ? '#EF4444' : '#D1D5DB', opacity: (isUpdate && isExpired) ? 0.6 : 1 }}
+              disabled={isUpdate && isExpired}
+              onFocus={!isExpired ? handleInputFocus : undefined}
+              onBlur={!isExpired ? handleInputBlur : undefined}
             />
             {errors.startTime && <span style={errorStyle}>{errors.startTime}</span>}
           </div>
@@ -364,9 +428,10 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
                 const target = e.target as HTMLInputElement;
                 target.setCustomValidity('Time must be between 7:00 AM and 8:00 PM');
               }}
-              style={{ ...inputStyle, borderColor: errors.endTime ? '#EF4444' : '#D1D5DB' }}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
+              style={{ ...inputStyle, borderColor: errors.endTime ? '#EF4444' : '#D1D5DB', opacity: (isUpdate && isExpired) ? 0.6 : 1 }}
+              disabled={isUpdate && isExpired}
+              onFocus={!isExpired ? handleInputFocus : undefined}
+              onBlur={!isExpired ? handleInputBlur : undefined}
             />
             {errors.endTime && <span style={errorStyle}>{errors.endTime}</span>}
           </div>
@@ -385,9 +450,10 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
                 ...prev,
                 expectedAttendees: e.target.value ? Number(e.target.value) : undefined,
               }))}
-              style={{ ...inputStyle, borderColor: errors.expectedAttendees ? '#EF4444' : '#D1D5DB' }}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
+              style={{ ...inputStyle, borderColor: errors.expectedAttendees ? '#EF4444' : '#D1D5DB', opacity: (isUpdate && isExpired) ? 0.6 : 1 }}
+              disabled={isUpdate && isExpired}
+              onFocus={!isExpired ? handleInputFocus : undefined}
+              onBlur={!isExpired ? handleInputBlur : undefined}
             />
             {errors.expectedAttendees && <span style={errorStyle}>{errors.expectedAttendees}</span>}
           </div>
@@ -398,9 +464,10 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
               placeholder="Any special equipment or arrangements needed"
               value={form.specialNotes || ''}
               onChange={e => setForm(prev => ({ ...prev, specialNotes: e.target.value }))}
-              style={inputStyle}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
+              style={{...inputStyle, opacity: (isUpdate && isExpired) ? 0.6 : 1}}
+              disabled={isUpdate && isExpired}
+              onFocus={!isExpired ? handleInputFocus : undefined}
+              onBlur={!isExpired ? handleInputBlur : undefined}
             />
           </div>
         </div>
@@ -418,9 +485,11 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
               resize: 'vertical',
               minHeight: '100px',
               borderColor: errors.purpose ? '#EF4444' : '#D1D5DB',
+              opacity: (isUpdate && isExpired) ? 0.6 : 1,
             }}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
+            disabled={isUpdate && isExpired}
+            onFocus={!isExpired ? handleInputFocus : undefined}
+            onBlur={!isExpired ? handleInputBlur : undefined}
           />
           {errors.purpose && <span style={errorStyle}>{errors.purpose}</span>}
         </div>
@@ -429,17 +498,17 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
         <div style={{ display: 'flex', gap: '28px', paddingTop: '8px' }}>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || (isUpdate && isExpired)}
             style={{
               flex: 1,
               padding: '13px 24px',
-              backgroundColor: submitting ? '#93C5FD' : '#3B82F6',
+              backgroundColor: (submitting || (isUpdate && isExpired)) ? '#93C5FD' : '#3B82F6',
               color: '#FFFFFF',
               border: 'none',
               borderRadius: '8px',
               fontSize: '15px',
               fontWeight: 600,
-              cursor: submitting ? 'not-allowed' : 'pointer',
+              cursor: (submitting || (isUpdate && isExpired)) ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               transform: 'translateZ(0)',
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -447,7 +516,7 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
             onMouseEnter={handleButtonMouseEnter}
             onMouseLeave={handleButtonMouseLeave}
           >
-            {submitting ? 'Submitting...' : (isUpdate ? 'Update Reservation' : 'Submit Booking Request')}
+            {submitting ? 'Submitting...' : (isUpdate ? 'Update Booking Request' : 'Submit Booking Request')}
           </button>
           <button
             type="button"
