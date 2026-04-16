@@ -1,3 +1,4 @@
+
 package com.unipulse.backend.Controller;
 
 import com.unipulse.backend.dto.AssignTechnicianRequest;
@@ -50,7 +51,13 @@ public class TicketController {
         TicketRequest request = new TicketRequest();
         request.setCategory(category);
         request.setLocation(location);
-        request.setPriority(priority);
+        try {
+        request.setPriority(com.unipulse.backend.enums.TicketPriority.valueOf(priority.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            request.setPriority(com.unipulse.backend.enums.TicketPriority.MEDIUM);
+        }
+        
+        
         request.setDescription(description);
         request.setPreferredContact(preferredContact);
         request.setCreatedBy(createdBy);

@@ -52,7 +52,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public TicketResponse createTicket(TicketRequest request) {
+    public TicketResponse createTicket(TicketRequest request, List<MultipartFile> attachments) {
         Ticket ticket = Ticket.builder()
                 .ticketCode(generateTicketCode())
                 .category(request.getCategory())
@@ -68,11 +68,19 @@ public class TicketServiceImpl implements TicketService {
                 .build();
 
         Ticket savedTicket = ticketRepository.save(ticket);
+        
+        // Handle attachments if provided
+        if (attachments != null && !attachments.isEmpty()) {
+            for (MultipartFile file : attachments) {
+                uploadAttachment(savedTicket.getId(), file);
+            }
+        }
+        
         return mapToResponse(savedTicket);
     }
 
     @Override
-    public TicketResponse updateTicket(Long id, TicketRequest request) {
+    public TicketResponse updateTicket(Long id, TicketRequest request, List<MultipartFile> attachments) {
         Ticket ticket = getTicketEntityById(id);
 
         ticket.setCategory(request.getCategory());
@@ -85,6 +93,14 @@ public class TicketServiceImpl implements TicketService {
         ticket.setTechnicianType(request.getTechnicianType());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
+        
+        // Handle attachments if provided
+        if (attachments != null && !attachments.isEmpty()) {
+            for (MultipartFile file : attachments) {
+                uploadAttachment(updatedTicket.getId(), file);
+            }
+        }
+        
         return mapToResponse(updatedTicket);
     }
 
