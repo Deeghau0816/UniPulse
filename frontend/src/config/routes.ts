@@ -34,6 +34,7 @@ export const ROLE_BASED_ROUTES = {
   // Admin routes (ADMIN role)
   ADMIN: [
     '/dashboard/admin/tickets',
+    '/dashboard/admin/tickets/:ticketId',
   ],
   
   // Shared routes (multiple roles)

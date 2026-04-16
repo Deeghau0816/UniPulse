@@ -15,6 +15,7 @@ import TechnicianDashboardPage from './pages/TechnicianDashboardPage';
 import TechnicianTicketDetailsPage from './pages/TechnicianTicketDetailsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import AdminTicketsPage from './pages/AdminTicketsPage';
+import AdminTicketDetailsPage from './pages/AdminTicketDetailsPage';
 
 function App() {
   return (
@@ -76,6 +77,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="ADMIN">
                 <AdminTicketsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/admin/tickets/:ticketId"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AdminTicketDetailsPage />
               </ProtectedRoute>
             }
           />
