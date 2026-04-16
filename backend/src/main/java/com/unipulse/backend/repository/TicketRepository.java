@@ -6,6 +6,7 @@ import com.unipulse.backend.model.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -24,4 +25,6 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByCreatedBy(String createdBy);
 
     List<Ticket> findByStatusAndPriority(TicketStatus status, TicketPriority priority);
+
+    List<Ticket> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 }
