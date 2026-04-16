@@ -7,6 +7,8 @@ import com.unipulse.backend.dto.CommentResponse;
 import com.unipulse.backend.exception.ResourceNotFoundException;
 import com.unipulse.backend.model.Ticket;
 import com.unipulse.backend.model.TicketComment;
+import com.unipulse.backend.Repository.TicketCommentRepository;
+import com.unipulse.backend.Repository.TicketRepository;
 import com.unipulse.backend.service.TicketCommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
