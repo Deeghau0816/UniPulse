@@ -1,5 +1,8 @@
 package com.unipulse.backend.service.impl;
 
+import com.unipulse.backend.Repository.TicketAttachmentRepository;
+import com.unipulse.backend.Repository.TicketMessageRepository;
+import com.unipulse.backend.Repository.TicketRepository;
 import com.unipulse.backend.dto.AssignTechnicianRequest;
 import com.unipulse.backend.dto.MessageRequest;
 import com.unipulse.backend.dto.MessageResponse;

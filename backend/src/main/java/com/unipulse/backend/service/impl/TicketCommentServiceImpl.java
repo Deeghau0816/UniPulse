@@ -1,5 +1,7 @@
 package com.unipulse.backend.service.impl;
 
+import com.unipulse.backend.Repository.TicketCommentRepository;
+import com.unipulse.backend.Repository.TicketRepository;
 import com.unipulse.backend.dto.CommentRequest;
 import com.unipulse.backend.dto.CommentResponse;
 import com.unipulse.backend.exception.ResourceNotFoundException;
