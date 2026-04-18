@@ -1,4 +1,4 @@
-package com.unipulse.backend.controller;
+package com.unipulse.backend.Controller;
 
 import com.unipulse.backend.dto.ResourceRequest;
 import com.unipulse.backend.dto.ResourceResponse;
