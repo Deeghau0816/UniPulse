@@ -1,6 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { resourceService, type ResourceResponse, type ResourceType } from '../services/resourceService';
+import {
+  Building2,
+  Search,
+  Filter,
+  Users,
+  MapPin,
+  Calendar,
+  ArrowRight,
+  Ticket,
+  Bell,
+  Wrench,
+  Home,
+} from 'lucide-react';
 
 const CustomerFacilitiesPage = () => {
   const navigate = useNavigate();
@@ -81,6 +94,16 @@ const CustomerFacilitiesPage = () => {
     }
   };
 
+  const getTypeColor = (type: ResourceType) => {
+    switch (type) {
+      case 'LECTURE_HALL': return 'bg-blue-100 text-blue-700';
+      case 'LAB': return 'bg-purple-100 text-purple-700';
+      case 'MEETING_ROOM': return 'bg-emerald-100 text-emerald-700';
+      case 'EQUIPMENT': return 'bg-orange-100 text-orange-700';
+      default: return 'bg-slate-100 text-slate-700';
+    }
+  };
+
   const handleResourceClick = (resourceId: number) => {
     navigate(`/customer/resources/${resourceId}`);
   };
@@ -96,721 +119,252 @@ const CustomerFacilitiesPage = () => {
   };
 
   return (
-    <>
-      <style>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-
-        body {
-          margin: 0;
-          font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-          background: #ffffff;
-        }
-
-        .customer-facilities-page {
-          min-height: 100vh;
-          position: relative;
-          overflow-x: hidden;
-          background:
-            radial-gradient(circle at 10% 12%, rgba(59, 130, 246, 0.15), transparent 25%),
-            radial-gradient(circle at 88% 18%, rgba(99, 102, 241, 0.12), transparent 22%),
-            radial-gradient(circle at 82% 82%, rgba(24, 24, 27, 0.06), transparent 28%),
-            radial-gradient(circle at 45% 55%, rgba(59, 130, 246, 0.08), transparent 30%),
-            linear-gradient(135deg, #ffffff 0%, #f8fafc 45%, #eff6ff 100%);
-          color: #111111;
-        }
-
-        .customer-facilities-page::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(17, 17, 17, 0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(17, 17, 17, 0.025) 1px, transparent 1px);
-          background-size: 42px 42px;
-          animation: gridFloat 20s ease-in-out infinite;
-          pointer-events: none;
-          opacity: 0.45;
-        }
-
-        @keyframes gridFloat {
-          0% { transform: translate3d(0, 0, 0); }
-          50% { transform: translate3d(10px, 10px, 0); }
-          100% { transform: translate3d(0, 0, 0); }
-        }
-
-        .accent-blob {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(120px);
-          pointer-events: none;
-          opacity: 0.5;
-          animation: blobFloat 12s ease-in-out infinite;
-        }
-
-        .blob-1 {
-          width: 400px;
-          height: 400px;
-          background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(99, 102, 241, 0.15));
-          top: -140px;
-          left: -120px;
-          animation-delay: 0s;
-        }
-
-        .blob-2 {
-          width: 380px;
-          height: 380px;
-          background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(59, 130, 246, 0.12));
-          bottom: -120px;
-          right: -100px;
-          animation-delay: -4s;
-        }
-
-        .blob-3 {
-          width: 280px;
-          height: 280px;
-          background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(99, 102, 241, 0.1));
-          top: 50%;
-          right: 10%;
-          animation-delay: -8s;
-        }
-
-        @keyframes blobFloat {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(20px, -20px) scale(1.05); }
-          66% { transform: translate(-15px, 15px) scale(0.95); }
-        }
-
-        .page-header {
-          padding: 72px 72px 28px;
-          position: relative;
-          z-index: 2;
-        }
-
-        .header-content {
-          max-width: 1360px;
-          margin: 0 auto;
-        }
-
-        .page-title {
-          font-size: 52px;
-          font-weight: 800;
-          margin-bottom: 12px;
-          background: linear-gradient(135deg, #111111 0%, #3b82f6 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          letter-spacing: -0.03em;
-        }
-
-        .page-subtitle {
-          font-size: 18px;
-          line-height: 1.75;
-          color: #52525b;
-          max-width: 760px;
-        }
-
-        .filters-section {
-          padding: 0 72px 28px;
-          position: relative;
-          z-index: 2;
-        }
-
-        .filters-container {
-          max-width: 1360px;
-          margin: 0 auto;
-          background: rgba(255,255,255,0.95);
-          border: 1.5px solid rgba(228, 228, 231, 0.8);
-          border-radius: 24px;
-          padding: 26px;
-          box-shadow: 
-            0 4px 20px rgba(0,0,0,0.06),
-            0 0 0 1px rgba(255,255,255,0.5) inset;
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-        }
-
-        .filters-grid {
-          display: grid;
-          grid-template-columns: 2fr 1fr 1fr 1fr auto;
-          gap: 16px;
-          align-items: end;
-        }
-
-        .search-box,
-        .select-box {
-          padding: 16px 18px;
-          border-radius: 16px;
-          border: 1.5px solid #e4e4e7;
-          background: #ffffff;
-          color: #111111;
-          font-size: 14px;
-          outline: none;
-          width: 100%;
-          transition: all 0.2s ease;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-
-        .search-box::placeholder {
-          color: #a1a1aa;
-        }
-
-        .search-box:focus,
-        .select-box:focus {
-          border-color: #3b82f6;
-          box-shadow: 
-            0 0 0 4px rgba(59, 130, 246, 0.15),
-            0 4px 12px rgba(59, 130, 246, 0.1);
-        }
-
-        .clear-btn {
-          padding: 16px 20px;
-          border-radius: 16px;
-          border: 1.5px solid #e4e4e7;
-          background: #ffffff;
-          color: #111111;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-
-        .clear-btn:hover {
-          background: #fafafa;
-          border-color: #93c5fd;
-          transform: translateY(-1px);
-        }
-
-        .resources-section {
-          padding: 0 72px 72px;
-          position: relative;
-          z-index: 2;
-        }
-
-        .resources-container {
-          max-width: 1360px;
-          margin: 0 auto;
-        }
-
-        .results-text {
-          margin-bottom: 20px;
-          font-size: 14px;
-          color: #52525b;
-          font-weight: 500;
-          padding: 12px 16px;
-          background: rgba(255,255,255,0.8);
-          border-radius: 12px;
-          border: 1px solid rgba(228, 228, 231, 0.6);
-          display: inline-block;
-        }
-
-        .resources-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-          gap: 26px;
-        }
-
-        .resource-card {
-          background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%);
-          border: 1.5px solid rgba(228, 228, 231, 0.8);
-          border-radius: 24px;
-          padding: 26px;
-          box-shadow: 
-            0 4px 20px rgba(0,0,0,0.06),
-            0 0 0 1px rgba(255,255,255,0.5) inset;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          position: relative;
-          overflow: hidden;
-          cursor: pointer;
-        }
-
-        .resource-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 4px;
-          background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-
-        .resource-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 
-            0 12px 40px rgba(59, 130, 246, 0.15),
-            0 0 0 1px rgba(59, 130, 246, 0.2) inset;
-          border-color: rgba(59, 130, 246, 0.3);
-        }
-
-        .resource-card:hover::before {
-          opacity: 1;
-        }
-
-        .resource-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 14px;
-          margin-bottom: 18px;
-        }
-
-        .resource-thumbnail {
-          width: 80px;
-          height: 60px;
-          border-radius: 12px;
-          overflow: hidden;
-          flex-shrink: 0;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .resource-thumbnail img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .resource-thumbnail-placeholder {
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 28px;
-          color: #3b82f6;
-        }
-
-        .resource-icon {
-          font-size: 40px;
-          margin-bottom: 10px;
-          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-        }
-
-        .resource-name {
-          font-size: 24px;
-          font-weight: 800;
-          background: linear-gradient(135deg, #111111 0%, #3b82f6 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin-bottom: 8px;
-          line-height: 1.2;
-        }
-
-        .resource-type {
-          color: #71717a;
-          font-size: 14px;
-          font-weight: 600;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-        }
-
-        .resource-badges {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-          justify-content: flex-end;
-        }
-
-        .badge {
-          padding: 8px 14px;
-          border-radius: 999px;
-          font-size: 11px;
-          font-weight: 700;
-          border: 1.5px solid transparent;
-          white-space: nowrap;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .status-active { 
-          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
-          color: #166534; 
-          border-color: #86efac; 
-        }
-        .status-out-of-service { 
-          background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); 
-          color: #991b1b; 
-          border-color: #fca5a5; 
-        }
-
-        .resource-location {
-          color: #52525b;
-          font-size: 14px;
-          margin-bottom: 14px;
-          font-weight: 500;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .resource-capacity {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 14px;
-          border-radius: 999px;
-          background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-          color: #52525b;
-          font-size: 12px;
-          font-weight: 600;
-          margin-bottom: 14px;
-          border: 1px solid #e4e4e7;
-        }
-
-        .resource-description {
-          color: #3f3f46;
-          font-size: 14px;
-          line-height: 1.75;
-          margin-bottom: 18px;
-          padding: 14px;
-          background: rgba(59, 130, 246, 0.03);
-          border-radius: 12px;
-          border-left: 3px solid #3b82f6;
-        }
-
-        .resource-availability {
-          color: #52525b;
-          font-size: 13px;
-          margin-bottom: 18px;
-          padding: 12px 16px;
-          background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-          border-radius: 14px;
-          border: 1px solid #e4e4e7;
-        }
-
-        .resource-availability strong {
-          color: #111111;
-        }
-
-        .resource-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 14px;
-          padding-top: 18px;
-          border-top: 1.5px solid #e4e4e7;
-        }
-
-        .view-details-btn {
-          padding: 12px 20px;
-          border: none;
-          border-radius: 14px;
-          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-          color: #ffffff;
-          font-size: 13px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .view-details-btn::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-
-        .view-details-btn:hover::before {
-          opacity: 1;
-        }
-
-        .view-details-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
-        }
-
-        .quick-book-btn {
-          padding: 12px 16px;
-          border: none;
-          border-radius: 14px;
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          color: #ffffff;
-          font-size: 12px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .quick-book-btn::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-
-        .quick-book-btn:hover::before {
-          opacity: 1;
-        }
-
-        .quick-book-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-        }
-
-        .quick-book-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-          background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
-        }
-
-        .footer-buttons {
-          display: flex;
-          gap: 8px;
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 80px 40px;
-          background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.90) 100%);
-          border: 1.5px solid rgba(228, 228, 231, 0.8);
-          border-radius: 24px;
-          box-shadow: 
-            0 4px 20px rgba(0,0,0,0.06),
-            0 0 0 1px rgba(255,255,255,0.5) inset;
-        }
-
-        .empty-icon {
-          width: 90px;
-          height: 90px;
-          margin: 0 auto 24px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-          color: #3b82f6;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 40px;
-          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
-        }
-
-        .empty-title {
-          font-size: 28px;
-          font-weight: 800;
-          background: linear-gradient(135deg, #111111 0%, #52525b 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin-bottom: 12px;
-        }
-
-        .empty-description {
-          color: #52525b;
-          font-size: 16px;
-          line-height: 1.75;
-        }
-
-        .loading-spinner {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 60px;
-        }
-
-        .spinner {
-          width: 48px;
-          height: 48px;
-          border: 4px solid #e4e4e7;
-          border-top-color: #3b82f6;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 1280px) {
-          .page-header,
-          .filters-section,
-          .resources-section {
-            padding-left: 40px;
-            padding-right: 40px;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .filters-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .resources-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .page-title {
-            font-size: 36px;
-          }
-        }
-      `}</style>
-
-      <div className="customer-facilities-page">
-        <div className="accent-blob blob-1" />
-        <div className="accent-blob blob-2" />
-        <div className="accent-blob blob-3" />
-
-        <div className="page-header">
-          <div className="header-content">
-            <h1 className="page-title">Browse Campus Resources</h1>
-            <p className="page-subtitle">
-              Explore and discover available lecture halls, laboratories, meeting rooms, and equipment across the campus. 
-              Find the perfect space or resource for your needs.
-            </p>
+    <div className="min-h-screen bg-slate-50">
+      {/* Navbar - Same as HomePage */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Building2 className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                Smart Campus
+              </span>
+            </Link>
+            
+            <div className="hidden xl:flex items-center gap-6">
+              <button
+                onClick={() => navigate('/customer/resources')}
+                className="flex items-center gap-2 text-sm font-medium text-blue-600"
+              >
+                <Building2 className="w-4 h-4" />
+                Browse Resources
+              </button>
+              <button
+                onClick={() => navigate('/dashboard/my-tickets')}
+                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+              >
+                <Ticket className="w-4 h-4" />
+                My Tickets
+              </button>
+              <button
+                onClick={() => navigate('/dashboard/technician/tickets')}
+                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+              >
+                <Wrench className="w-4 h-4" />
+                Technician
+              </button>
+              <button
+                onClick={() => navigate('/dashboard/notifications')}
+                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+              >
+                <Bell className="w-4 h-4" />
+                Notifications
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/login')}
+                className="hidden sm:block text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => navigate('/login')}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
+              >
+                Get Started
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
+      </nav>
 
-        <div className="filters-section">
-          <div className="filters-container">
-            <div className="filters-grid">
-              <input
-                type="text"
-                className="search-box"
-                placeholder="Search resources..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      {/* Main Content */}
+      <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+              <Link to="/" className="hover:text-slate-700 flex items-center gap-1">
+                <Home className="w-4 h-4" /> Home
+              </Link>
+              <span>/</span>
+              <span className="text-slate-900 font-medium">Browse Resources</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">
+              Browse Campus Resources
+            </h1>
+            <p className="text-lg text-slate-600 max-w-2xl">
+              Explore and discover available lecture halls, laboratories, meeting rooms, and equipment across the campus.
+            </p>
+          </div>
 
-              <select className="select-box" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+          {/* Filters */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-5 h-5 text-slate-500" />
+              <h2 className="font-semibold text-slate-900">Filters</h2>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search resources..."
+                  className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <select
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm bg-white"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
                 <option value="ALL">All Types</option>
                 <option value="LECTURE_HALL">Lecture Halls</option>
                 <option value="LAB">Laboratories</option>
                 <option value="MEETING_ROOM">Meeting Rooms</option>
                 <option value="EQUIPMENT">Equipment</option>
               </select>
-
-              <select className="select-box" value={filterCapacity} onChange={(e) => setFilterCapacity(e.target.value)}>
+              <select
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm bg-white"
+                value={filterCapacity}
+                onChange={(e) => setFilterCapacity(e.target.value)}
+              >
                 <option value="ALL">All Capacities</option>
                 <option value="SMALL">Small (&le;30)</option>
                 <option value="MEDIUM">Medium (31-100)</option>
                 <option value="LARGE">Large (&gt;100)</option>
               </select>
-
-              <select className="select-box" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+              <select
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm bg-white"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
                 <option value="ALL">All Status</option>
                 <option value="ACTIVE">Active</option>
                 <option value="OUT_OF_SERVICE">Out of Service</option>
               </select>
-
-              <button className="clear-btn" onClick={clearFilters}>
+              <button
+                onClick={clearFilters}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all"
+              >
                 Clear Filters
               </button>
             </div>
           </div>
-        </div>
 
-        <div className="resources-section">
-          <div className="resources-container">
-            {loading ? (
-              <div className="loading-spinner">
-                <div className="spinner" />
+          {/* Results */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">⚠️</span>
               </div>
-            ) : error ? (
-              <div className="empty-state">
-                <div className="empty-icon">⚠️</div>
-                <h2 className="empty-title">Error Loading Resources</h2>
-                <p className="empty-description">{error}</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Error Loading Resources</h3>
+              <p className="text-slate-600">{error}</p>
+            </div>
+          ) : filteredResources.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center">
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-blue-500" />
               </div>
-            ) : filteredResources.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">🔍</div>
-                <h2 className="empty-title">No Resources Found</h2>
-                <p className="empty-description">
-                  {searchTerm || filterType !== 'ALL' || filterStatus !== 'ALL' || filterCapacity !== 'ALL'
-                    ? 'Try adjusting your filters or search term to find what you\'re looking for.'
-                    : 'There are no resources available at the moment.'}
-                </p>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">No Resources Found</h3>
+              <p className="text-slate-600">
+                {searchTerm || filterType !== 'ALL' || filterStatus !== 'ALL' || filterCapacity !== 'ALL'
+                  ? 'Try adjusting your filters or search term.'
+                  : 'There are no resources available at the moment.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="mb-4 text-sm text-slate-600">
+                Showing <span className="font-semibold text-slate-900">{filteredResources.length}</span> of{' '}
+                <span className="font-semibold text-slate-900">{resources.length}</span> resources
               </div>
-            ) : (
-              <>
-                <div className="results-text">
-                  Showing {filteredResources.length} of {resources.length} resources
-                </div>
-                <div className="resources-grid">
-                  {filteredResources.map((resource) => (
-                    <div
-                      key={resource.id}
-                      className="resource-card"
-                      onClick={() => handleResourceClick(resource.id)}
-                    >
-                      <div className="resource-header">
-                        <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', flex: 1 }}>
-                          {resource.imageUrl ? (
-                            <div className="resource-thumbnail">
-                              <img src={resource.imageUrl} alt={resource.name} />
-                            </div>
-                          ) : (
-                            <div className="resource-thumbnail-placeholder">
-                              {getResourceIcon(resource.type)}
-                            </div>
-                          )}
-                          <div style={{ flex: 1 }}>
-                            <h3 className="resource-name">{resource.name}</h3>
-                            <p className="resource-type">{getTypeLabel(resource.type)}</p>
-                          </div>
-                        </div>
-                        <div className="resource-badges">
-                          <span className={`badge status-${resource.status.toLowerCase().replace('_', '-')}`}>
-                            {resource.status === 'ACTIVE' ? 'Active' : 'Out of Service'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="resource-location">📍 {resource.location}</div>
-
-                      {resource.capacity && (
-                        <div className="resource-capacity">
-                          👥 Capacity: {resource.capacity} people
-                        </div>
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredResources.map((resource) => (
+                  <div
+                    key={resource.id}
+                    className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-slate-900/10 hover:border-slate-300 transition-all cursor-pointer"
+                    onClick={() => handleResourceClick(resource.id)}
+                  >
+                    {/* Card Header */}
+                    <div className="relative h-48 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                      {resource.imageUrl ? (
+                        <img
+                          src={resource.imageUrl}
+                          alt={resource.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-6xl">{getResourceIcon(resource.type)}</div>
                       )}
-
-                      <p className="resource-description">{resource.description}</p>
-
-                      <div className="resource-availability">
-                        <strong>📅 Availability:</strong> {resource.availabilityWindows}
+                      <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold ${
+                        resource.status === 'ACTIVE'
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          : 'bg-red-100 text-red-700 border border-red-200'
+                      }`}>
+                        {resource.status === 'ACTIVE' ? 'Active' : 'Out of Service'}
                       </div>
-
-                      <div className="resource-footer">
-                        <span className="resource-date">
-                          Updated: {new Date(resource.updatedAt).toLocaleDateString()}
-                        </span>
-                        <div className="footer-buttons">
-                          <button
-                            className="quick-book-btn"
-                            onClick={(e) => handleQuickBook(e, resource.id)}
-                            disabled={resource.status !== 'ACTIVE'}
-                          >
-                            📅 Book
-                          </button>
-                          <button className="view-details-btn">View Details →</button>
-                        </div>
+                      <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold ${getTypeColor(resource.type)}`}>
+                        {getTypeLabel(resource.type)}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+
+                    {/* Card Content */}
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
+                        {resource.name}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-slate-600 mb-3">
+                        <MapPin className="w-4 h-4" />
+                        {resource.location}
+                      </div>
+                      {resource.capacity && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600 mb-3">
+                          <Users className="w-4 h-4" />
+                          Capacity: {resource.capacity} people
+                        </div>
+                      )}
+                      <p className="text-slate-600 text-sm line-clamp-2 mb-4">
+                        {resource.description}
+                      </p>
+                      <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+                        <Calendar className="w-4 h-4" />
+                        {resource.availabilityWindows}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-3 pt-4 border-t border-slate-100">
+                        <button
+                          onClick={(e) => handleQuickBook(e, resource.id)}
+                          disabled={resource.status !== 'ACTIVE'}
+                          className="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Book Now
+                        </button>
+                        <button className="px-4 py-2.5 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all">
+                          Details
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
-      </div>
-    </>
+      </main>
+    </div>
   );
 };
 

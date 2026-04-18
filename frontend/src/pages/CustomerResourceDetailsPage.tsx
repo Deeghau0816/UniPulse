@@ -1,6 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { resourceService, type ResourceResponse, type ResourceType } from '../services/resourceService';
+import {
+  Building2,
+  ArrowLeft,
+  MapPin,
+  Users,
+  Calendar,
+  Clock,
+  Ticket,
+  Bell,
+  Wrench,
+  ArrowRight,
+  Home,
+  X,
+  CheckCircle,
+} from 'lucide-react';
 
 const CustomerResourceDetailsPage = () => {
   const { resourceId } = useParams<{ resourceId: string }>();
@@ -54,6 +69,16 @@ const CustomerResourceDetailsPage = () => {
     }
   };
 
+  const getTypeColor = (type: ResourceType) => {
+    switch (type) {
+      case 'LECTURE_HALL': return 'bg-blue-100 text-blue-700';
+      case 'LAB': return 'bg-purple-100 text-purple-700';
+      case 'MEETING_ROOM': return 'bg-emerald-100 text-emerald-700';
+      case 'EQUIPMENT': return 'bg-orange-100 text-orange-700';
+      default: return 'bg-slate-100 text-slate-700';
+    }
+  };
+
   const handleBack = () => {
     navigate('/customer/resources');
   };
@@ -82,7 +107,6 @@ const CustomerResourceDetailsPage = () => {
     }
 
     setIsSubmitting(true);
-    // Simulate booking submission
     setTimeout(() => {
       alert(`Booking request submitted successfully!\n\nResource: ${resource?.name}\nDate: ${bookingDate}\nTime: ${bookingTime}\nDuration: ${bookingDuration} hour(s)\nPurpose: ${bookingPurpose}\n\nYou will receive a confirmation email shortly.`);
       setIsSubmitting(false);
@@ -97,793 +121,205 @@ const CustomerResourceDetailsPage = () => {
 
   if (loading) {
     return (
-      <>
-        <style>{`
-          .loading-container {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 45%, #eff6ff 100%);
-          }
-          .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #e4e4e7;
-            border-top-color: #3b82f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-          }
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-        <div className="loading-container">
-          <div className="spinner" />
-        </div>
-      </>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+      </div>
     );
   }
 
   if (error || !resource) {
     return (
-      <>
-        <style>{`
-          .error-container {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 45%, #eff6ff 100%);
-            padding: 40px;
-          }
-          .error-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%);
-            border: 1.5px solid rgba(228, 228, 231, 0.8);
-            border-radius: 24px;
-            padding: 48px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            max-width: 500px;
-          }
-          .error-icon {
-            font-size: 64px;
-            margin-bottom: 24px;
-          }
-          .error-title {
-            font-size: 28px;
-            font-weight: 800;
-            color: #111111;
-            margin-bottom: 12px;
-          }
-          .error-message {
-            color: #52525b;
-            font-size: 16px;
-            line-height: 1.75;
-            margin-bottom: 24px;
-          }
-          .back-btn {
-            padding: 16px 24px;
-            border-radius: 16px;
-            border: 1.5px solid #e4e4e7;
-            background: #ffffff;
-            color: #111111;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-          }
-          .back-btn:hover {
-            background: #fafafa;
-            border-color: #93c5fd;
-            transform: translateY(-2px);
-          }
-        `}</style>
-        <div className="error-container">
-          <div className="error-card">
-            <div className="error-icon">⚠️</div>
-            <h2 className="error-title">Error</h2>
-            <p className="error-message">{error || 'Resource not found'}</p>
-            <button className="back-btn" onClick={handleBack}>
-              ← Back to Resources
-            </button>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">⚠️</span>
           </div>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">Error</h3>
+          <p className="text-slate-600 mb-4">{error || 'Resource not found'}</p>
+          <button
+            onClick={handleBack}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Back to Resources
+          </button>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <style>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-
-        body {
-          margin: 0;
-          font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-          background: #ffffff;
-        }
-
-        .details-page {
-          min-height: 100vh;
-          position: relative;
-          overflow-x: hidden;
-          background:
-            radial-gradient(circle at 10% 12%, rgba(59, 130, 246, 0.15), transparent 25%),
-            radial-gradient(circle at 88% 18%, rgba(99, 102, 241, 0.12), transparent 22%),
-            radial-gradient(circle at 82% 82%, rgba(24, 24, 27, 0.06), transparent 28%),
-            radial-gradient(circle at 45% 55%, rgba(59, 130, 246, 0.08), transparent 30%),
-            linear-gradient(135deg, #ffffff 0%, #f8fafc 45%, #eff6ff 100%);
-          color: #111111;
-        }
-
-        .details-page::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(17, 17, 17, 0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(17, 17, 17, 0.025) 1px, transparent 1px);
-          background-size: 42px 42px;
-          animation: gridFloat 20s ease-in-out infinite;
-          pointer-events: none;
-          opacity: 0.45;
-        }
-
-        @keyframes gridFloat {
-          0% { transform: translate3d(0, 0, 0); }
-          50% { transform: translate3d(10px, 10px, 0); }
-          100% { transform: translate3d(0, 0, 0); }
-        }
-
-        .accent-blob {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(120px);
-          pointer-events: none;
-          opacity: 0.5;
-          animation: blobFloat 12s ease-in-out infinite;
-        }
-
-        .blob-1 {
-          width: 400px;
-          height: 400px;
-          background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(99, 102, 241, 0.15));
-          top: -140px;
-          left: -120px;
-          animation-delay: 0s;
-        }
-
-        .blob-2 {
-          width: 380px;
-          height: 380px;
-          background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(59, 130, 246, 0.12));
-          bottom: -120px;
-          right: -100px;
-          animation-delay: -4s;
-        }
-
-        .blob-3 {
-          width: 280px;
-          height: 280px;
-          background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(99, 102, 241, 0.1));
-          top: 50%;
-          right: 10%;
-          animation-delay: -8s;
-        }
-
-        @keyframes blobFloat {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(20px, -20px) scale(1.05); }
-          66% { transform: translate(-15px, 15px) scale(0.95); }
-        }
-
-        .page-header {
-          padding: 72px 72px 28px;
-          position: relative;
-          z-index: 2;
-        }
-
-        .header-content {
-          max-width: 1360px;
-          margin: 0 auto;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 20px;
-          flex-wrap: wrap;
-        }
-
-        .page-title {
-          font-size: 46px;
-          font-weight: 800;
-          margin-bottom: 12px;
-          background: linear-gradient(135deg, #111111 0%, #3b82f6 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          letter-spacing: -0.03em;
-        }
-
-        .header-actions {
-          display: flex;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-
-        .back-btn {
-          padding: 16px 22px;
-          border-radius: 16px;
-          border: 1.5px solid #e4e4e7;
-          background: rgba(255,255,255,0.95);
-          color: #111111;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 4px 14px rgba(0,0,0,0.04);
-        }
-
-        .back-btn:hover {
-          background: #ffffff;
-          border-color: #93c5fd;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
-        }
-
-        .details-section {
-          padding: 0 72px 72px;
-          position: relative;
-          z-index: 2;
-        }
-
-        .details-container {
-          max-width: 900px;
-          margin: 0 auto;
-        }
-
-        .details-card {
-          background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%);
-          border: 1.5px solid rgba(228, 228, 231, 0.8);
-          border-radius: 24px;
-          padding: 36px;
-          box-shadow: 
-            0 4px 20px rgba(0,0,0,0.06),
-            0 0 0 1px rgba(255,255,255,0.5) inset;
-        }
-
-        .image-gallery {
-          width: 100%;
-          height: 400px;
-          border-radius: 20px;
-          overflow: hidden;
-          margin-bottom: 32px;
-          position: relative;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        }
-
-        .resource-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.5s ease;
-        }
-
-        .image-gallery:hover .resource-image {
-          transform: scale(1.05);
-        }
-
-        .image-placeholder {
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 80px;
-          color: #3b82f6;
-        }
-
-        .booking-section {
-          margin-top: 32px;
-          padding-top: 32px;
-          border-top: 1.5px solid #e4e4e7;
-        }
-
-        .booking-btn {
-          width: 100%;
-          padding: 18px 24px;
-          border: none;
-          border-radius: 16px;
-          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-          color: #ffffff;
-          font-size: 16px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .booking-btn::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-
-        .booking-btn:hover::before {
-          opacity: 1;
-        }
-
-        .booking-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
-        }
-
-        .booking-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-          background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
-        }
-
-        .modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.6);
-          backdrop-filter: blur(4px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          animation: fadeIn 0.2s ease;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        .modal-content {
-          background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%);
-          border: 1.5px solid rgba(228, 228, 231, 0.8);
-          border-radius: 24px;
-          padding: 36px;
-          max-width: 500px;
-          width: 90%;
-          max-height: 90vh;
-          overflow-y: auto;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-          animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 28px;
-          padding-bottom: 20px;
-          border-bottom: 1.5px solid #e4e4e7;
-        }
-
-        .modal-title {
-          font-size: 24px;
-          font-weight: 800;
-          background: linear-gradient(135deg, #111111 0%, #3b82f6 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .close-btn {
-          background: none;
-          border: none;
-          font-size: 28px;
-          cursor: pointer;
-          color: #71717a;
-          transition: color 0.2s ease;
-          padding: 4px;
-        }
-
-        .close-btn:hover {
-          color: #111111;
-        }
-
-        .booking-form {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .form-label {
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-          color: #52525b;
-        }
-
-        .form-input,
-        .form-select,
-        .form-textarea {
-          padding: 14px 16px;
-          border-radius: 14px;
-          border: 1.5px solid #e4e4e7;
-          background: #ffffff;
-          color: #111111;
-          font-size: 14px;
-          outline: none;
-          transition: all 0.2s ease;
-        }
-
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-        }
-
-        .form-textarea {
-          min-height: 100px;
-          resize: vertical;
-        }
-
-        .form-actions {
-          display: flex;
-          gap: 12px;
-          margin-top: 8px;
-        }
-
-        .submit-btn {
-          flex: 1;
-          padding: 16px 24px;
-          border: none;
-          border-radius: 14px;
-          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-          color: #ffffff;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
-        }
-
-        .submit-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
-        }
-
-        .submit-btn:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .cancel-btn {
-          padding: 16px 24px;
-          border: 1.5px solid #e4e4e7;
-          border-radius: 14px;
-          background: #ffffff;
-          color: #111111;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .cancel-btn:hover {
-          background: #fafafa;
-          border-color: #93c5fd;
-        }
-
-        .card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 24px;
-          margin-bottom: 32px;
-          padding-bottom: 24px;
-          border-bottom: 1.5px solid #e4e4e7;
-        }
-
-        .resource-icon {
-          font-size: 56px;
-          margin-bottom: 14px;
-          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-        }
-
-        .resource-name {
-          font-size: 36px;
-          font-weight: 800;
-          background: linear-gradient(135deg, #111111 0%, #3b82f6 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin-bottom: 10px;
-          line-height: 1.2;
-        }
-
-        .resource-type {
-          color: #71717a;
-          font-size: 16px;
-          font-weight: 600;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-        }
-
-        .status-badge {
-          padding: 12px 20px;
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 700;
-          border: 1.5px solid transparent;
-          white-space: nowrap;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .status-active { 
-          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
-          color: #166534; 
-          border-color: #86efac; 
-        }
-        .status-out-of-service { 
-          background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); 
-          color: #991b1b; 
-          border-color: #fca5a5; 
-        }
-
-        .info-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-          margin-bottom: 24px;
-        }
-
-        .info-card {
-          padding: 20px;
-          background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-          border-radius: 16px;
-          border: 1px solid #e4e4e7;
-        }
-
-        .info-label {
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-          color: #52525b;
-          margin-bottom: 8px;
-        }
-
-        .info-value {
-          font-size: 16px;
-          color: #111111;
-          font-weight: 500;
-        }
-
-        .description-section {
-          margin-bottom: 24px;
-        }
-
-        .section-title {
-          font-size: 18px;
-          font-weight: 700;
-          color: #111111;
-          margin-bottom: 12px;
-        }
-
-        .description-text {
-          color: #3f3f46;
-          font-size: 15px;
-          line-height: 1.8;
-          padding: 20px;
-          background: rgba(59, 130, 246, 0.03);
-          border-radius: 16px;
-          border-left: 4px solid #3b82f6;
-        }
-
-        .availability-section {
-          margin-bottom: 24px;
-        }
-
-        .availability-card {
-          padding: 20px;
-          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-          border-radius: 16px;
-          border: 1px solid #bfdbfe;
-        }
-
-        .availability-title {
-          font-size: 16px;
-          font-weight: 700;
-          color: #1e40af;
-          margin-bottom: 8px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .availability-text {
-          color: #1e3a8a;
-          font-size: 15px;
-          line-height: 1.6;
-        }
-
-        .meta-section {
-          padding-top: 24px;
-          border-top: 1.5px solid #e4e4e7;
-        }
-
-        .meta-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-        }
-
-        .meta-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 14px 18px;
-          background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-          border-radius: 14px;
-          border: 1px solid #e4e4e7;
-        }
-
-        .meta-label {
-          font-size: 13px;
-          font-weight: 600;
-          color: #52525b;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-        }
-
-        .meta-value {
-          font-size: 14px;
-          color: #111111;
-          font-weight: 500;
-        }
-
-        @media (max-width: 1280px) {
-          .page-header,
-          .details-section {
-            padding-left: 40px;
-            padding-right: 40px;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .info-grid,
-          .meta-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .card-header {
-            flex-direction: column;
-          }
-
-          .page-title {
-            font-size: 32px;
-          }
-        }
-      `}</style>
-
-      <div className="details-page">
-        <div className="accent-blob blob-1" />
-        <div className="accent-blob blob-2" />
-        <div className="accent-blob blob-3" />
-
-        <div className="page-header">
-          <div className="header-content">
-            <h1 className="page-title">Resource Details</h1>
-
-            <div className="header-actions">
-              <button className="back-btn" onClick={handleBack}>
-                ← Back to Browse
+    <div className="min-h-screen bg-slate-50">
+      {/* Navbar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Building2 className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                Smart Campus
+              </span>
+            </Link>
+            
+            <div className="hidden xl:flex items-center gap-6">
+              <button onClick={() => navigate('/customer/resources')} className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+                <Building2 className="w-4 h-4" />
+                Browse Resources
+              </button>
+              <button onClick={() => navigate('/dashboard/my-tickets')} className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+                <Ticket className="w-4 h-4" />
+                My Tickets
+              </button>
+              <button onClick={() => navigate('/dashboard/technician/tickets')} className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+                <Wrench className="w-4 h-4" />
+                Technician
+              </button>
+              <button onClick={() => navigate('/dashboard/notifications')} className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+                <Bell className="w-4 h-4" />
+                Notifications
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate('/login')} className="hidden sm:block text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                Sign In
+              </button>
+              <button onClick={() => navigate('/login')} className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20">
+                Get Started
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
+      </nav>
 
-        <div className="details-section">
-          <div className="details-container">
-            <div className="details-card">
-              <div className="card-header">
-                <div>
-                  <div className="resource-icon">{getResourceIcon(resource.type)}</div>
-                  <h2 className="resource-name">{resource.name}</h2>
-                  <p className="resource-type">{getTypeLabel(resource.type)}</p>
-                </div>
-                <div className="resource-badges">
-                  <span className={`status-badge status-${resource.status.toLowerCase().replace('_', '-')}`}>
-                    {resource.status === 'ACTIVE' ? 'Active' : 'Out of Service'}
-                  </span>
+      {/* Main Content */}
+      <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+              <Link to="/" className="hover:text-slate-700 flex items-center gap-1">
+                <Home className="w-4 h-4" /> Home
+              </Link>
+              <span>/</span>
+              <Link to="/customer/resources" className="hover:text-slate-700">Browse Resources</Link>
+              <span>/</span>
+              <span className="text-slate-900 font-medium">{resource.name}</span>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">
+                  Resource Details
+                </h1>
+                <p className="text-slate-600">
+                  View resource information and make a booking
+                </p>
+              </div>
+              
+              <button
+                onClick={handleBack}
+                className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+            </div>
+          </div>
+
+          {/* Resource Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* Card Header */}
+            <div className="p-6 sm:p-8 border-b border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="text-5xl">{getResourceIcon(resource.type)}</div>
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">{resource.name}</h2>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getTypeColor(resource.type)}`}>
+                        {getTypeLabel(resource.type)}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        resource.status === 'ACTIVE'
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          : 'bg-red-100 text-red-700 border border-red-200'
+                      }`}>
+                        {resource.status === 'ACTIVE' ? 'Available for Booking' : 'Out of Service'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              {resource.imageUrl ? (
-                <div className="image-gallery">
-                  <img src={resource.imageUrl} alt={resource.name} className="resource-image" />
-                </div>
-              ) : (
-                <div className="image-gallery">
-                  <div className="image-placeholder">{getResourceIcon(resource.type)}</div>
-                </div>
-              )}
-
-              <div className="info-grid">
-                <div className="info-card">
-                  <div className="info-label">📍 Location</div>
-                  <div className="info-value">{resource.location}</div>
-                </div>
-
-                {resource.capacity && (
-                  <div className="info-card">
-                    <div className="info-label">👥 Capacity</div>
-                    <div className="info-value">{resource.capacity} people</div>
+            {/* Card Body */}
+            <div className="p-6 sm:p-8">
+              {/* Image */}
+              <div className="rounded-2xl overflow-hidden mb-8 border border-slate-200">
+                {resource.imageUrl ? (
+                  <img src={resource.imageUrl} alt={resource.name} className="w-full h-64 sm:h-80 object-cover" />
+                ) : (
+                  <div className="w-full h-64 sm:h-80 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                    <span className="text-8xl">{getResourceIcon(resource.type)}</span>
                   </div>
                 )}
               </div>
 
-              <div className="description-section">
-                <h3 className="section-title">Description</h3>
-                <p className="description-text">{resource.description}</p>
-              </div>
-
-              <div className="availability-section">
-                <div className="availability-card">
-                  <div className="availability-title">
-                    📅 Availability Schedule
+              {/* Info Grid */}
+              <div className="grid sm:grid-cols-2 gap-4 mb-8">
+                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
+                  <MapPin className="w-5 h-5 text-slate-500" />
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-semibold">Location</p>
+                    <p className="text-sm font-medium text-slate-900">{resource.location}</p>
                   </div>
-                  <p className="availability-text">{resource.availabilityWindows}</p>
+                </div>
+                {resource.capacity && (
+                  <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
+                    <Users className="w-5 h-5 text-slate-500" />
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase font-semibold">Capacity</p>
+                      <p className="text-sm font-medium text-slate-900">{resource.capacity} people</p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
+                  <Calendar className="w-5 h-5 text-slate-500" />
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-semibold">Availability</p>
+                    <p className="text-sm font-medium text-slate-900">{resource.availabilityWindows}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
+                  <Clock className="w-5 h-5 text-slate-500" />
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-semibold">Resource ID</p>
+                    <p className="text-sm font-medium text-slate-900">#{resource.id}</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="meta-section">
-                <div className="meta-grid">
-                  <div className="meta-item">
-                    <span className="meta-label">Resource ID</span>
-                    <span className="meta-value">#{resource.id}</span>
-                  </div>
-                  <div className="meta-item">
-                    <span className="meta-label">Last Updated</span>
-                    <span className="meta-value">
-                      {new Date(resource.updatedAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                </div>
+              {/* Description */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-slate-900 mb-3">About this Resource</h3>
+                <p className="text-slate-600 leading-relaxed p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
+                  {resource.description}
+                </p>
               </div>
 
-              <div className="booking-section">
+              {/* Booking Section */}
+              <div className="pt-6 border-t border-slate-100">
                 <button
-                  className="booking-btn"
                   onClick={handleOpenBooking}
                   disabled={resource.status !== 'ACTIVE'}
+                  className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${
+                    resource.status === 'ACTIVE'
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:shadow-lg hover:shadow-emerald-500/30'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  }`}
                 >
                   {resource.status === 'ACTIVE' ? '📅 Book This Resource' : '❌ Currently Unavailable'}
                 </button>
@@ -891,45 +327,54 @@ const CustomerResourceDetailsPage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </main>
 
+      {/* Booking Modal */}
       {showBookingModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3 className="modal-title">Book {resource?.name}</h3>
-              <button className="close-btn" onClick={handleCloseBooking}>×</button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-slate-900">Book {resource?.name}</h3>
+                <button
+                  onClick={handleCloseBooking}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-slate-500" />
+                </button>
+              </div>
             </div>
-            <form className="booking-form" onSubmit={handleBookingSubmit}>
-              <div className="form-group">
-                <label className="form-label">Date *</label>
+            
+            <form onSubmit={handleBookingSubmit} className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Date *</label>
                 <input
                   type="date"
-                  className="form-input"
                   value={bookingDate}
                   onChange={(e) => setBookingDate(e.target.value)}
                   min={getTodayDate()}
                   required
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Start Time *</label>
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Start Time *</label>
                 <input
                   type="time"
-                  className="form-input"
                   value={bookingTime}
                   onChange={(e) => setBookingTime(e.target.value)}
                   required
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Duration (hours)</label>
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Duration</label>
                 <select
-                  className="form-select"
                   value={bookingDuration}
                   onChange={(e) => setBookingDuration(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
                 >
                   <option value="1">1 hour</option>
                   <option value="2">2 hours</option>
@@ -939,22 +384,31 @@ const CustomerResourceDetailsPage = () => {
                 </select>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Purpose *</label>
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Purpose *</label>
                 <textarea
-                  className="form-textarea"
                   placeholder="Describe the purpose of your booking..."
                   value={bookingPurpose}
                   onChange={(e) => setBookingPurpose(e.target.value)}
+                  rows={3}
                   required
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y"
                 />
               </div>
 
-              <div className="form-actions">
-                <button type="button" className="cancel-btn" onClick={handleCloseBooking}>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCloseBooking}
+                  className="flex-1 px-4 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-70"
+                >
                   {isSubmitting ? 'Submitting...' : 'Submit Booking'}
                 </button>
               </div>
@@ -962,7 +416,7 @@ const CustomerResourceDetailsPage = () => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 
