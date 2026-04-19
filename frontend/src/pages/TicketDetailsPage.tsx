@@ -1241,12 +1241,7 @@ const TicketDetailsPage = () => {
                   </div>
                 )}
 
-                <button
-                  className="primary-btn"
-                  onClick={() => navigate('/dashboard/technician/tickets')}
-                >
-                  Technician Dashboard
-                </button>
+                
               </div>
             </div>
           </div>

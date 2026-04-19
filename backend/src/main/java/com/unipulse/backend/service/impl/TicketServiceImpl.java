@@ -1,5 +1,8 @@
 package com.unipulse.backend.service.impl;
 
+import com.unipulse.backend.Repository.TicketAttachmentRepository;
+import com.unipulse.backend.Repository.TicketMessageRepository;
+import com.unipulse.backend.Repository.TicketRepository;
 import com.unipulse.backend.dto.AssignTechnicianRequest;
 import com.unipulse.backend.dto.MessageRequest;
 import com.unipulse.backend.dto.MessageResponse;
@@ -13,9 +16,9 @@ import com.unipulse.backend.enums.TicketStatus;
 import com.unipulse.backend.exception.ResourceNotFoundException;
 import com.unipulse.backend.model.Ticket;
 import com.unipulse.backend.model.TicketAttachment;
-import com.unipulse.backend.repository.TicketRepository;
-import com.unipulse.backend.repository.TicketAttachmentRepository;
-import com.unipulse.backend.repository.TicketMessageRepository;
+import com.unipulse.backend.Repository.TicketRepository;
+import com.unipulse.backend.Repository.TicketAttachmentRepository;
+import com.unipulse.backend.Repository.TicketMessageRepository;
 import com.unipulse.backend.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

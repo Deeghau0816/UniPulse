@@ -1,7 +1,8 @@
-package com.unipulse.backend.service;
+package com.unipulse.backend.service.impl;
 
-import com.unipulse.backend.model.User;
 import com.unipulse.backend.Repository.UserRepository;
+import com.unipulse.backend.model.User;
+import com.unipulse.backend.service.UserService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,11 +18,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User saveUser(User user) {
-        return userRepository.save(user);
-    }
-
-    @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
@@ -29,5 +25,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
+    }
+
+    @Override
+    public Optional<User> getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 }

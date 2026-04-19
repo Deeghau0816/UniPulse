@@ -1,11 +1,13 @@
 package com.unipulse.backend.service.impl;
 
+import com.unipulse.backend.Repository.TicketAttachmentRepository;
+import com.unipulse.backend.Repository.TicketRepository;
 import com.unipulse.backend.dto.AttachmentResponse;
 import com.unipulse.backend.exception.ResourceNotFoundException;
 import com.unipulse.backend.model.Ticket;
 import com.unipulse.backend.model.TicketAttachment;
-import com.unipulse.backend.repository.TicketAttachmentRepository;
-import com.unipulse.backend.repository.TicketRepository;
+import com.unipulse.backend.Repository.TicketAttachmentRepository;
+import com.unipulse.backend.Repository.TicketRepository;
 import com.unipulse.backend.service.TicketAttachmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +28,7 @@ public class TicketAttachmentServiceImpl implements TicketAttachmentService {
     private final TicketAttachmentRepository ticketAttachmentRepository;
     private final TicketRepository ticketRepository;
 
-    @Value("${file.upload-dir}")
+    @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
     @Override

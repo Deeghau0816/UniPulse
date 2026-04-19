@@ -930,14 +930,14 @@ const TechnicianDashboardPage = () => {
                         {ticket.assignedTo === currentTechnician && (
                           <button
                             className="message-btn"
-                            onClick={() => navigate(`/dashboard/tickets/${ticket.id}`)}
+                            onClick={() => navigate(`/dashboard/technician/tickets/${ticket.id}`)}
                           >
                             Send Message
                           </button>
                         )}
                         <button
                           className="details-btn"
-                          onClick={() => navigate(`/dashboard/tickets/${ticket.id}`)}
+                          onClick={() => navigate(`/dashboard/technician/tickets/${ticket.id}`)}
                         >
                           Open Ticket
                         </button>

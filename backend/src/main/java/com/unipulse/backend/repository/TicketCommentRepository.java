@@ -1,4 +1,4 @@
-package com.unipulse.backend.repository;
+package com.unipulse.backend.Repository;
 
 import com.unipulse.backend.model.TicketComment;
 import org.springframework.data.jpa.repository.JpaRepository;

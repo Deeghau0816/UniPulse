@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ticketService, type TicketStatus, type TicketPriority, type TicketCategory } from '../services/ticketService';
+import { analyticsService, type AnalyticsData } from '../services/analyticsService';
+import KPICard from '../components/KPICard';
 
 type TechnicianFilter = 'ALL' | 'UNASSIGNED' | string;
 
@@ -30,6 +32,11 @@ const AdminTicketsPage = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Analytics state
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState<boolean>(true);
+  const [selectedPeriod, setSelectedPeriod] = useState<'overall' | 'today' | 'week' | 'month' | 'year'>('overall');
+
   type TechnicianEntry = { name: string; type: string };
 
   const technicianList: TechnicianEntry[] = [
@@ -45,6 +52,42 @@ const AdminTicketsPage = () => {
   const technicianOptions: string[] = technicianList.map(t => t.name);
 
   const [assignSuccess, setAssignSuccess] = useState<string | null>(null);
+
+  // Analytics fetching
+  const fetchAnalytics = async (period: typeof selectedPeriod) => {
+    try {
+      setAnalyticsLoading(true);
+      let data: AnalyticsData;
+      
+      switch (period) {
+        case 'today':
+          data = await analyticsService.getTodayAnalytics();
+          break;
+        case 'week':
+          data = await analyticsService.getWeekAnalytics();
+          break;
+        case 'month':
+          data = await analyticsService.getMonthAnalytics();
+          break;
+        case 'year':
+          data = await analyticsService.getYearAnalytics();
+          break;
+        default:
+          data = await analyticsService.getOverallAnalytics();
+          break;
+      }
+      
+      setAnalytics(data);
+    } catch (error) {
+      console.error('Failed to fetch analytics:', error);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalytics(selectedPeriod);
+  }, [selectedPeriod]);
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -316,18 +359,20 @@ const AdminTicketsPage = () => {
           background: #ffffff;
           color: #111111;
           font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
 
-        .quick-btn:hover {
-          background: #fafafa;
-        }
+          .ticket-id {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ea580c;
+            margin-bottom: 8px;
+          }
 
-        .content-section {
-          padding: 0 72px 72px;
-          position: relative;
+          .ticket-category {
+            font-size: 22px;
+            font-weight: 800;
+            color: #111111;
+            margin-bottom: 6px;
+          }
           z-index: 2;
         }
 
@@ -539,6 +584,34 @@ const AdminTicketsPage = () => {
           box-shadow: 0 10px 24px rgba(249, 115, 22, 0.20);
         }
 
+        .kpi-section {
+          padding: 0 24px 24px;
+        }
+
+        .kpi-grid {
+          display: flex;
+          gap: 12px;
+          justify-content: space-between;
+          align-items: stretch;
+        }
+
+        .kpi-grid .kpi-card {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .kpi-loading-grid {
+          display: flex;
+          gap: 12px;
+          justify-content: space-between;
+          align-items: stretch;
+        }
+
+        .kpi-loading-grid .kpi-card {
+          flex: 1;
+          min-width: 0;
+        }
+
         .empty-state {
           background: rgba(255,255,255,0.92);
           border: 1px solid #e4e4e7;
@@ -621,31 +694,76 @@ const AdminTicketsPage = () => {
             <div>
               <h1 className="page-title">Admin Ticket Management</h1>
               <p className="page-subtitle">
-                Review all incident tickets, monitor progress, assign technicians, and open ticket details for administrative management.
+                Review all incident tickets, monitor progress, assign technicians, and track key performance metrics.
               </p>
             </div>
 
             <div className="header-right">
-              <div className="summary-chip">Total Tickets: {tickets.length}</div>
-
-              <div className="quick-links">
-                <button className="quick-btn" onClick={() => navigate('/dashboard/my-tickets')}>
-                  My Tickets
-                </button>
-                <button
-                  className="quick-btn"
-                  onClick={() => navigate('/dashboard/technician/tickets')}
+              <div className="period-selector">
+                <select
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value as typeof selectedPeriod)}
+                  className="period-select"
                 >
-                  Technician Dashboard
-                </button>
-                <button
-                  className="quick-btn"
-                  onClick={() => navigate('/dashboard/notifications')}
-                >
-                  Notifications
-                </button>
+                  <option value="overall">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="week">Last 7 Days</option>
+                  <option value="month">Last 30 Days</option>
+                  <option value="year">Last 365 Days</option>
+                </select>
               </div>
             </div>
+          </div>
+
+          {/* KPI Cards Section */}
+          <div className="kpi-section">
+            {analyticsLoading ? (
+              <div className="kpi-loading-grid">
+                <KPICard title="Total Open" value="..." loading={true} />
+                <KPICard title="In Progress" value="..." loading={true} />
+                <KPICard title="Resolved" value="..." loading={true} />
+                <KPICard title="Overdue" value="..." loading={true} />
+                <KPICard title="Avg Resolution Time" value="..." loading={true} />
+              </div>
+            ) : analytics ? (
+              <div className="kpi-grid">
+                <KPICard
+                  title="Total Open"
+                  value={analytics.totalOpenTickets}
+                  icon="📋"
+                  color="primary"
+                  subtitle="Active tickets"
+                />
+                <KPICard
+                  title="In Progress"
+                  value={analytics.totalInProgressTickets}
+                  icon="⚡"
+                  color="warning"
+                  subtitle="Being worked on"
+                />
+                <KPICard
+                  title="Resolved"
+                  value={analytics.totalResolvedTickets}
+                  icon="✅"
+                  color="success"
+                  subtitle="Successfully completed"
+                />
+                <KPICard
+                  title="Overdue"
+                  value={analytics.totalOverdueTickets}
+                  icon="⚠️"
+                  color="danger"
+                  subtitle="Past due date"
+                />
+                <KPICard
+                  title="Avg Resolution Time"
+                  value={analyticsService.formatResolutionTime(analytics.averageResolutionTime)}
+                  icon="⏱️"
+                  color="info"
+                  subtitle="Time to complete"
+                />
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -816,7 +934,7 @@ const AdminTicketsPage = () => {
 
                       <button
                         className="details-btn"
-                        onClick={() => navigate(`/dashboard/tickets/${ticket.id}`)}
+                        onClick={() => navigate(`/dashboard/admin/tickets/${ticket.id}`)}
                       >
                         View Details
                       </button>

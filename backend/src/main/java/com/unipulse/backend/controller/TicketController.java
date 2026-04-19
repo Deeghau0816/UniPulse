@@ -1,4 +1,4 @@
-package com.unipulse.backend.controller;
+package com.unipulse.backend.Controller;
 
 import com.unipulse.backend.dto.AssignTechnicianRequest;
 import com.unipulse.backend.dto.MessageRequest;
@@ -36,18 +36,37 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.getTicketById(id));
     }
 
-    @PostMapping
-    public ResponseEntity<TicketResponse> createTicket(@Valid @RequestBody TicketRequest request) {
-        TicketResponse createdTicket = ticketService.createTicket(request);
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<TicketResponse> createTicket(
+            @RequestParam("category") String category,
+            @RequestParam("location") String location,
+            @RequestParam("priority") String priority,
+            @RequestParam("description") String description,
+            @RequestParam("preferredContact") String preferredContact,
+            @RequestParam("createdBy") String createdBy,
+            @RequestParam(value = "assignedTechnician", required = false) String assignedTechnician,
+            @RequestParam(value = "attachments", required = false) List<MultipartFile> attachments
+    ) {
+        TicketRequest request = new TicketRequest();
+        request.setCategory(category);
+        request.setLocation(location);
+        request.setPriority(priority);
+        request.setDescription(description);
+        request.setPreferredContact(preferredContact);
+        request.setCreatedBy(createdBy);
+        request.setAssignedTechnician(assignedTechnician);
+        
+        TicketResponse createdTicket = ticketService.createTicket(request, attachments);
         return new ResponseEntity<>(createdTicket, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<TicketResponse> updateTicket(
             @PathVariable Long id,
-            @Valid @RequestBody TicketRequest request
+            @Valid @RequestBody TicketRequest request,
+            @RequestParam(value = "attachments", required = false) List<MultipartFile> attachments
     ) {
-        return ResponseEntity.ok(ticketService.updateTicket(id, request));
+        return ResponseEntity.ok(ticketService.updateTicket(id, request, attachments));
     }
 
     @DeleteMapping("/{id}")
