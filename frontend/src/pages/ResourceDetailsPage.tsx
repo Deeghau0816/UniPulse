@@ -1,6 +1,25 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { resourceService, type ResourceType, type ResourceStatus, type ResourceRequest } from '../services/resourceService';
+import {
+  Building2,
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Power,
+  Save,
+  X,
+  Ticket,
+  Bell,
+  Wrench,
+  ArrowRight,
+  Home,
+  LayoutDashboard,
+  MapPin,
+  Users,
+  Calendar,
+  Clock,
+} from 'lucide-react';
 
 const ResourceDetailsPage = () => {
   const navigate = useNavigate();
@@ -125,35 +144,36 @@ const ResourceDetailsPage = () => {
 
   const getTypeIcon = (type: ResourceType): string => {
     switch (type) {
-      case 'LECTURE_HALL':
-        return '🏛️';
-      case 'LAB':
-        return '🔬';
-      case 'MEETING_ROOM':
-        return '🤝';
-      case 'EQUIPMENT':
-        return '📦';
-      default:
-        return '📍';
+      case 'LECTURE_HALL': return '🏛️';
+      case 'LAB': return '🔬';
+      case 'MEETING_ROOM': return '🤝';
+      case 'EQUIPMENT': return '📦';
+      default: return '📍';
     }
   };
 
   const getTypeLabel = (type: ResourceType): string => {
     switch (type) {
-      case 'LECTURE_HALL':
-        return 'Lecture Hall';
-      case 'LAB':
-        return 'Lab';
-      case 'MEETING_ROOM':
-        return 'Meeting Room';
-      case 'EQUIPMENT':
-        return 'Equipment';
-      default:
-        return type;
+      case 'LECTURE_HALL': return 'Lecture Hall';
+      case 'LAB': return 'Laboratory';
+      case 'MEETING_ROOM': return 'Meeting Room';
+      case 'EQUIPMENT': return 'Equipment';
+      default: return type;
+    }
+  };
+
+  const getTypeColor = (type: ResourceType) => {
+    switch (type) {
+      case 'LECTURE_HALL': return 'bg-blue-100 text-blue-700';
+      case 'LAB': return 'bg-purple-100 text-purple-700';
+      case 'MEETING_ROOM': return 'bg-emerald-100 text-emerald-700';
+      case 'EQUIPMENT': return 'bg-orange-100 text-orange-700';
+      default: return 'bg-slate-100 text-slate-700';
     }
   };
 
   const formatDate = (dateString: string): string => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -166,82 +186,25 @@ const ResourceDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="loading-page">
-        <style>{`
-          .loading-page {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background:
-              radial-gradient(circle at 10% 12%, rgba(249, 115, 22, 0.12), transparent 22%),
-              radial-gradient(circle at 88% 18%, rgba(251, 146, 60, 0.12), transparent 20%),
-              linear-gradient(135deg, #ffffff 0%, #fafafa 48%, #fff7ed 100%);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-          }
-
-          .loading-box {
-            text-align: center;
-            color: #111111;
-          }
-
-          .spinner {
-            width: 46px;
-            height: 46px;
-            border: 3px solid #fed7aa;
-            border-top-color: #f97316;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 16px;
-          }
-
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-        <div className="loading-box">
-          <div className="spinner" />
-          <p>Loading resource details...</p>
-        </div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   if (error && !resource) {
     return (
-      <div className="loading-page">
-        <style>{`
-          .loading-page {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background:
-              radial-gradient(circle at 10% 12%, rgba(249, 115, 22, 0.12), transparent 22%),
-              radial-gradient(circle at 88% 18%, rgba(251, 146, 60, 0.12), transparent 20%),
-              linear-gradient(135deg, #ffffff 0%, #fafafa 48%, #fff7ed 100%);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-          }
-
-          .error-box {
-            text-align: center;
-            color: #111111;
-          }
-
-          .retry-btn {
-            margin-top: 16px;
-            padding: 12px 18px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #ea580c, #fb923c);
-            color: #ffffff;
-            font-weight: 700;
-            cursor: pointer;
-          }
-        `}</style>
-        <div className="error-box">
-          <p>{error}</p>
-          <button className="retry-btn" onClick={() => window.location.reload()}>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">⚠️</span>
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">Error</h3>
+          <p className="text-slate-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
             Retry
           </button>
         </div>
@@ -250,665 +213,345 @@ const ResourceDetailsPage = () => {
   }
 
   return (
-    <>
-      <style>{`
-        * {
-          box-sizing: border-box;
-        }
-
-        body {
-          margin: 0;
-          font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-          background: #ffffff;
-        }
-
-        .details-page {
-          min-height: 100vh;
-          position: relative;
-          overflow-x: hidden;
-          background:
-            radial-gradient(circle at 10% 12%, rgba(249, 115, 22, 0.15), transparent 25%),
-            radial-gradient(circle at 88% 18%, rgba(251, 146, 60, 0.12), transparent 22%),
-            radial-gradient(circle at 82% 82%, rgba(24, 24, 27, 0.06), transparent 28%),
-            radial-gradient(circle at 45% 55%, rgba(249, 115, 22, 0.08), transparent 30%),
-            linear-gradient(135deg, #ffffff 0%, #fafafa 45%, #fff7ed 100%);
-          color: #111111;
-        }
-
-        .details-page::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(17, 17, 17, 0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(17, 17, 17, 0.025) 1px, transparent 1px);
-          background-size: 42px 42px;
-          animation: gridFloat 20s ease-in-out infinite;
-          pointer-events: none;
-          opacity: 0.45;
-        }
-
-        @keyframes gridFloat {
-          0% { transform: translate3d(0, 0, 0); }
-          50% { transform: translate3d(10px, 10px, 0); }
-          100% { transform: translate3d(0, 0, 0); }
-        }
-
-        .accent-blob {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(120px);
-          pointer-events: none;
-          opacity: 0.5;
-          animation: blobFloat 12s ease-in-out infinite;
-        }
-
-        .blob-1 {
-          width: 400px;
-          height: 400px;
-          background: linear-gradient(135deg, rgba(249, 115, 22, 0.25), rgba(251, 146, 60, 0.15));
-          top: -140px;
-          left: -120px;
-          animation-delay: 0s;
-        }
-
-        .blob-2 {
-          width: 380px;
-          height: 380px;
-          background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(249, 115, 22, 0.12));
-          bottom: -120px;
-          right: -100px;
-          animation-delay: -4s;
-        }
-
-        .blob-3 {
-          width: 280px;
-          height: 280px;
-          background: linear-gradient(135deg, rgba(249, 115, 22, 0.18), rgba(251, 146, 60, 0.1));
-          top: 50%;
-          right: 10%;
-          animation-delay: -8s;
-        }
-
-        @keyframes blobFloat {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(20px, -20px) scale(1.05); }
-          66% { transform: translate(-15px, 15px) scale(0.95); }
-        }
-
-        .page-header {
-          padding: 72px 72px 28px;
-          position: relative;
-          z-index: 2;
-        }
-
-        .header-content {
-          max-width: 1360px;
-          margin: 0 auto;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 20px;
-          flex-wrap: wrap;
-        }
-
-        .page-title {
-          font-size: 46px;
-          font-weight: 800;
-          margin-bottom: 12px;
-          background: linear-gradient(135deg, #111111 0%, #52525b 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          letter-spacing: -0.03em;
-        }
-
-        .header-actions {
-          display: flex;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-
-        .primary-btn,
-        .secondary-btn,
-        .danger-btn {
-          padding: 16px 22px;
-          border-radius: 16px;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .primary-btn::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-
-        .primary-btn:hover::before {
-          opacity: 1;
-        }
-
-        .primary-btn {
-          border: none;
-          background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
-          color: #ffffff;
-          box-shadow: 
-            0 4px 14px rgba(249, 115, 22, 0.3),
-            0 0 0 1px rgba(249, 115, 22, 0.1) inset;
-        }
-
-        .primary-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 
-            0 8px 24px rgba(249, 115, 22, 0.35),
-            0 0 0 1px rgba(249, 115, 22, 0.15) inset;
-        }
-
-        .primary-btn:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .secondary-btn {
-          border: 1.5px solid #e4e4e7;
-          background: rgba(255,255,255,0.95);
-          color: #111111;
-          box-shadow: 0 4px 14px rgba(0,0,0,0.04);
-        }
-
-        .secondary-btn:hover {
-          background: #ffffff;
-          border-color: #fdba74;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(249, 115, 22, 0.12);
-        }
-
-        .danger-btn {
-          border: 1.5px solid #fecaca;
-          background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-          color: #991b1b;
-          box-shadow: 0 4px 14px rgba(239, 68, 68, 0.1);
-        }
-
-        .danger-btn:hover {
-          background: #fee2e2;
-          border-color: #f87171;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2);
-        }
-
-        .details-section {
-          padding: 0 72px 72px;
-          position: relative;
-          z-index: 2;
-        }
-
-        .details-container {
-          max-width: 1360px;
-          margin: 0 auto;
-        }
-
-        .details-card {
-          background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%);
-          border: 1.5px solid rgba(228, 228, 231, 0.8);
-          border-radius: 24px;
-          padding: 36px;
-          box-shadow: 
-            0 4px 20px rgba(0,0,0,0.06),
-            0 0 0 1px rgba(255,255,255,0.5) inset;
-        }
-
-        .card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 24px;
-          margin-bottom: 32px;
-          padding-bottom: 24px;
-          border-bottom: 1.5px solid #e4e4e7;
-        }
-
-        .resource-icon {
-          font-size: 56px;
-          margin-bottom: 14px;
-          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-        }
-
-        .resource-name {
-          font-size: 36px;
-          font-weight: 800;
-          background: linear-gradient(135deg, #111111 0%, #52525b 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin-bottom: 10px;
-          line-height: 1.2;
-        }
-
-        .resource-type {
-          color: #71717a;
-          font-size: 16px;
-          font-weight: 600;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-        }
-
-        .status-badge {
-          padding: 12px 20px;
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 700;
-          border: 1.5px solid transparent;
-          white-space: nowrap;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .status-active { 
-          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
-          color: #166534; 
-          border-color: #86efac; 
-        }
-        .status-out-of-service { 
-          background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); 
-          color: #991b1b; 
-          border-color: #fca5a5; 
-        }
-
-        .form-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
-          margin-bottom: 24px;
-        }
-
-        .form-group {
-          margin-bottom: 20px;
-        }
-
-        .form-group.full-width {
-          grid-column: 1 / -1;
-        }
-
-        .form-label {
-          display: block;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: #52525b;
-          margin-bottom: 10px;
-        }
-
-        .form-input,
-        .form-select,
-        .form-textarea {
-          width: 100%;
-          padding: 16px 18px;
-          border-radius: 16px;
-          border: 1.5px solid #e4e4e7;
-          background: #ffffff;
-          color: #111111;
-          font-size: 14px;
-          outline: none;
-          transition: all 0.2s ease;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus {
-          border-color: #f97316;
-          box-shadow: 
-            0 0 0 4px rgba(249, 115, 22, 0.15),
-            0 4px 12px rgba(249, 115, 22, 0.1);
-        }
-
-        .form-textarea {
-          min-height: 120px;
-          resize: vertical;
-        }
-
-        .form-input:disabled,
-        .form-select:disabled,
-        .form-textarea:disabled {
-          background: #fafafa;
-          cursor: not-allowed;
-        }
-
-        .info-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 18px;
-          background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-          border-radius: 14px;
-          margin-bottom: 14px;
-          border: 1px solid #e4e4e7;
-        }
-
-        .info-label {
-          font-size: 13px;
-          font-weight: 600;
-          color: #52525b;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-        }
-
-        .info-value {
-          font-size: 14px;
-          color: #111111;
-          font-weight: 500;
-        }
-
-        .image-preview {
-          margin-top: 12px;
-          border-radius: 14px;
-          overflow: hidden;
-          border: 1.5px solid #e4e4e7;
-          background: #fafafa;
-        }
-
-        .preview-image {
-          width: 100%;
-          height: 250px;
-          object-fit: cover;
-          display: block;
-        }
-
-        .preview-label {
-          padding: 10px 14px;
-          background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-          font-size: 12px;
-          font-weight: 600;
-          color: #52525b;
-          text-align: center;
-          border-top: 1px solid #e4e4e7;
-        }
-
-        .error-message {
-          padding: 16px;
-          background: #fef2f2;
-          border: 1px solid #fecaca;
-          border-radius: 12px;
-          color: #991b1b;
-          margin-bottom: 20px;
-        }
-
-        @media (max-width: 1280px) {
-          .page-header,
-          .details-section {
-            padding-left: 40px;
-            padding-right: 40px;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .page-header {
-            padding: 52px 24px 20px;
-          }
-
-          .details-section {
-            padding-left: 24px;
-            padding-right: 24px;
-          }
-
-          .page-title {
-            font-size: 34px;
-          }
-
-          .header-content,
-          .card-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-
-          .form-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
-
-      <div className="details-page">
-        <div className="accent-blob blob-1" />
-        <div className="accent-blob blob-2" />
-        <div className="accent-blob blob-3" />
-
-        <div className="page-header">
-          <div className="header-content">
-            <h1 className="page-title">Resource Details</h1>
-
-            <div className="header-actions">
-              <button className="secondary-btn" onClick={() => navigate('/dashboard/resources')}>
-                ← Back to Catalogue
+    <div className="min-h-screen bg-slate-50">
+      {/* Navbar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Building2 className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                Smart Campus
+              </span>
+            </Link>
+            
+            <div className="hidden xl:flex items-center gap-6">
+              <button onClick={() => navigate('/customer/resources')} className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+                <Building2 className="w-4 h-4" />
+                Browse Resources
               </button>
-              {!isEditing && (
-                <>
-                  <button className="primary-btn" onClick={() => setIsEditing(true)}>
-                    Edit Resource
-                  </button>
-                  <button className="danger-btn" onClick={handleStatusToggle}>
-                    {resource?.status === 'ACTIVE' ? 'Mark Out of Service' : 'Mark Active'}
-                  </button>
-                  <button className="danger-btn" onClick={handleDelete}>
-                    Delete Resource
-                  </button>
-                </>
-              )}
-              {isEditing && (
-                <>
-                  <button className="primary-btn" onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save Changes'}
-                  </button>
-                  <button className="secondary-btn" onClick={() => setIsEditing(false)}>
-                    Cancel
-                  </button>
-                </>
-              )}
+              <button onClick={() => navigate('/dashboard/my-tickets')} className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+                <Ticket className="w-4 h-4" />
+                My Tickets
+              </button>
+              <button onClick={() => navigate('/dashboard/technician/tickets')} className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+                <Wrench className="w-4 h-4" />
+                Technician
+              </button>
+              <button onClick={() => navigate('/dashboard/notifications')} className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+                <Bell className="w-4 h-4" />
+                Notifications
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate('/login')} className="hidden sm:block text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                Sign In
+              </button>
+              <button onClick={() => navigate('/login')} className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20">
+                Get Started
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
+      </nav>
 
-        <div className="details-section">
-          <div className="details-container">
-            {error && (
-              <div className="error-message">
-                {error}
+      {/* Main Content */}
+      <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+              <Link to="/" className="hover:text-slate-700 flex items-center gap-1">
+                <Home className="w-4 h-4" /> Home
+              </Link>
+              <span>/</span>
+              <Link to="/dashboard/resources" className="hover:text-slate-700">Facilities Catalogue</Link>
+              <span>/</span>
+              <span className="text-slate-900 font-medium">{resource?.name || 'Resource Details'}</span>
+            </div>
+            
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">
+                  Resource Details
+                </h1>
+                <p className="text-slate-600">
+                  Manage and view resource information
+                </p>
               </div>
-            )}
+              
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => navigate('/dashboard/resources')}
+                  className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
+                </button>
+                
+                {!isEditing ? (
+                  <>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={handleStatusToggle}
+                      className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
+                        resource?.status === 'ACTIVE'
+                          ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                          : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                      }`}
+                    >
+                      <Power className="w-4 h-4" />
+                      {resource?.status === 'ACTIVE' ? 'Mark Out of Service' : 'Mark Active'}
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 text-sm font-semibold rounded-xl hover:bg-red-200 transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-70"
+                    >
+                      <Save className="w-4 h-4" />
+                      {isSaving ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all"
+                    >
+                      <X className="w-4 h-4" />
+                      Cancel
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
 
-            <div className="details-card">
-              <div className="card-header">
-                <div>
-                  <div className="resource-icon">{getTypeIcon(resource?.type)}</div>
-                  <div className="resource-name">{resource?.name}</div>
-                  <div className="resource-type">{getTypeLabel(resource?.type)}</div>
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Resource Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* Card Header */}
+            <div className="p-6 sm:p-8 border-b border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="text-5xl">{getTypeIcon(resource?.type)}</div>
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">{resource?.name}</h2>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getTypeColor(resource?.type)}`}>
+                        {getTypeLabel(resource?.type)}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        resource?.status === 'ACTIVE'
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          : 'bg-red-100 text-red-700 border border-red-200'
+                      }`}>
+                        {resource?.status === 'ACTIVE' ? 'Active' : 'Out of Service'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-
-                <span className={`status-badge status-${resource?.status?.toLowerCase()}`}>
-                  {resource?.status?.replace('_', ' ')}
-                </span>
               </div>
+            </div>
 
+            {/* Card Body */}
+            <div className="p-6 sm:p-8">
               {isEditing ? (
-                <div className="form-grid">
-                  <div className="form-group full-width">
-                    <label className="form-label">Resource Name</label>
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">Resource Name</label>
                     <input
                       type="text"
                       name="name"
-                      className="form-input"
                       value={formData.name}
                       onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Resource Type</label>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">Resource Type</label>
                     <select
                       name="type"
-                      className="form-select"
                       value={formData.type}
                       onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
                     >
                       <option value="LECTURE_HALL">Lecture Hall</option>
-                      <option value="LAB">Lab</option>
+                      <option value="LAB">Laboratory</option>
                       <option value="MEETING_ROOM">Meeting Room</option>
                       <option value="EQUIPMENT">Equipment</option>
                     </select>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Capacity (Optional)</label>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">Capacity</label>
                     <input
                       type="number"
                       name="capacity"
-                      className="form-input"
                       value={formData.capacity || ''}
                       onChange={handleInputChange}
-                      placeholder="Enter capacity"
+                      placeholder="Leave empty for equipment"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     />
                   </div>
 
-                  <div className="form-group full-width">
-                    <label className="form-label">Location</label>
-                    <input
-                      type="text"
-                      name="location"
-                      className="form-input"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                    />
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">Location</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        name="location"
+                        value={formData.location}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      />
+                    </div>
                   </div>
 
-                  <div className="form-group full-width">
-                    <label className="form-label">Description</label>
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">Description</label>
                     <textarea
                       name="description"
-                      className="form-textarea"
                       value={formData.description}
                       onChange={handleInputChange}
+                      rows={4}
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y"
                     />
                   </div>
 
-                  <div className="form-group full-width">
-                    <label className="form-label">Availability Windows</label>
-                    <input
-                      type="text"
-                      name="availabilityWindows"
-                      className="form-input"
-                      value={formData.availabilityWindows}
-                      onChange={handleInputChange}
-                      placeholder="e.g., Mon-Fri 8AM-10PM, Sat 9AM-5PM"
-                    />
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">Availability Windows</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        name="availabilityWindows"
+                        value={formData.availabilityWindows}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Mon-Fri 8AM-10PM, Sat 9AM-5PM"
+                        className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      />
+                    </div>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Status</label>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">Status</label>
                     <select
                       name="status"
-                      className="form-select"
                       value={formData.status}
                       onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
                     >
                       <option value="ACTIVE">Active</option>
                       <option value="OUT_OF_SERVICE">Out of Service</option>
                     </select>
                   </div>
 
-                  <div className="form-group full-width">
-                    <label className="form-label">Image URL (Optional)</label>
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">Image URL</label>
                     <input
                       type="url"
                       name="imageUrl"
-                      className="form-input"
                       value={formData.imageUrl || ''}
                       onChange={handleInputChange}
                       placeholder="https://example.com/resource-image.jpg"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     />
                     {formData.imageUrl && (
-                      <div className="image-preview">
-                        <img src={formData.imageUrl} alt="Preview" className="preview-image" />
-                        <div className="preview-label">Image Preview</div>
+                      <div className="mt-4 rounded-xl overflow-hidden border border-slate-200">
+                        <img src={formData.imageUrl} alt="Preview" className="w-full h-48 object-cover" />
                       </div>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="form-grid">
-                  <div className="form-group full-width">
-                    <div className="info-row">
-                      <span className="info-label">Resource Name</span>
-                      <span className="info-value">{resource?.name}</span>
+                <div className="space-y-6">
+                  {/* Info Grid */}
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
+                      <MapPin className="w-5 h-5 text-slate-500" />
+                      <div>
+                        <p className="text-xs text-slate-500 uppercase font-semibold">Location</p>
+                        <p className="text-sm font-medium text-slate-900">{resource?.location}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
+                      <Users className="w-5 h-5 text-slate-500" />
+                      <div>
+                        <p className="text-xs text-slate-500 uppercase font-semibold">Capacity</p>
+                        <p className="text-sm font-medium text-slate-900">{resource?.capacity || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
+                      <Calendar className="w-5 h-5 text-slate-500" />
+                      <div>
+                        <p className="text-xs text-slate-500 uppercase font-semibold">Availability</p>
+                        <p className="text-sm font-medium text-slate-900">{resource?.availabilityWindows}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
+                      <Clock className="w-5 h-5 text-slate-500" />
+                      <div>
+                        <p className="text-xs text-slate-500 uppercase font-semibold">Last Updated</p>
+                        <p className="text-sm font-medium text-slate-900">{formatDate(resource?.updatedAt)}</p>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <div className="info-row">
-                      <span className="info-label">Type</span>
-                      <span className="info-value">{getTypeLabel(resource?.type)}</span>
-                    </div>
+                  {/* Description */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900 mb-3">Description</h3>
+                    <p className="text-slate-600 leading-relaxed p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
+                      {resource?.description}
+                    </p>
                   </div>
 
-                  <div className="form-group">
-                    <div className="info-row">
-                      <span className="info-label">Capacity</span>
-                      <span className="info-value">{resource?.capacity || 'N/A'}</span>
-                    </div>
-                  </div>
-
-                  <div className="form-group full-width">
-                    <div className="info-row">
-                      <span className="info-label">Location</span>
-                      <span className="info-value">{resource?.location}</span>
-                    </div>
-                  </div>
-
-                  <div className="form-group full-width">
-                    <div className="info-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                      <span className="info-label">Description</span>
-                      <span className="info-value">{resource?.description}</span>
-                    </div>
-                  </div>
-
+                  {/* Image */}
                   {resource?.imageUrl && (
-                    <div className="form-group full-width">
-                      <div className="info-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px', padding: '0' }}>
-                        <span className="info-label">Resource Image</span>
-                        <div className="image-preview">
-                          <img src={resource.imageUrl} alt={resource.name} className="preview-image" />
-                        </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900 mb-3">Resource Image</h3>
+                      <div className="rounded-xl overflow-hidden border border-slate-200">
+                        <img src={resource.imageUrl} alt={resource.name} className="w-full h-64 object-cover" />
                       </div>
                     </div>
                   )}
 
-                  <div className="form-group full-width">
-                    <div className="info-row">
-                      <span className="info-label">Availability</span>
-                      <span className="info-value">{resource?.availabilityWindows}</span>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <div className="info-row">
-                      <span className="info-label">Created At</span>
-                      <span className="info-value">{formatDate(resource?.createdAt)}</span>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <div className="info-row">
-                      <span className="info-label">Last Updated</span>
-                      <span className="info-value">{formatDate(resource?.updatedAt)}</span>
+                  {/* Meta Info */}
+                  <div className="pt-6 border-t border-slate-100">
+                    <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                      <div className="flex justify-between p-3 bg-slate-50 rounded-lg">
+                        <span className="text-slate-500">Resource ID</span>
+                        <span className="font-medium text-slate-900">#{resource?.id}</span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-slate-50 rounded-lg">
+                        <span className="text-slate-500">Created</span>
+                        <span className="font-medium text-slate-900">{formatDate(resource?.createdAt)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -916,8 +559,8 @@ const ResourceDetailsPage = () => {
             </div>
           </div>
         </div>
-      </div>
-    </>
+      </main>
+    </div>
   );
 };
 

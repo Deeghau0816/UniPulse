@@ -1,4 +1,4 @@
-package com.unipulse.backend.repository;
+package com.unipulse.backend.Repository;
 
 import com.unipulse.backend.enums.ResourceStatus;
 import com.unipulse.backend.enums.ResourceType;
