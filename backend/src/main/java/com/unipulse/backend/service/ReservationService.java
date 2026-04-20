@@ -24,7 +24,7 @@ public interface ReservationService {
 
     List<ReservationResponseDTO> getReservationsWithFilters(
             Reservation.ReservationStatus status,
-            com.unipulse.backend.model.ReservationResource.ResourceType resourceType,
+            com.unipulse.backend.enums.ResourceType resourceType,
             LocalDate date
     );
 

@@ -29,7 +29,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
            "ORDER BY r.createdAt DESC")
     List<Reservation> findWithFilters(
             @Param("status") ReservationStatus status,
-            @Param("resourceType") com.unipulse.backend.model.ReservationResource.ResourceType resourceType,
+            @Param("resourceType") com.unipulse.backend.enums.ResourceType resourceType,
             @Param("date") LocalDate date
     );
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { resourceService, reservationService } from '../../services/reservationService';
-import type { CampusResource, ReservationRequest, ResourceType, ReservationRecord } from '../../types/reservation';
+import { reservationService } from '../../services/reservationService';
+import { resourceService } from '../../services/resourceService';
+import type { ReservationRequest, ResourceType, ReservationRecord } from '../../types/reservation';
+import type { ResourceResponse } from '../../services/resourceService';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { useToast } from '../shared/Toast';
 
@@ -79,8 +81,8 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
   initialData,
   isUpdate = false,
 }) => {
-  const [resources, setResources] = useState<CampusResource[]>([]);
-  const [filtered, setFiltered] = useState<CampusResource[]>([]);
+  const [resources, setResources] = useState<ResourceResponse[]>([]);
+  const [filtered, setFiltered] = useState<ResourceResponse[]>([]);
   const [selectedType, setSelectedType] = useState<ResourceType | ''>('');
   const [submitting, setSubmitting] = useState(false);
   const [loadingResources, setLoadingResources] = useState(true);
@@ -130,7 +132,7 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
   const [conflictMessage, setConflictMessage] = useState('');
 
   useEffect(() => {
-    resourceService.getAll()
+    resourceService.getAllResources()
       .then(setResources)
       .catch(() => showToast('Failed to load resources', 'error'))
       .finally(() => setLoadingResources(false));
