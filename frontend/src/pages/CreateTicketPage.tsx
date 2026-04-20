@@ -227,7 +227,7 @@ const CreateTicketPage = () => {
       
       if (error instanceof Error) {
         if (error.message.includes('Failed to fetch')) {
-          errorMessage = 'Backend server is not responding. Please check if backend is running on http://localhost:8081';
+          errorMessage = 'Backend server is not responding. Please check if backend is running on http://localhost:8083';
         } else if (error.message.includes('Network error')) {
           errorMessage = 'Network connection failed. Please check your internet connection';
         } else if (error.message.includes('HTTP error')) {
