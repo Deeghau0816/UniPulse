@@ -16,7 +16,7 @@ public interface ReservationResourceRepository extends JpaRepository<Reservation
 
     List<ReservationResource> findByTypeAndStatus(ReservationResource.ResourceType type, ReservationResource.ResourceStatus status);
 
-    @Query("SELECT r FROM Resource r WHERE r.status = 'ACTIVE' AND " +
+    @Query("SELECT r FROM ReservationResource r WHERE r.status = 'ACTIVE' AND " +
            "(:type IS NULL OR r.type = :type) AND " +
            "(:location IS NULL OR LOWER(r.location) LIKE LOWER(CONCAT('%', :location, '%')))")
     List<ReservationResource> searchActiveResources(
