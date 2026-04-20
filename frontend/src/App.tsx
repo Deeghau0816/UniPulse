@@ -103,7 +103,8 @@ function App() {
           <Route path="*" element={<UnauthorizedPage />} />
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+    </AuthProvider>);
+}
 import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
 import ResourceDetailsPage from './pages/ResourceDetailsPage';
 import AddResourcePage from './pages/AddResourcePage';

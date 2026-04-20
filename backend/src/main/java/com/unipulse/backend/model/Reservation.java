@@ -30,7 +30,7 @@ public class Reservation {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "resource_id", nullable = false)
     @NotNull(message = "Resource is required")
-    private ReservationResource resource;
+    private Resource resource;
 
     @Column(name = "reservation_date", nullable = false)
     @NotNull(message = "Reservation date is required")

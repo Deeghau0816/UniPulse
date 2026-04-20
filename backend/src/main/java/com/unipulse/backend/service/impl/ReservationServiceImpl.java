@@ -5,11 +5,11 @@ import com.unipulse.backend.exception.ReservationConflictException;
 import com.unipulse.backend.exception.ResourceNotFoundException;
 import com.unipulse.backend.model.Reservation;
 import com.unipulse.backend.model.Reservation.ReservationStatus;
-import com.unipulse.backend.model.ReservationResource;
+import com.unipulse.backend.model.Resource;
 import com.unipulse.backend.model.ReservationNotification;
 import com.unipulse.backend.Repository.ReservationNotificationRepository;
 import com.unipulse.backend.Repository.ReservationRepository;
-import com.unipulse.backend.Repository.ReservationResourceRepository;
+import com.unipulse.backend.Repository.ResourceRepository;
 import com.unipulse.backend.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationRepository reservationRepository;
-    private final ReservationResourceRepository resourceRepository;
+    private final ResourceRepository resourceRepository;
     private final ReservationNotificationRepository notificationRepository;
 
     // ─── User Operations ─────────────────────────────────────────────────────────
@@ -43,11 +43,11 @@ public class ReservationServiceImpl implements ReservationService {
         }
 
         // 2. Fetch resource
-        ReservationResource resource = resourceRepository.findById(dto.getResourceId())
+        Resource resource = resourceRepository.findById(dto.getResourceId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Resource not found with id: " + dto.getResourceId()));
 
-        if (resource.getStatus() != ReservationResource.ResourceStatus.ACTIVE) {
+        if (resource.getStatus() != com.unipulse.backend.enums.ResourceStatus.ACTIVE) {
             throw new IllegalStateException("Resource '" + resource.getName() + "' is currently out of service");
         }
 
@@ -139,7 +139,7 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Reservation not found with id: " + reservationId));
-        
+
         reservationRepository.delete(reservation);
     }
 
@@ -173,11 +173,11 @@ public class ReservationServiceImpl implements ReservationService {
         }
 
         // Fetch and validate resource
-        ReservationResource resource = resourceRepository.findById(dto.getResourceId())
+        Resource resource = resourceRepository.findById(dto.getResourceId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Resource not found with id: " + dto.getResourceId()));
 
-        if (resource.getStatus() != ReservationResource.ResourceStatus.ACTIVE) {
+        if (resource.getStatus() != com.unipulse.backend.enums.ResourceStatus.ACTIVE) {
             throw new IllegalStateException("Resource is not available for booking");
         }
 
@@ -190,7 +190,6 @@ public class ReservationServiceImpl implements ReservationService {
                 reservationId
         );
 
-        // Remove current reservation from conflicts list
         conflicts = conflicts.stream()
                 .filter(r -> !r.getId().equals(reservationId))
                 .collect(Collectors.toList());
@@ -228,7 +227,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional(readOnly = true)
     public List<ReservationResponseDTO> getReservationsWithFilters(
             ReservationStatus status,
-            ReservationResource.ResourceType resourceType,
+            com.unipulse.backend.enums.ResourceType resourceType,
             LocalDate date) {
         return reservationRepository.findWithFilters(status, resourceType, date)
                 .stream()
