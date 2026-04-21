@@ -29,19 +29,19 @@ public class NotificationController {
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER', 'STUDENT')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<NotificationResponse>> getUserNotifications(@PathVariable Long userId) {
         return ResponseEntity.ok(notificationService.getNotificationsByUser(userId));
     }
 
     @GetMapping("/user/{userId}/unread")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER', 'STUDENT')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<NotificationResponse>> getUnreadNotifications(@PathVariable Long userId) {
         return ResponseEntity.ok(notificationService.getUnreadNotificationsByUser(userId));
     }
 
     @PutMapping("/{notificationId}/read")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER', 'STUDENT')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<NotificationResponse> markAsRead(@PathVariable Long notificationId) {
         return ResponseEntity.ok(notificationService.markAsRead(notificationId));
     }
