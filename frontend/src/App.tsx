@@ -103,7 +103,8 @@ function App() {
           <Route path="*" element={<UnauthorizedPage />} />
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+    </AuthProvider>);
+}
 import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
 import ResourceDetailsPage from './pages/ResourceDetailsPage';
 import AddResourcePage from './pages/AddResourcePage';
@@ -116,7 +117,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LoginPage />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
 
         <Route path="/dashboard/my-tickets" element={<MyTicketsPage />} />

@@ -150,7 +150,7 @@ const mockResources: ResourceResponse[] = [
 ];
 
 class ResourceService {
-  private useMockData = false;
+  private useMockData = false; // Force real API calls, set to true only for offline development
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -228,23 +228,10 @@ class ResourceService {
       mockResources.push(newResource);
       return newResource;
     }
-    try {
-      return await this.request<ResourceResponse>('/resources', {
-        method: 'POST',
-        body: JSON.stringify(resource),
-      });
-    } catch {
-      this.useMockData = true;
-      const newResource: ResourceResponse = {
-        id: mockResources.length + 1,
-        ...resource,
-        capacity: resource.capacity || null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      mockResources.push(newResource);
-      return newResource;
-    }
+    return await this.request<ResourceResponse>('/resources', {
+      method: 'POST',
+      body: JSON.stringify(resource),
+    });
   }
 
   async updateResource(id: string, resource: ResourceRequest): Promise<ResourceResponse> {
