@@ -16,9 +16,6 @@ import com.unipulse.backend.enums.TicketStatus;
 import com.unipulse.backend.exception.ResourceNotFoundException;
 import com.unipulse.backend.model.Ticket;
 import com.unipulse.backend.model.TicketAttachment;
-import com.unipulse.backend.Repository.TicketRepository;
-import com.unipulse.backend.Repository.TicketAttachmentRepository;
-import com.unipulse.backend.Repository.TicketMessageRepository;
 import com.unipulse.backend.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -56,6 +53,11 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public TicketResponse createTicket(TicketRequest request) {
+        return createTicket(request, null);
+    }
+
+    @Override
+    public TicketResponse createTicket(TicketRequest request, List<MultipartFile> attachments) {
         Ticket ticket = Ticket.builder()
                 .ticketCode(generateTicketCode())
                 .category(request.getCategory())
@@ -71,11 +73,26 @@ public class TicketServiceImpl implements TicketService {
                 .build();
 
         Ticket savedTicket = ticketRepository.save(ticket);
+        
+        // Handle attachments if provided
+        if (attachments != null && !attachments.isEmpty()) {
+            for (MultipartFile file : attachments) {
+                if (!file.isEmpty()) {
+                    uploadAttachment(savedTicket.getId(), file);
+                }
+            }
+        }
+        
         return mapToResponse(savedTicket);
     }
 
     @Override
     public TicketResponse updateTicket(Long id, TicketRequest request) {
+        return updateTicket(id, request, null);
+    }
+
+    @Override
+    public TicketResponse updateTicket(Long id, TicketRequest request, List<MultipartFile> attachments) {
         Ticket ticket = getTicketEntityById(id);
 
         ticket.setCategory(request.getCategory());
@@ -88,6 +105,16 @@ public class TicketServiceImpl implements TicketService {
         ticket.setTechnicianType(request.getTechnicianType());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
+        
+        // Handle attachments if provided
+        if (attachments != null && !attachments.isEmpty()) {
+            for (MultipartFile file : attachments) {
+                if (!file.isEmpty()) {
+                    uploadAttachment(updatedTicket.getId(), file);
+                }
+            }
+        }
+        
         return mapToResponse(updatedTicket);
     }
 

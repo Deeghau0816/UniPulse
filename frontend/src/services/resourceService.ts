@@ -150,8 +150,6 @@ const mockResources: ResourceResponse[] = [
 ];
 
 class ResourceService {
-  private useMockData = false; // Force real API calls, set to true only for offline development
-
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     const config = {
@@ -162,72 +160,30 @@ class ResourceService {
       ...options,
     };
 
-    try {
-      console.log('Making API request to:', url);
-      const response = await fetch(url, config);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-      }
-
-      if (response.status === 204) {
-        return {} as T;
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error('API request failed:', error);
-      console.log('Falling back to mock data for development');
-      this.useMockData = true;
-      throw error;
+    console.log('Making API request to:', url);
+    const response = await fetch(url, config);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
+
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return response.json();
   }
 
   async getAllResources(): Promise<ResourceResponse[]> {
-    if (this.useMockData) {
-      return mockResources;
-    }
-    try {
-      return await this.request<ResourceResponse[]>('/resources');
-    } catch {
-      this.useMockData = true;
-      return mockResources;
-    }
+    return await this.request<ResourceResponse[]>('/resources');
   }
 
   async getResourceById(id: string): Promise<ResourceResponse> {
-    if (this.useMockData) {
-      const resource = mockResources.find(r => r.id === parseInt(id));
-      if (!resource) {
-        throw new Error('Resource not found');
-      }
-      return resource;
-    }
-    try {
-      return await this.request<ResourceResponse>(`/resources/${id}`);
-    } catch {
-      this.useMockData = true;
-      const resource = mockResources.find(r => r.id === parseInt(id));
-      if (!resource) {
-        throw new Error('Resource not found');
-      }
-      return resource;
-    }
+    return await this.request<ResourceResponse>(`/resources/${id}`);
   }
 
   async createResource(resource: ResourceRequest): Promise<ResourceResponse> {
-    if (this.useMockData) {
-      const newResource: ResourceResponse = {
-        id: mockResources.length + 1,
-        ...resource,
-        capacity: resource.capacity || null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      mockResources.push(newResource);
-      return newResource;
-    }
     return await this.request<ResourceResponse>('/resources', {
       method: 'POST',
       body: JSON.stringify(resource),
@@ -235,88 +191,23 @@ class ResourceService {
   }
 
   async updateResource(id: string, resource: ResourceRequest): Promise<ResourceResponse> {
-    if (this.useMockData) {
-      const index = mockResources.findIndex(r => r.id === parseInt(id));
-      if (index === -1) {
-        throw new Error('Resource not found');
-      }
-      mockResources[index] = {
-        ...mockResources[index],
-        ...resource,
-        capacity: resource.capacity || null,
-        updatedAt: new Date().toISOString(),
-      };
-      return mockResources[index];
-    }
-    try {
-      return await this.request<ResourceResponse>(`/resources/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(resource),
-      });
-    } catch {
-      this.useMockData = true;
-      const index = mockResources.findIndex(r => r.id === parseInt(id));
-      if (index === -1) {
-        throw new Error('Resource not found');
-      }
-      mockResources[index] = {
-        ...mockResources[index],
-        ...resource,
-        capacity: resource.capacity || null,
-        updatedAt: new Date().toISOString(),
-      };
-      return mockResources[index];
-    }
+    return await this.request<ResourceResponse>(`/resources/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(resource),
+    });
   }
 
   async deleteResource(id: string): Promise<void> {
-    if (this.useMockData) {
-      const index = mockResources.findIndex(r => r.id === parseInt(id));
-      if (index === -1) {
-        throw new Error('Resource not found');
-      }
-      mockResources.splice(index, 1);
-      return;
-    }
-    try {
-      await this.request<void>(`/resources/${id}`, {
-        method: 'DELETE',
-      });
-    } catch {
-      this.useMockData = true;
-      const index = mockResources.findIndex(r => r.id === parseInt(id));
-      if (index === -1) {
-        throw new Error('Resource not found');
-      }
-      mockResources.splice(index, 1);
-    }
+    await this.request<void>(`/resources/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   async updateResourceStatus(id: string, status: ResourceStatus): Promise<ResourceResponse> {
-    if (this.useMockData) {
-      const index = mockResources.findIndex(r => r.id === parseInt(id));
-      if (index === -1) {
-        throw new Error('Resource not found');
-      }
-      mockResources[index].status = status;
-      mockResources[index].updatedAt = new Date().toISOString();
-      return mockResources[index];
-    }
-    try {
-      return await this.request<ResourceResponse>(`/resources/${id}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status }),
-      });
-    } catch {
-      this.useMockData = true;
-      const index = mockResources.findIndex(r => r.id === parseInt(id));
-      if (index === -1) {
-        throw new Error('Resource not found');
-      }
-      mockResources[index].status = status;
-      mockResources[index].updatedAt = new Date().toISOString();
-      return mockResources[index];
-    }
+    return await this.request<ResourceResponse>(`/resources/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
   }
 
   async searchResources(filters: {
@@ -325,33 +216,13 @@ class ResourceService {
     location?: string;
     status?: ResourceStatus;
   }): Promise<ResourceResponse[]> {
-    if (this.useMockData) {
-      return mockResources.filter(resource => {
-        if (filters.type && resource.type !== filters.type) return false;
-        if (filters.minCapacity && (!resource.capacity || resource.capacity < filters.minCapacity)) return false;
-        if (filters.location && !resource.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
-        if (filters.status && resource.status !== filters.status) return false;
-        return true;
-      });
-    }
-    try {
-      const params = new URLSearchParams();
-      if (filters.type) params.append('type', filters.type);
-      if (filters.minCapacity) params.append('minCapacity', filters.minCapacity.toString());
-      if (filters.location) params.append('location', filters.location);
-      if (filters.status) params.append('status', filters.status);
+    const params = new URLSearchParams();
+    if (filters.type) params.append('type', filters.type);
+    if (filters.minCapacity) params.append('minCapacity', filters.minCapacity.toString());
+    if (filters.location) params.append('location', filters.location);
+    if (filters.status) params.append('status', filters.status);
 
-      return await this.request<ResourceResponse[]>(`/resources/search?${params.toString()}`);
-    } catch {
-      this.useMockData = true;
-      return mockResources.filter(resource => {
-        if (filters.type && resource.type !== filters.type) return false;
-        if (filters.minCapacity && (!resource.capacity || resource.capacity < filters.minCapacity)) return false;
-        if (filters.location && !resource.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
-        if (filters.status && resource.status !== filters.status) return false;
-        return true;
-      });
-    }
+    return await this.request<ResourceResponse[]>(`/resources/search?${params.toString()}`);
   }
 }
 

@@ -3,7 +3,6 @@ package com.unipulse.backend.config;
 import com.unipulse.backend.service.impl.CustomUserJwtDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -44,11 +43,16 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/users/**").authenticated()
-                        .requestMatchers("/api/notifications/**").authenticated()
-                        .requestMatchers("/api/attachments/**").authenticated()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/resources/**").permitAll()
+                        .requestMatchers("/api/reservation-resources/**").permitAll()
+                        .requestMatchers("/api/reservations/**").permitAll()
+                        .requestMatchers("/api/reservation-notifications/**").permitAll()
+                        .requestMatchers("/api/users/**").permitAll()
+                        .requestMatchers("/api/notifications/**").permitAll()
+                        .requestMatchers("/api/attachments/**").permitAll()
+                        .requestMatchers("/api/tickets/**").permitAll()
+                        .requestMatchers("/api/analytics/**").permitAll()
+                        .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(userJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

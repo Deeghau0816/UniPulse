@@ -11,7 +11,7 @@ import type {
   ReservationStatus,
 } from '../types/reservation';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8083/api';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -45,17 +45,17 @@ export const resourceService = {
     const params: Record<string, string> = {};
     if (type) params.type = type;
     if (location) params.location = location;
-    const res = await apiClient.get<ApiResponse<CampusResource[]>>('/resources', { params });
+    const res = await apiClient.get<ApiResponse<CampusResource[]>>('/reservation-resources', { params });
     return res.data.data;
   },
 
   getById: async (id: number): Promise<CampusResource> => {
-    const res = await apiClient.get<ApiResponse<CampusResource>>(`/resources/${id}`);
+    const res = await apiClient.get<ApiResponse<CampusResource>>(`/reservation-resources/${id}`);
     return res.data.data;
   },
 
   create: async (resource: Partial<CampusResource>): Promise<CampusResource> => {
-    const res = await apiClient.post<ApiResponse<CampusResource>>('/resources', resource);
+    const res = await apiClient.post<ApiResponse<CampusResource>>('/reservation-resources', resource);
     return res.data.data;
   },
 };

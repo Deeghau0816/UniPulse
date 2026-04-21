@@ -8,6 +8,7 @@ import com.unipulse.backend.dto.TicketAttachmentResponse;
 import com.unipulse.backend.dto.TicketRequest;
 import com.unipulse.backend.dto.TicketResponse;
 import com.unipulse.backend.dto.TicketStatusUpdateRequest;
+import com.unipulse.backend.enums.TicketPriority;
 import com.unipulse.backend.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +37,16 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.getTicketById(id));
     }
 
-    @PostMapping(consumes = "multipart/form-data")
+    @PostMapping
     public ResponseEntity<TicketResponse> createTicket(
+            @Valid @RequestBody TicketRequest request
+    ) {
+        TicketResponse createdTicket = ticketService.createTicket(request);
+        return new ResponseEntity<>(createdTicket, HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/with-attachments", consumes = "multipart/form-data")
+    public ResponseEntity<TicketResponse> createTicketWithAttachments(
             @RequestParam("category") String category,
             @RequestParam("location") String location,
             @RequestParam("priority") String priority,
@@ -50,7 +59,7 @@ public class TicketController {
         TicketRequest request = new TicketRequest();
         request.setCategory(category);
         request.setLocation(location);
-        request.setPriority(priority);
+        request.setPriority(TicketPriority.valueOf(priority));
         request.setDescription(description);
         request.setPreferredContact(preferredContact);
         request.setCreatedBy(createdBy);
@@ -63,10 +72,9 @@ public class TicketController {
     @PutMapping("/{id}")
     public ResponseEntity<TicketResponse> updateTicket(
             @PathVariable Long id,
-            @Valid @RequestBody TicketRequest request,
-            @RequestParam(value = "attachments", required = false) List<MultipartFile> attachments
+            @Valid @RequestBody TicketRequest request
     ) {
-        return ResponseEntity.ok(ticketService.updateTicket(id, request, attachments));
+        return ResponseEntity.ok(ticketService.updateTicket(id, request));
     }
 
     @DeleteMapping("/{id}")
