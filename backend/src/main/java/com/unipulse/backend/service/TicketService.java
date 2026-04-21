@@ -18,9 +18,9 @@ public interface TicketService {
 
     TicketResponse getTicketById(Long id);
 
-    TicketResponse createTicket(TicketRequest request);
+    TicketResponse createTicket(TicketRequest request, List<MultipartFile> attachments);
 
-    TicketResponse updateTicket(Long id, TicketRequest request);
+    TicketResponse updateTicket(Long id, TicketRequest request, List<MultipartFile> attachments);
 
     void deleteTicket(Long id);
 

@@ -7,7 +7,7 @@ import com.unipulse.backend.enums.ResourceStatus;
 import com.unipulse.backend.enums.ResourceType;
 import com.unipulse.backend.exception.ResourceNotFoundException;
 import com.unipulse.backend.model.Resource;
-import com.unipulse.backend.repository.ResourceRepository;
+import com.unipulse.backend.Repository.ResourceRepository;
 import com.unipulse.backend.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

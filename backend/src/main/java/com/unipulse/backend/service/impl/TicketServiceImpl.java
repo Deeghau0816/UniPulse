@@ -1,8 +1,5 @@
 package com.unipulse.backend.service.impl;
 
-import com.unipulse.backend.Repository.TicketAttachmentRepository;
-import com.unipulse.backend.Repository.TicketMessageRepository;
-import com.unipulse.backend.Repository.TicketRepository;
 import com.unipulse.backend.dto.AssignTechnicianRequest;
 import com.unipulse.backend.dto.MessageRequest;
 import com.unipulse.backend.dto.MessageResponse;
@@ -30,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -55,7 +53,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public TicketResponse createTicket(TicketRequest request) {
+    public TicketResponse createTicket(TicketRequest request, List<MultipartFile> attachments) {
         Ticket ticket = Ticket.builder()
                 .ticketCode(generateTicketCode())
                 .category(request.getCategory())
@@ -71,11 +69,12 @@ public class TicketServiceImpl implements TicketService {
                 .build();
 
         Ticket savedTicket = ticketRepository.save(ticket);
+        uploadAttachments(savedTicket.getId(), attachments);
         return mapToResponse(savedTicket);
     }
 
     @Override
-    public TicketResponse updateTicket(Long id, TicketRequest request) {
+    public TicketResponse updateTicket(Long id, TicketRequest request, List<MultipartFile> attachments) {
         Ticket ticket = getTicketEntityById(id);
 
         ticket.setCategory(request.getCategory());
@@ -88,6 +87,7 @@ public class TicketServiceImpl implements TicketService {
         ticket.setTechnicianType(request.getTechnicianType());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
+        uploadAttachments(updatedTicket.getId(), attachments);
         return mapToResponse(updatedTicket);
     }
 
@@ -251,6 +251,17 @@ public class TicketServiceImpl implements TicketService {
                 .stream()
                 .map(MessageResponse::fromEntity)
                 .toList();
+    }
+
+    private void uploadAttachments(Long ticketId, List<MultipartFile> attachments) {
+        if (attachments == null || attachments.isEmpty()) {
+            return;
+        }
+
+        attachments.stream()
+                .filter(Objects::nonNull)
+                .filter(file -> !file.isEmpty())
+                .forEach(file -> uploadAttachment(ticketId, file));
     }
 
     private Ticket getTicketEntityById(Long id) {
