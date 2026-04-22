@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8083/api';
+const API_BASE_URL = 'http://localhost:8081/api';
 
 export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'REJECTED';
 export type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -64,9 +64,12 @@ export interface TicketResponse {
 class TicketService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
+    const token = localStorage.getItem('authToken');
+    
     const config = {
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
       ...options,
