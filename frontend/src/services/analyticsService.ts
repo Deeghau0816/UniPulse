@@ -14,6 +14,11 @@ interface AnalyticsData {
   endDate?: string;
 }
 
+interface TicketCategoryData {
+  categoryCounts: Record<string, number>;
+  period: string;
+}
+
 class AnalyticsService {
   private readonly baseUrl = 'http://localhost:8081/api/analytics';
 
@@ -145,7 +150,21 @@ class AnalyticsService {
     }
     return num.toString();
   }
+
+  async getTicketCategoriesAnalytics(): Promise<TicketCategoryData> {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${this.baseUrl}/ticket-categories`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch ticket categories analytics');
+    }
+    return response.json();
+  }
 }
 
 export const analyticsService = new AnalyticsService();
-export type { AnalyticsData };
+export type { AnalyticsData, TicketCategoryData };

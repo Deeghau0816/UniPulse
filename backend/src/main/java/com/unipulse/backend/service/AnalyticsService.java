@@ -2,6 +2,7 @@ package com.unipulse.backend.service;
 
 import com.unipulse.backend.dto.AnalyticsDTO;
 import com.unipulse.backend.dto.ResourceAnalyticsDTO;
+import com.unipulse.backend.dto.TicketCategoryAnalyticsDTO;
 import com.unipulse.backend.model.Ticket;
 import com.unipulse.backend.enums.TicketStatus;
 
@@ -87,4 +88,9 @@ public interface AnalyticsService {
      * Count overdue tickets (tickets older than 3 days that are not resolved/closed)
      */
     Long countOverdueTickets(List<Ticket> tickets);
+    
+    /**
+     * Get ticket categories distribution analytics
+     */
+    TicketCategoryAnalyticsDTO getTicketCategoriesAnalytics();
 }

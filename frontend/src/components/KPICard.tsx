@@ -50,9 +50,9 @@ const KPICard = ({
         border: '#FCA5A5'
       },
       info: {
-        bg: 'linear-gradient(135deg, #8B5CF6, #ffffff)',
+        bg: 'linear-gradient(135deg, #f5e28e, #ffffff)',
         lightBg: '#EDE9FE',
-        text: '#8B5CF6',
+        text: '#000000',
         border: '#C4B5FD'
       }
     };

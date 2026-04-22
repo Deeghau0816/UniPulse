@@ -11,7 +11,7 @@ import type {
   ReservationStatus,
 } from '../types/reservation';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8083/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

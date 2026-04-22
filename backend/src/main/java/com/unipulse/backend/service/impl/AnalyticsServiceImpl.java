@@ -2,6 +2,7 @@ package com.unipulse.backend.service.impl;
 
 import com.unipulse.backend.dto.AnalyticsDTO;
 import com.unipulse.backend.dto.ResourceAnalyticsDTO;
+import com.unipulse.backend.dto.TicketCategoryAnalyticsDTO;
 import com.unipulse.backend.model.Reservation;
 import com.unipulse.backend.model.Ticket;
 import com.unipulse.backend.enums.TicketStatus;
@@ -11,6 +12,7 @@ import com.unipulse.backend.service.AnalyticsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class AnalyticsServiceImpl implements AnalyticsService {
@@ -363,5 +366,31 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 .orElse("N/A"));
         
         return analytics;
+    }
+    
+    @Override
+    public TicketCategoryAnalyticsDTO getTicketCategoriesAnalytics() {
+        try {
+            List<Ticket> allTickets = ticketRepository.findAll();
+            
+            Map<String, Long> categoryCountsLong = allTickets.stream()
+                    .collect(Collectors.groupingBy(
+                        ticket -> ticket.getCategory() != null ? ticket.getCategory().toString() : "UNCATEGORIZED",
+                        Collectors.counting()
+                    ));
+            
+            // Convert Long counts to Integer safely
+            Map<String, Integer> categoryCounts = categoryCountsLong.entrySet().stream()
+                    .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().intValue()
+                    ));
+            
+            return new TicketCategoryAnalyticsDTO(categoryCounts, "All Time");
+        } catch (Exception e) {
+            log.error("Error fetching ticket categories analytics", e);
+            // Return empty data in case of error
+            return new TicketCategoryAnalyticsDTO(new HashMap<>(), "All Time");
+        }
     }
 }

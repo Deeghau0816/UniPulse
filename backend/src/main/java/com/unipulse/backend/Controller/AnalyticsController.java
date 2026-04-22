@@ -2,6 +2,7 @@ package com.unipulse.backend.Controller;
 
 import com.unipulse.backend.dto.AnalyticsDTO;
 import com.unipulse.backend.dto.ResourceAnalyticsDTO;
+import com.unipulse.backend.dto.TicketCategoryAnalyticsDTO;
 import com.unipulse.backend.service.AnalyticsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -152,6 +153,15 @@ public class AnalyticsController {
         }
         
         ResourceAnalyticsDTO analytics = analyticsService.getResourceAnalyticsByPeriod(startDate, endDate);
+        return ResponseEntity.ok(analytics);
+    }
+    
+    /**
+     * Get ticket categories distribution analytics
+     */
+    @GetMapping("/ticket-categories")
+    public ResponseEntity<TicketCategoryAnalyticsDTO> getTicketCategoriesAnalytics() {
+        TicketCategoryAnalyticsDTO analytics = analyticsService.getTicketCategoriesAnalytics();
         return ResponseEntity.ok(analytics);
     }
 }

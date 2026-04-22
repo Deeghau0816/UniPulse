@@ -23,15 +23,6 @@ import CustomerResourceDetailsPage from './pages/CustomerResourceDetailsPage';
 import UserPanel from './pages/reservation/UserPanel';
 import AdminPanel from './pages/reservation/ReservationAdminPanel';
 
-// Pages - Facilities & Reservations
-import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
-import ResourceDetailsPage from './pages/ResourceDetailsPage';
-import AddResourcePage from './pages/AddResourcePage';
-import CustomerFacilitiesPage from './pages/CustomerFacilitiesPage';
-import CustomerResourceDetailsPage from './pages/CustomerResourceDetailsPage';
-import UserPanel from './pages/reservation/UserPanel';
-import AdminPanel from './pages/reservation/ReservationAdminPanel';
-
 function App() {
   return (
     <AuthProvider>
