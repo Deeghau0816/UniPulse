@@ -15,18 +15,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRoles,
   fallbackPath = '/login',
 }) => {
-  const { isAuthenticated, hasRole, hasAnyRole } = useAuth();
+  const { isAuthenticated, hasRole, hasAnyRole, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to={fallbackPath} replace />;
   }
 
-  // Check if user has the specific required role
   if (requiredRole && !hasRole(requiredRole)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // Check if user has any of the required roles
   if (requiredRoles && !hasAnyRole(requiredRoles)) {
     return <Navigate to="/unauthorized" replace />;
   }
