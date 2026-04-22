@@ -1,14 +1,17 @@
 package com.unipulse.backend.service.impl;
 
-import com.unipulse.backend.dto.NotificationRequest;
-import com.unipulse.backend.dto.NotificationResponse;
-import com.unipulse.backend.model.Notification;
-import com.unipulse.backend.model.User;
-import com.unipulse.backend.model.Role;
-import com.unipulse.backend.model.AuthProvider;
 import com.unipulse.backend.Repository.NotificationRepository;
 import com.unipulse.backend.Repository.UserRepository;
+import com.unipulse.backend.dto.NotificationRequest;
+import com.unipulse.backend.dto.NotificationResponse;
+import com.unipulse.backend.model.AuthProvider;
+import com.unipulse.backend.model.Notification;
+import com.unipulse.backend.model.Role;
+import com.unipulse.backend.model.User;
 import com.unipulse.backend.service.NotificationService;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -81,6 +84,18 @@ public class NotificationServiceImpl implements NotificationService {
         Notification updated = notificationRepository.save(notification);
 
         return mapToResponse(updated);
+    }
+
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+    }
+
+    private boolean isAdmin(User user) {
+        return user.getRole() == Role.ADMIN;
     }
 
     private NotificationResponse mapToResponse(Notification notification) {
