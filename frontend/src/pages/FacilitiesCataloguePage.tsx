@@ -15,6 +15,11 @@ import {
   Wrench,
   LayoutDashboard,
   Home,
+  BarChart3,
+  Clock,
+  TrendingUp,
+  PieChart,
+  Activity,
 } from 'lucide-react';
 
 type Resource = {
@@ -29,6 +34,29 @@ type Resource = {
   createdAt: string;
 };
 
+type ResourceAnalytics = {
+  period: string;
+  totalReservations: number;
+  totalResourcesUsed: number;
+  uniqueUsers: number;
+  averageReservationDuration: number;
+  averageAttendeesPerReservation: number;
+  pendingCount: number;
+  approvedCount: number;
+  rejectedCount: number;
+  cancelledCount: number;
+  reservationsByResourceType: Record<string, number>;
+  reservationsByResourceName: Record<string, number>;
+  usageByLocation: Record<string, number>;
+  reservationsByUser: Record<string, number>;
+  usersWithMultipleReservations: number;
+  reservationsByDayOfWeek: Record<string, number>;
+  reservationsByHour: Record<string, number>;
+  peakUsageDay: string;
+  peakUsageHour: string;
+  mostPopularResource: string;
+};
+
 const FacilitiesCataloguePage = () => {
   const navigate = useNavigate();
 
@@ -40,6 +68,12 @@ const FacilitiesCataloguePage = () => {
   const [typeFilter, setTypeFilter] = useState<'ALL' | ResourceType>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | ResourceStatus>('ALL');
   const [capacityFilter, setCapacityFilter] = useState<'ALL' | 'SMALL' | 'MEDIUM' | 'LARGE'>('ALL');
+
+  // Analytics state
+  const [analytics, setAnalytics] = useState<ResourceAnalytics | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState<boolean>(false);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<'month' | 'week' | 'today' | 'year' | 'all'>('month');
+  const [showAnalytics, setShowAnalytics] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchResources = async () => {
@@ -70,7 +104,22 @@ const FacilitiesCataloguePage = () => {
     };
 
     fetchResources();
-  }, []);
+    fetchAnalytics();
+  }, [analyticsPeriod]);
+
+  const fetchAnalytics = async () => {
+    try {
+      setAnalyticsLoading(true);
+      const response = await fetch(`http://localhost:8083/api/analytics/resources/${analyticsPeriod}`);
+      if (!response.ok) throw new Error('Failed to fetch analytics');
+      const data = await response.json();
+      setAnalytics(data);
+    } catch (err) {
+      console.error('Failed to fetch analytics:', err);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
 
   const filteredResources = useMemo(() => {
     return resources.filter((resource) => {
@@ -227,6 +276,17 @@ const FacilitiesCataloguePage = () => {
               </div>
               <div className="flex gap-3">
                 <button
+                  onClick={() => setShowAnalytics(!showAnalytics)}
+                  className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+                    showAnalytics
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:shadow-lg hover:shadow-emerald-500/30'
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-blue-500/30'
+                  }`}
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  {showAnalytics ? 'Hide Analytics' : 'View Analytics'}
+                </button>
+                <button
                   onClick={() => navigate('/dashboard/resources/new')}
                   className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all"
                 >
@@ -243,6 +303,223 @@ const FacilitiesCataloguePage = () => {
               </div>
             </div>
           </div>
+
+          {/* Analytics Section */}
+          {showAnalytics && (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-slate-900">Resource Usage Analytics</h2>
+                    <p className="text-sm text-slate-500">
+                      {analytics?.period || 'Loading...'} • {analytics?.totalReservations || 0} total reservations
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select
+                    className="px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    value={analyticsPeriod}
+                    onChange={(e) => setAnalyticsPeriod(e.target.value as typeof analyticsPeriod)}
+                  >
+                    <option value="today">Today</option>
+                    <option value="week">Last 7 Days</option>
+                    <option value="month">Last 30 Days</option>
+                    <option value="year">Last 365 Days</option>
+                    <option value="all">All Time</option>
+                  </select>
+                </div>
+              </div>
+
+              {analyticsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+                </div>
+              ) : analytics ? (
+                <div className="space-y-6">
+                  {/* Key Metrics Grid */}
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Activity className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-700">Total Reservations</span>
+                      </div>
+                      <div className="text-2xl font-bold text-slate-900">{analytics.totalReservations}</div>
+                      <div className="text-xs text-slate-600 mt-1">
+                        {analytics.uniqueUsers} unique users
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Building2 className="w-4 h-4 text-emerald-600" />
+                        <span className="text-sm font-medium text-emerald-700">Resources Used</span>
+                      </div>
+                      <div className="text-2xl font-bold text-slate-900">{analytics.totalResourcesUsed}</div>
+                      <div className="text-xs text-slate-600 mt-1">
+                        across all locations
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="w-4 h-4 text-purple-600" />
+                        <span className="text-sm font-medium text-purple-700">Avg Duration</span>
+                      </div>
+                      <div className="text-2xl font-bold text-slate-900">
+                        {analytics.averageReservationDuration.toFixed(1)}h
+                      </div>
+                      <div className="text-xs text-slate-600 mt-1">
+                        per reservation
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="w-4 h-4 text-orange-600" />
+                        <span className="text-sm font-medium text-orange-700">Avg Attendees</span>
+                      </div>
+                      <div className="text-2xl font-bold text-slate-900">
+                        {analytics.averageAttendeesPerReservation.toFixed(1)}
+                      </div>
+                      <div className="text-xs text-slate-600 mt-1">
+                        people per booking
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status Breakdown & Peak Usage */}
+                  <div className="grid lg:grid-cols-2 gap-6">
+                    {/* Status Breakdown */}
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                      <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                        <PieChart className="w-4 h-4" />
+                        Reservation Status Breakdown
+                      </h3>
+                      <div className="space-y-3">
+                        {[
+                          { label: 'Approved', value: analytics.approvedCount, color: 'bg-emerald-500' },
+                          { label: 'Pending', value: analytics.pendingCount, color: 'bg-amber-500' },
+                          { label: 'Rejected', value: analytics.rejectedCount, color: 'bg-red-500' },
+                          { label: 'Cancelled', value: analytics.cancelledCount, color: 'bg-slate-500' },
+                        ].map((item) => {
+                          const total = analytics.totalReservations || 1;
+                          const percentage = ((item.value / total) * 100).toFixed(1);
+                          return (
+                            <div key={item.label}>
+                              <div className="flex items-center justify-between text-sm mb-1">
+                                <span className="text-slate-700">{item.label}</span>
+                                <span className="font-medium text-slate-900">
+                                  {item.value} ({percentage}%)
+                                </span>
+                              </div>
+                              <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full ${item.color} transition-all duration-500`}
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Peak Usage Insights */}
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                      <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4" />
+                        Peak Usage Insights
+                      </h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200">
+                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <Calendar className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <div className="text-sm text-slate-500">Peak Usage Day</div>
+                            <div className="font-semibold text-slate-900">{analytics.peakUsageDay}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200">
+                          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <Clock className="w-5 h-5 text-purple-600" />
+                          </div>
+                          <div>
+                            <div className="text-sm text-slate-500">Peak Usage Hour</div>
+                            <div className="font-semibold text-slate-900">{analytics.peakUsageHour}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200">
+                          <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                            <Building2 className="w-5 h-5 text-emerald-600" />
+                          </div>
+                          <div>
+                            <div className="text-sm text-slate-500">Most Popular Resource</div>
+                            <div className="font-semibold text-slate-900">{analytics.mostPopularResource}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200">
+                          <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <Users className="w-5 h-5 text-orange-600" />
+                          </div>
+                          <div>
+                            <div className="text-sm text-slate-500">Repeat Users</div>
+                            <div className="font-semibold text-slate-900">
+                              {analytics.usersWithMultipleReservations} users with multiple reservations
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Resource Usage by Type */}
+                  {Object.keys(analytics.reservationsByResourceType).length > 0 && (
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                      <h3 className="font-semibold text-slate-900 mb-4">Reservations by Resource Type</h3>
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {Object.entries(analytics.reservationsByResourceType)
+                          .sort(([,a], [,b]) => b - a)
+                          .map(([type, count]) => (
+                            <div key={type} className="bg-white rounded-lg p-3 border border-slate-200">
+                              <div className="text-sm text-slate-500 capitalize">{type.replace(/_/g, ' ')}</div>
+                              <div className="text-xl font-bold text-slate-900">{count}</div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Usage by Location */}
+                  {Object.keys(analytics.usageByLocation).length > 0 && (
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                      <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        Usage by Location
+                      </h3>
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {Object.entries(analytics.usageByLocation)
+                          .sort(([,a], [,b]) => b - a)
+                          .map(([location, count]) => (
+                            <div key={location} className="flex items-center justify-between bg-white rounded-lg p-3 border border-slate-200">
+                              <span className="text-sm text-slate-700">{location}</span>
+                              <span className="font-semibold text-slate-900">{count} bookings</span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          )}
 
           {/* Filters */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8">

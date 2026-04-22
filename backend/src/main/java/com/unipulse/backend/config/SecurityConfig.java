@@ -58,14 +58,20 @@ public class SecurityConfig {
                         .requestMatchers("/api/reservation-notifications/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/resources/**").permitAll()
+                        .requestMatchers("/api/analytics/**").permitAll()
+                        .requestMatchers("/api/tickets/**").permitAll()
+                        .requestMatchers("/api/reservations/**").permitAll()
+                        .requestMatchers("/api/reservation-notifications/**").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/attachments/**").authenticated()
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth -> oauth
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .successHandler(oAuth2LoginSuccessHandler)
-                )
+                // Note: OAuth2 login disabled - enable when OAuth2 client credentials are configured
+                // .oauth2Login(oauth -> oauth
+                //         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                //         .successHandler(oAuth2LoginSuccessHandler)
+                // )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(userJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -92,9 +98,8 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "http://localhost:5174",
                 "http://localhost:5175",
-                "http://localhost:5176",
-                "http://localhost:8081",
-                "http://localhost:3000"
+                "http://localhost:3000",
+                "http://localhost:*"
         ));
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"

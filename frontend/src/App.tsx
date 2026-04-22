@@ -15,6 +15,13 @@ import TechnicianTicketDetailsPage from './pages/TechnicianTicketDetailsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import AdminTicketsPage from './pages/AdminTicketsPage';
 import AdminTicketDetailsPage from './pages/AdminTicketDetailsPage';
+import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
+import ResourceDetailsPage from './pages/ResourceDetailsPage';
+import AddResourcePage from './pages/AddResourcePage';
+import CustomerFacilitiesPage from './pages/CustomerFacilitiesPage';
+import CustomerResourceDetailsPage from './pages/CustomerResourceDetailsPage';
+import UserPanel from './pages/reservation/UserPanel';
+import AdminPanel from './pages/reservation/ReservationAdminPanel';
 
 // Pages - Facilities & Reservations
 import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
@@ -97,20 +104,41 @@ function App() {
             }
           />
 
-          {/* Facilities - Admin */}
-          <Route path="/dashboard/resources" element={<FacilitiesCataloguePage />} />
-          <Route path="/dashboard/resources/new" element={<AddResourcePage />} />
-          <Route path="/dashboard/resources/:resourceId" element={<ResourceDetailsPage />} />
+          {/* Admin-only facilities management routes */}
+          <Route
+            path="/dashboard/resources"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <FacilitiesCataloguePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/resources/new"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AddResourcePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/resources/:resourceId"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <ResourceDetailsPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Facilities - Customer */}
+          {/* Customer-facing facilities routes */}
           <Route path="/customer/resources" element={<CustomerFacilitiesPage />} />
           <Route path="/customer/resources/:resourceId" element={<CustomerResourceDetailsPage />} />
 
-          {/* Reservations */}
+          {/* Reservation Module Routes */}
           <Route path="/reservations/user" element={<UserPanel />} />
           <Route path="/reservations/admin" element={<AdminPanel />} />
 
-          {/* Shared routes */}
+          {/* Shared routes - multiple roles */}
           <Route
             path="/dashboard/notifications"
             element={
