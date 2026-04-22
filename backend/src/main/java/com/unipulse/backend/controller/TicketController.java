@@ -9,6 +9,8 @@ import com.unipulse.backend.dto.TicketAttachmentResponse;
 import com.unipulse.backend.dto.TicketRequest;
 import com.unipulse.backend.dto.TicketResponse;
 import com.unipulse.backend.dto.TicketStatusUpdateRequest;
+import com.unipulse.backend.enums.TechnicianType;
+import com.unipulse.backend.enums.TicketPriority;
 import com.unipulse.backend.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,27 +43,27 @@ public class TicketController {
     public ResponseEntity<TicketResponse> createTicket(
             @RequestParam("category") String category,
             @RequestParam("location") String location,
-            @RequestParam("priority") String priority,
+            @RequestParam("priority") TicketPriority priority,
             @RequestParam("description") String description,
             @RequestParam("preferredContact") String preferredContact,
             @RequestParam("createdBy") String createdBy,
             @RequestParam(value = "assignedTechnician", required = false) String assignedTechnician,
+            @RequestParam(value = "technicianType", required = false) TechnicianType technicianType,
+            @RequestParam(value = "createdByUserId", required = false) Long createdByUserId,
             @RequestParam(value = "attachments", required = false) List<MultipartFile> attachments
     ) {
         TicketRequest request = new TicketRequest();
         request.setCategory(category);
         request.setLocation(location);
-        try {
-        request.setPriority(com.unipulse.backend.enums.TicketPriority.valueOf(priority.toUpperCase()));
-        } catch (IllegalArgumentException e) {
-            request.setPriority(com.unipulse.backend.enums.TicketPriority.MEDIUM);
-        }
+        request.setPriority(priority);
         
         
         request.setDescription(description);
         request.setPreferredContact(preferredContact);
         request.setCreatedBy(createdBy);
         request.setAssignedTechnician(assignedTechnician);
+        request.setTechnicianType(technicianType);
+        request.setCreatedByUserId(createdByUserId);
         
         TicketResponse createdTicket = ticketService.createTicket(request, attachments);
         return new ResponseEntity<>(createdTicket, HttpStatus.CREATED);
