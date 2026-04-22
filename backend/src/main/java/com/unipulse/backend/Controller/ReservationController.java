@@ -2,7 +2,7 @@ package com.unipulse.backend.Controller;
 
 import com.unipulse.backend.dto.*;
 import com.unipulse.backend.model.Reservation.ReservationStatus;
-import com.unipulse.backend.model.ReservationResource.ResourceType;
+import com.unipulse.backend.enums.ResourceType;
 import com.unipulse.backend.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
