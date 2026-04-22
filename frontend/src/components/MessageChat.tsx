@@ -46,7 +46,7 @@ const MessageChat = ({
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8083/api/tickets/${ticketId}/messages`);
+      const response = await fetch(`http://localhost:8081/api/tickets/${ticketId}/messages`);
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
@@ -65,7 +65,7 @@ const MessageChat = ({
     if (!newMessage.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:8083/api/tickets/${ticketId}/messages`, {
+      const response = await fetch(`http://localhost:8081/api/tickets/${ticketId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
