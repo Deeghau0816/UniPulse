@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { reservationService } from '../../services/reservationService';
 import type { ReservationSummary, ReservationRecord } from '../../types/reservation';
 import { ReservationRequestForm } from '../../components/reservation/ReservationRequestForm';
@@ -20,7 +20,9 @@ const navColors: Record<Tab, { active: string; glow: string; hover: string }> = 
 
 const UserPanel: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [searchParams] = useSearchParams();
+  const resourceIdFromUrl = searchParams.get('resourceId');
+  const [activeTab, setActiveTab] = useState<Tab>(resourceIdFromUrl ? 'request' : 'dashboard');
   const [summary, setSummary] = useState<ReservationSummary | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [updatingReservation, setUpdatingReservation] = useState<ReservationRecord | null>(null);
@@ -385,6 +387,7 @@ const UserPanel: React.FC = () => {
                 userName={DEMO_USER.name}
                 initialData={updatingReservation || undefined}
                 isUpdate={!!updatingReservation}
+                initialResourceId={resourceIdFromUrl ? parseInt(resourceIdFromUrl, 10) : undefined}
                 onSuccess={updatingReservation ? handleUpdateSuccess : () => {
                   setRefreshKey(k => k + 1);
                   setActiveTab('reservations');
