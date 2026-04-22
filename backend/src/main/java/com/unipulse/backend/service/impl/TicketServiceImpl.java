@@ -89,6 +89,11 @@ public class TicketServiceImpl implements TicketService {
     public TicketResponse updateTicket(Long id, TicketRequest request, List<MultipartFile> attachments) {
         Ticket ticket = getTicketEntityById(id);
 
+        // Check if ticket can be updated (no technician assigned yet)
+        if (ticket.getAssignedTechnician() != null && !ticket.getAssignedTechnician().trim().isEmpty()) {
+            throw new IllegalStateException("Ticket cannot be updated after a technician has been assigned. Contact the technician for any changes.");
+        }
+
         ticket.setCategory(request.getCategory());
         ticket.setLocation(request.getLocation());
         ticket.setPriority(request.getPriority());
@@ -109,7 +114,7 @@ public class TicketServiceImpl implements TicketService {
         
         return mapToResponse(updatedTicket);
     }
-
+//gggg
     @Override
     public void deleteTicket(Long id) {
         Ticket ticket = getTicketEntityById(id);

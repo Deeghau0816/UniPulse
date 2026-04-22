@@ -198,6 +198,12 @@ const TicketDetailsPage = () => {
 
   const handleEditTicket = (): void => {
     if (ticket) {
+      // Check if technician is assigned - prevent editing
+      if (ticket.assignedTechnician && ticket.assignedTechnician.trim() !== '') {
+        alert('This ticket cannot be edited because a technician has already been assigned. Please contact the technician for any changes.');
+        return;
+      }
+      
       setEditForm({
         category: ticket.category,
         location: ticket.location,
@@ -238,7 +244,11 @@ const TicketDetailsPage = () => {
         technicianType: updatedTicket.technicianType || '',
         resolutionNotes: updatedTicket.resolutionNotes || '',
         rejectionReason: updatedTicket.rejectionReason || '',
-        attachments: [],
+        attachments: updatedTicket.attachments?.map(att => ({
+          id: att.id,
+          name: att.originalFileName || att.fileName,
+          url: `/api/tickets/${updatedTicket.id}/attachments/${att.id}`
+        })) || [],
         comments: [],
       };
       
@@ -248,7 +258,15 @@ const TicketDetailsPage = () => {
       alert('Ticket updated successfully!');
     } catch (error) {
       console.error('Failed to update ticket:', error);
-      alert('Failed to update ticket. Please try again.');
+      
+      // Handle specific error for technician assignment restriction
+      if (error instanceof Error && error.message.includes('technician has been assigned')) {
+        alert('This ticket cannot be updated because a technician has been assigned. Contact the technician for any changes.');
+        setIsEditing(false);
+        setEditForm({});
+      } else {
+        alert('Failed to update ticket. Please try again.');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -979,9 +997,15 @@ const TicketDetailsPage = () => {
                 </span>
                 {!isEditing && (
                   <>
-                    <button className="primary-btn" onClick={handleEditTicket}>
-                      Edit Ticket
-                    </button>
+                    {!ticket.assignedTechnician || ticket.assignedTechnician.trim() === '' ? (
+                      <button className="primary-btn" onClick={handleEditTicket}>
+                        Edit Ticket
+                      </button>
+                    ) : (
+                      <button className="primary-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }} title="Cannot edit - technician assigned">
+                        Edit Ticket (Locked)
+                      </button>
+                    )}
                     <button className="delete-btn" onClick={() => setShowDeleteDialog(true)}>
                       Delete Ticket
                     </button>
