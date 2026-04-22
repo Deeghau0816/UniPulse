@@ -37,6 +37,7 @@ export default function RegistrationPage() {
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      alert('Passwords do not match');
       return;
     }
 
@@ -58,17 +59,28 @@ export default function RegistrationPage() {
         }),
       });
 
-      const data = await response.json();
+      const raw = await response.text();
+      let data: any = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        data = { message: raw };
+      }
 
       if (!response.ok) {
-        throw new Error(data?.message || 'Registration failed');
+        const message = data?.message || data?.error || 'Registration failed';
+        setError(message);
+        alert(message);
+        throw new Error(message);
       }
 
       login(data.user, data.token);
       navigate('/', { replace: true });
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      if (err instanceof Error && err.message) {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -215,7 +227,8 @@ export default function RegistrationPage() {
                   className="block w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all sm:text-sm"
                 >
                   <option value="STUDENT">Student</option>
-                  <option value="LECTURER">Lecturer</option>
+                  <option value="ACADEMIC">Academic Staff</option>
+                  <option value="NON_ACADEMIC">Non-Academic Staff</option>
                 </select>
               </div>
             </div>

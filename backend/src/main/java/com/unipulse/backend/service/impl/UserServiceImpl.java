@@ -5,12 +5,14 @@ import com.unipulse.backend.Repository.RoleRequestRepository;
 import com.unipulse.backend.Repository.UserRepository;
 import com.unipulse.backend.dto.RoleRequestCreateRequest;
 import com.unipulse.backend.dto.RoleRequestResponse;
+import com.unipulse.backend.dto.UpdateUserRequest;
 import com.unipulse.backend.model.Notification;
 import com.unipulse.backend.model.Role;
 import com.unipulse.backend.model.RoleRequest;
 import com.unipulse.backend.model.User;
 import com.unipulse.backend.service.EmailService;
 import com.unipulse.backend.service.UserService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,15 +27,18 @@ public class UserServiceImpl implements UserService {
     private final RoleRequestRepository roleRequestRepository;
     private final NotificationRepository notificationRepository;
     private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
 
     public UserServiceImpl(UserRepository userRepository,
                            RoleRequestRepository roleRequestRepository,
                            NotificationRepository notificationRepository,
-                           EmailService emailService) {
+                           EmailService emailService,
+                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRequestRepository = roleRequestRepository;
         this.notificationRepository = notificationRepository;
         this.emailService = emailService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -49,6 +54,61 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public User getCurrentUser(String email) {
+        return userRepository.findByEmail(email.trim().toLowerCase())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @Override
+    @Transactional
+    public User updateMyProfile(String email, UpdateUserRequest request) {
+        User user = getCurrentUser(email);
+
+        String normalizedEmail = request.getEmail() == null ? user.getEmail() : request.getEmail().trim().toLowerCase();
+        String normalizedSliitId = request.getSliitId() == null ? user.getSliitId() : request.getSliitId().trim();
+
+        userRepository.findByEmail(normalizedEmail)
+                .filter(existing -> !existing.getId().equals(user.getId()))
+                .ifPresent(existing -> {
+                    throw new RuntimeException("Email is already registered");
+                });
+
+        if (normalizedSliitId != null && !normalizedSliitId.isBlank()) {
+            userRepository.findBySliitId(normalizedSliitId)
+                    .filter(existing -> !existing.getId().equals(user.getId()))
+                    .ifPresent(existing -> {
+                        throw new RuntimeException("SLIIT ID is already registered");
+                    });
+        }
+
+        if (request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) {
+            user.setFirstName(request.getFirstName().trim());
+        }
+
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName().trim());
+        }
+
+        user.setEmail(normalizedEmail);
+        user.setSliitId(normalizedSliitId);
+        user.setProfileImage(request.getProfileImage() == null ? "" : request.getProfileImage().trim());
+
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword().trim()));
+        }
+
+        // role is NOT updated here
+        return userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMyProfile(String email) {
+        User user = getCurrentUser(email);
+        userRepository.delete(user);
     }
 
     @Override
@@ -75,14 +135,14 @@ public class UserServiceImpl implements UserService {
 
         RoleRequest savedRequest = roleRequestRepository.save(roleRequest);
 
-        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        List<User> admins = userRepository.findByRoleIn(List.of(Role.TECHNICIAN, Role.SYSTEM_ADMIN));
 
         for (User admin : admins) {
             Notification adminNotification = new Notification();
             adminNotification.setTitle("Role Change Request");
             adminNotification.setMessage(
                     user.getFullName() + " requested role change from " +
-                    user.getRole().name() + " to " + request.getRequestedRole().name() + "."
+                            user.getRole().name() + " to " + request.getRequestedRole().name() + "."
             );
             adminNotification.setRead(false);
             adminNotification.setCreatedAt(LocalDateTime.now());
@@ -111,6 +171,16 @@ public class UserServiceImpl implements UserService {
         userNotification.setCreatedAt(LocalDateTime.now());
         userNotification.setUser(user);
         notificationRepository.save(userNotification);
+
+        try {
+            emailService.sendSimpleEmail(
+                    user.getEmail(),
+                    "Role Request Submitted",
+                    "Hello " + user.getFullName() + ", your role change request has been submitted successfully."
+            );
+        } catch (Exception e) {
+            System.out.println("Submit email failed: " + e.getMessage());
+        }
 
         return RoleRequestResponse.fromEntity(savedRequest);
     }

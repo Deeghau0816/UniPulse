@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
-export type UserRole = 'USER' | 'TECHNICIAN' | 'ADMIN';
+export type UserRole =
+  | 'STUDENT'
+  | 'ACADEMIC'
+  | 'NON_ACADEMIC'
+  | 'TECHNICIAN'
+  | 'SYSTEM_ADMIN';
 
 export interface User {
   id: string;
@@ -54,6 +59,7 @@ interface AuthContextType {
   loading: boolean;
   login: (user: RawUser, token?: string) => void;
   logout: () => void;
+  updateUser: (userData: Partial<User>) => void;
   isAuthenticated: boolean;
   hasRole: (role: UserRole) => boolean;
   hasAnyRole: (roles: UserRole[]) => boolean;
@@ -96,16 +102,24 @@ const decodeJwtPayload = (token: string): JwtPayload | null => {
 };
 
 const normalizeRole = (rawRole?: string): UserRole => {
-  if (!rawRole) return 'USER';
+  const value = (rawRole || '').toUpperCase();
 
-  if (rawRole === 'ADMIN') return 'ADMIN';
-  if (rawRole === 'TECHNICIAN') return 'TECHNICIAN';
-
-  if (rawRole === 'USER' || rawRole === 'STUDENT' || rawRole === 'LECTURER') {
-    return 'USER';
+  switch (value) {
+    case 'STUDENT':
+      return 'STUDENT';
+    case 'ACADEMIC':
+    case 'LECTURER':
+      return 'ACADEMIC';
+    case 'NON_ACADEMIC':
+      return 'NON_ACADEMIC';
+    case 'TECHNICIAN':
+      return 'TECHNICIAN';
+    case 'SYSTEM_ADMIN':
+    case 'ADMIN':
+      return 'SYSTEM_ADMIN';
+    default:
+      return 'STUDENT';
   }
-
-  return 'USER';
 };
 
 const normalizeUser = (rawUser: RawUser): User => {
@@ -206,6 +220,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...userData };
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem(USER_STORAGE_KEY);
@@ -229,6 +252,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     login,
     logout,
+    updateUser,
     isAuthenticated,
     hasRole,
     hasAnyRole,

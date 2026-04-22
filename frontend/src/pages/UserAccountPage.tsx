@@ -11,6 +11,8 @@ import {
   Trash2,
   Image as ImageIcon,
   AlertTriangle,
+  IdCard,
+  Lock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -24,10 +26,10 @@ type UserRole =
   | 'NON_ACADEMIC'
   | 'TECHNICIAN'
   | 'SYSTEM_ADMIN'
-  | 'ADMIN'
   | string;
 
 interface UserData {
+  id?: string;
   firstName: string;
   lastName: string;
   fullName: string;
@@ -41,7 +43,7 @@ const API_BASE_URL = 'http://localhost:8081';
 
 export default function UserAccountPage() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, updateUser } = useAuth();
 
   const [user, setUser] = useState<UserData>({
     firstName: '',
@@ -63,58 +65,57 @@ export default function UserAccountPage() {
     profileImage: '',
   });
 
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-
-        const mappedUser: UserData = {
-          firstName: parsedUser.firstName || '',
-          lastName: parsedUser.lastName || '',
-          fullName:
-            parsedUser.fullName ||
-            `${parsedUser.firstName || ''} ${parsedUser.lastName || ''}`.trim(),
-          email: parsedUser.email || '',
-          sliitId: parsedUser.sliitId || '',
-          role: parsedUser.role || 'STUDENT',
-          profileImage: parsedUser.profileImage || '',
-        };
-
-        setUser(mappedUser);
-        setFormData(mappedUser);
-      } catch (error) {
-        console.error('Failed to parse user from localStorage:', error);
-      }
-    } else if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const mappedUser: UserData = {
-          firstName: payload.firstName || '',
-          lastName: payload.lastName || '',
-          fullName:
-            payload.fullName ||
-            `${payload.firstName || ''} ${payload.lastName || ''}`.trim(),
-          email: payload.sub || payload.email || '',
-          sliitId: payload.sliitId || '',
-          role: payload.role || 'STUDENT',
-          profileImage: payload.profileImage || '',
-        };
-
-        setUser(mappedUser);
-        setFormData(mappedUser);
-      } catch (error) {
-        console.error('Failed to decode token:', error);
-      }
-    }
+    fetchProfile();
   }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/users/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = response.data;
+      const mappedUser: UserData = {
+        id: String(data.id),
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        fullName:
+          data.fullName ||
+          `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+        email: data.email || '',
+        sliitId: data.sliitId || '',
+        role: data.role || 'STUDENT',
+        profileImage: data.profileImage || '',
+      };
+
+      setUser(mappedUser);
+      setFormData(mappedUser);
+      localStorage.setItem('user', JSON.stringify(mappedUser));
+      updateUser({
+        id: mappedUser.id,
+        firstName: mappedUser.firstName,
+        lastName: mappedUser.lastName,
+        name: mappedUser.fullName,
+        email: mappedUser.email,
+        sliitId: mappedUser.sliitId,
+        role: mappedUser.role as any,
+        profileImage: mappedUser.profileImage || null,
+      });
+    } catch (error) {
+      console.error('Failed to fetch profile:', error);
+    }
+  };
 
   const roleLabel = useMemo(() => {
     switch ((user.role || '').toUpperCase()) {
@@ -127,30 +128,11 @@ export default function UserAccountPage() {
       case 'TECHNICIAN':
         return 'Technician';
       case 'SYSTEM_ADMIN':
-      case 'ADMIN':
         return 'System Admin';
       default:
         return 'Student';
     }
   }, [user.role]);
-
-  const formRoleLabel = useMemo(() => {
-    switch ((formData.role || '').toUpperCase()) {
-      case 'STUDENT':
-        return 'Student';
-      case 'ACADEMIC':
-        return 'Academic Staff';
-      case 'NON_ACADEMIC':
-        return 'Non-Academic Staff';
-      case 'TECHNICIAN':
-        return 'Technician';
-      case 'SYSTEM_ADMIN':
-      case 'ADMIN':
-        return 'System Admin';
-      default:
-        return 'Student';
-    }
-  }, [formData.role]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -169,41 +151,62 @@ export default function UserAccountPage() {
   };
 
   const handleSave = async () => {
+    if (password && password !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
     try {
       setIsSaving(true);
-
       const token = localStorage.getItem('token');
 
       const payload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
+        sliitId: formData.sliitId,
+        email: formData.email,
+        password: password || '',
         profileImage: formData.profileImage || '',
       };
 
-      try {
-        await axios.put(`${API_BASE_URL}/api/users/me`, payload, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      } catch (apiError) {
-        console.warn('Backend update failed, saving locally for now:', apiError);
-      }
+      const response = await axios.put(`${API_BASE_URL}/api/users/me`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
+      const saved = response.data;
       const updatedUser = {
-        ...user,
-        ...formData,
-        fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+        id: String(saved.id),
+        firstName: saved.firstName,
+        lastName: saved.lastName,
+        fullName: saved.fullName || `${saved.firstName} ${saved.lastName}`.trim(),
+        email: saved.email,
+        sliitId: saved.sliitId,
+        role: saved.role,
+        profileImage: saved.profileImage || '',
       };
 
       setUser(updatedUser);
       setFormData(updatedUser);
+      setPassword('');
+      setConfirmPassword('');
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      updateUser({
+        id: updatedUser.id,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        name: updatedUser.fullName,
+        email: updatedUser.email,
+        sliitId: updatedUser.sliitId,
+        role: updatedUser.role as any,
+        profileImage: updatedUser.profileImage || null,
+      });
       setIsEditing(false);
       alert('Profile updated successfully.');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update profile:', error);
-      alert('Failed to update profile.');
+      alert(error?.response?.data?.message || 'Failed to update profile.');
     } finally {
       setIsSaving(false);
     }
@@ -211,32 +214,29 @@ export default function UserAccountPage() {
 
   const handleCancel = () => {
     setFormData(user);
+    setPassword('');
+    setConfirmPassword('');
     setIsEditing(false);
   };
 
   const handleDeleteAccount = async () => {
     try {
       setIsDeleting(true);
-
       const token = localStorage.getItem('token');
 
-      try {
-        await axios.delete(`${API_BASE_URL}/api/users/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      } catch (apiError) {
-        console.warn('Backend delete failed or not ready yet:', apiError);
-      }
+      await axios.delete(`${API_BASE_URL}/api/users/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       logout();
       navigate('/', { replace: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete account:', error);
-      alert('Failed to delete account.');
+      alert(error?.response?.data?.message || 'Failed to delete account.');
     } finally {
       setIsDeleting(false);
       setShowDeletePopup(false);
@@ -246,7 +246,6 @@ export default function UserAccountPage() {
   const getRoleBadgeColor = (role: string) => {
     switch (role.toUpperCase()) {
       case 'SYSTEM_ADMIN':
-      case 'ADMIN':
         return 'bg-red-100 text-red-700 border-red-200';
       case 'TECHNICIAN':
         return 'bg-orange-100 text-orange-700 border-orange-200';
@@ -308,13 +307,15 @@ export default function UserAccountPage() {
                   {roleLabel}
                 </span>
 
-                <button
-                  onClick={() => navigate('/dashboard/role-request')}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-                >
-                  <RefreshCw size={16} />
-                  Change Role
-                </button>
+                {(user.role === 'STUDENT' || user.role === 'ACADEMIC' || user.role === 'NON_ACADEMIC') && (
+                  <button
+                    onClick={() => navigate('/dashboard/role-request')}
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                  >
+                    <RefreshCw size={16} />
+                    Change Role
+                  </button>
+                )}
               </div>
 
               <div className="mt-8 space-y-4">
@@ -391,9 +392,7 @@ export default function UserAccountPage() {
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    First Name
-                  </label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">First Name</label>
                   <div className="relative">
                     <User className="absolute left-3 top-3.5 text-slate-400" size={18} />
                     <input
@@ -408,9 +407,7 @@ export default function UserAccountPage() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Last Name
-                  </label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Last Name</label>
                   <div className="relative">
                     <User className="absolute left-3 top-3.5 text-slate-400" size={18} />
                     <input
@@ -425,9 +422,7 @@ export default function UserAccountPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Full Name
-                  </label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Full Name</label>
                   <input
                     type="text"
                     value={formData.fullName}
@@ -436,15 +431,40 @@ export default function UserAccountPage() {
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Profile Picture Path
-                  </label>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">SLIIT ID</label>
                   <div className="relative">
-                    <ImageIcon
-                      className="absolute left-3 top-3.5 text-slate-400"
-                      size={18}
+                    <IdCard className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <input
+                      type="text"
+                      name="sliitId"
+                      value={formData.sliitId}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Profile Picture Path</label>
+                  <div className="relative">
+                    <ImageIcon className="absolute left-3 top-3.5 text-slate-400" size={18} />
                     <input
                       type="text"
                       name="profileImage"
@@ -455,45 +475,43 @@ export default function UserAccountPage() {
                       className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
                     />
                   </div>
-                  <p className="mt-2 text-xs text-slate-500">
-                    Add an image path or image URL for the profile picture.
-                  </p>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Email
-                  </label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">New Password</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <Lock className="absolute left-3 top-3.5 text-slate-400" size={18} />
                     <input
-                      type="email"
-                      value={formData.email}
-                      disabled
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-100 py-3 pl-10 pr-4 text-slate-600 outline-none"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="Leave blank to keep current password"
+                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    SLIIT ID
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.sliitId}
-                    disabled
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600 outline-none"
-                  />
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Confirm Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="Repeat new password"
+                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Current Role
-                  </label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Current Role</label>
                   <input
                     type="text"
-                    value={formRoleLabel}
+                    value={roleLabel}
                     disabled
                     className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600 outline-none"
                   />
@@ -514,12 +532,8 @@ export default function UserAccountPage() {
                 <AlertTriangle size={24} />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-900">
-                  Delete Profile
-                </h3>
-                <p className="text-sm text-slate-500">
-                  This action cannot be undone.
-                </p>
+                <h3 className="text-xl font-bold text-slate-900">Delete Profile</h3>
+                <p className="text-sm text-slate-500">This action cannot be undone.</p>
               </div>
             </div>
 

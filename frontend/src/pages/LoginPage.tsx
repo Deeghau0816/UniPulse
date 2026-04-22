@@ -23,19 +23,27 @@ export default function LoginPage() {
     try {
       const response = await fetch('http://localhost:8081/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const raw = await response.text();
+      let data: any = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        data = { message: raw };
+      }
 
       if (!response.ok) {
-        throw new Error(data?.message || 'Login failed');
+        const message = data?.message || data?.error || 'Login failed';
+        setError(message);
+        if (message.toLowerCase().includes('not registered')) {
+          alert(message);
+          navigate('/register', { replace: true });
+          return;
+        }
+        throw new Error(message);
       }
 
       login(data.user, data.token);
@@ -60,7 +68,7 @@ export default function LoginPage() {
         <div
           className="absolute inset-0 opacity-10"
           style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
-        ></div>
+        />
 
         <div className="relative z-10 flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-md">
