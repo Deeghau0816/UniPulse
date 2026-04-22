@@ -52,15 +52,19 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/resources/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/analytics/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/tickets/**").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/notifications/**").authenticated()
                         .requestMatchers("/api/attachments/**").authenticated()
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth -> oauth
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .successHandler(oAuth2LoginSuccessHandler)
-                )
+                // Note: OAuth2 login disabled - enable when OAuth2 client credentials are configured
+                // .oauth2Login(oauth -> oauth
+                //         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                //         .successHandler(oAuth2LoginSuccessHandler)
+                // )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(userJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -86,7 +90,9 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:5173",
                 "http://localhost:5174",
-                "http://localhost:3000"
+                "http://localhost:5175",
+                "http://localhost:3000",
+                "http://localhost:*"
         ));
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
