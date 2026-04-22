@@ -12,6 +12,7 @@ interface ReservationRequestFormProps {
   userName?: string;
   initialData?: ReservationRecord;
   isUpdate?: boolean;
+  initialResourceId?: number;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -80,6 +81,7 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
   userName,
   initialData,
   isUpdate = false,
+  initialResourceId,
 }) => {
   const [resources, setResources] = useState<ResourceResponse[]>([]);
   const [filtered, setFiltered] = useState<ResourceResponse[]>([]);
@@ -161,7 +163,7 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
         specialNotes: initialData.specialNotes || '',
         expectedAttendees: initialData.expectedAttendees,
       });
-      
+
       // Set the resource type based on the initial resource
       const resource = resources.find(r => r.id === initialData.resourceId);
       if (resource) {
@@ -169,6 +171,17 @@ export const ReservationRequestForm: React.FC<ReservationRequestFormProps> = ({
       }
     }
   }, [initialData, isUpdate, resources, userId, userName]);
+
+  // Pre-select resource when initialResourceId is provided (for new bookings from browse page)
+  useEffect(() => {
+    if (initialResourceId && !isUpdate && resources.length > 0) {
+      const resource = resources.find(r => r.id === initialResourceId);
+      if (resource) {
+        setSelectedType(resource.type);
+        setForm(prev => ({ ...prev, resourceId: initialResourceId }));
+      }
+    }
+  }, [initialResourceId, isUpdate, resources]);
 
   const resourceTypeLabels: Record<ResourceType, string> = {
     LECTURE_HALL: 'Lecture Hall',

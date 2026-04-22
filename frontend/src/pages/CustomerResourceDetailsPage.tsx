@@ -88,7 +88,7 @@ const CustomerResourceDetailsPage = () => {
       alert('This resource is currently out of service and cannot be booked.');
       return;
     }
-    setShowBookingModal(true);
+    navigate(`/reservations/user?resourceId=${resourceId}`);
   };
 
   const handleCloseBooking = () => {
