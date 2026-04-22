@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { resourceService, type ResourceResponse, type ResourceType } from '../services/resourceService';
+import { ReservationRequestForm } from '../components/reservation/ReservationRequestForm';
 import {
   Building2,
   ArrowLeft,
@@ -24,11 +25,6 @@ const CustomerResourceDetailsPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showBookingModal, setShowBookingModal] = useState<boolean>(false);
-  const [bookingDate, setBookingDate] = useState<string>('');
-  const [bookingTime, setBookingTime] = useState<string>('');
-  const [bookingDuration, setBookingDuration] = useState<string>('1');
-  const [bookingPurpose, setBookingPurpose] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     loadResource();
@@ -93,25 +89,10 @@ const CustomerResourceDetailsPage = () => {
 
   const handleCloseBooking = () => {
     setShowBookingModal(false);
-    setBookingDate('');
-    setBookingTime('');
-    setBookingDuration('1');
-    setBookingPurpose('');
   };
 
-  const handleBookingSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!bookingDate || !bookingTime || !bookingPurpose) {
-      alert('Please fill in all required fields.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setTimeout(() => {
-      alert(`Booking request submitted successfully!\n\nResource: ${resource?.name}\nDate: ${bookingDate}\nTime: ${bookingTime}\nDuration: ${bookingDuration} hour(s)\nPurpose: ${bookingPurpose}\n\nYou will receive a confirmation email shortly.`);
-      setIsSubmitting(false);
-      handleCloseBooking();
-    }, 1500);
+  const handleBookingSuccess = () => {
+    setShowBookingModal(false);
   };
 
   const getTodayDate = () => {
@@ -332,7 +313,7 @@ const CustomerResourceDetailsPage = () => {
       {/* Booking Modal */}
       {showBookingModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-slate-100">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold text-slate-900">Book {resource?.name}</h3>
@@ -345,74 +326,13 @@ const CustomerResourceDetailsPage = () => {
               </div>
             </div>
             
-            <form onSubmit={handleBookingSubmit} className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">Date *</label>
-                <input
-                  type="date"
-                  value={bookingDate}
-                  onChange={(e) => setBookingDate(e.target.value)}
-                  min={getTodayDate()}
-                  required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">Start Time *</label>
-                <input
-                  type="time"
-                  value={bookingTime}
-                  onChange={(e) => setBookingTime(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">Duration</label>
-                <select
-                  value={bookingDuration}
-                  onChange={(e) => setBookingDuration(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
-                >
-                  <option value="1">1 hour</option>
-                  <option value="2">2 hours</option>
-                  <option value="3">3 hours</option>
-                  <option value="4">4 hours</option>
-                  <option value="8">Full day (8 hours)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">Purpose *</label>
-                <textarea
-                  placeholder="Describe the purpose of your booking..."
-                  value={bookingPurpose}
-                  onChange={(e) => setBookingPurpose(e.target.value)}
-                  rows={3}
-                  required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={handleCloseBooking}
-                  className="flex-1 px-4 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-70"
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Booking'}
-                </button>
-              </div>
-            </form>
+            <div className="p-6">
+              <ReservationRequestForm
+                onSuccess={handleBookingSuccess}
+                userId="1" // TODO: Get from auth context
+                userName="Current User" // TODO: Get from auth context
+              />
+            </div>
           </div>
         </div>
       )}
