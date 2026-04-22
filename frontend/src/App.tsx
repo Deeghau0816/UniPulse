@@ -12,8 +12,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import './App.css';
 
-import HomePage from './pages/HomePage';
+<<<<<<< HEAD
 // Pages - Tickets
+=======
+import HomePage from './pages/HomePage';
+>>>>>>> d2149b7 (backend and frontend changes)
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -25,9 +28,12 @@ import TechnicianDashboardPage from './pages/TechnicianDashboardPage';
 import TechnicianTicketDetailsPage from './pages/TechnicianTicketDetailsPage';
 import AdminTicketsPage from './pages/AdminTicketsPage';
 import AdminTicketDetailsPage from './pages/AdminTicketDetailsPage';
+<<<<<<< HEAD
+=======
 import NotificationsPage from './pages/NotificationsPage';
 import RoleRequestPage from './pages/RoleRequestPage';
 import AdminRoleRequestsPage from './pages/AdminRoleRequestsPage';
+>>>>>>> d2149b7 (backend and frontend changes)
 import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
 import ResourceDetailsPage from './pages/ResourceDetailsPage';
 import AddResourcePage from './pages/AddResourcePage';
@@ -35,6 +41,8 @@ import CustomerFacilitiesPage from './pages/CustomerFacilitiesPage';
 import CustomerResourceDetailsPage from './pages/CustomerResourceDetailsPage';
 import UserPanel from './pages/reservation/UserPanel';
 import AdminPanel from './pages/reservation/ReservationAdminPanel';
+<<<<<<< HEAD
+=======
 import CompleteProfilePage from './pages/CompleteProfilePage';
 import UserAccountPage from './pages/UserAccountPage';
 
@@ -88,6 +96,7 @@ function OAuthSuccessHandler() {
 
   return <div>Logging in...</div>;
 }
+>>>>>>> d2149b7 (backend and frontend changes)
 
 function App() {
   return (
@@ -102,6 +111,8 @@ function App() {
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/oauth2/success" element={<OAuthSuccessHandler />} />
 
+<<<<<<< HEAD
+=======
           {/* Admin entry */}
           <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -116,6 +127,7 @@ function App() {
             }
           />
 
+>>>>>>> d2149b7 (backend and frontend changes)
           {/* User routes */}
           <Route
             path="/dashboard/my-tickets"
@@ -226,59 +238,56 @@ function App() {
             }
           />
 
-          {/* Shared user/admin routes */}
-          <Route
-            path="/customer/resources"
-            element={
-              <ProtectedRoute requiredRoles={['USER', 'ADMIN']}>
-                <CustomerFacilitiesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/customer/resources/:resourceId"
-            element={
-              <ProtectedRoute requiredRoles={['USER', 'ADMIN']}>
-                <CustomerResourceDetailsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reservations/user"
-            element={
-              <ProtectedRoute requiredRoles={['USER', 'ADMIN']}>
-                <UserPanel />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Notifications */}
+<<<<<<< HEAD
           {/* Admin-only facilities management routes */}
           <Route
             path="/dashboard/resources"
             element={
               <ProtectedRoute requiredRole="ADMIN">
                 <FacilitiesCataloguePage />
+=======
+          {/* Shared user/admin routes */}
+          <Route
+            path="/customer/resources"
+            element={
+              <ProtectedRoute requiredRoles={['USER', 'ADMIN']}>
+                <CustomerFacilitiesPage />
+>>>>>>> d2149b7 (backend and frontend changes)
               </ProtectedRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path="/dashboard/resources/new"
             element={
               <ProtectedRoute requiredRole="ADMIN">
                 <AddResourcePage />
+=======
+            path="/customer/resources/:resourceId"
+            element={
+              <ProtectedRoute requiredRoles={['USER', 'ADMIN']}>
+                <CustomerResourceDetailsPage />
+>>>>>>> d2149b7 (backend and frontend changes)
               </ProtectedRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path="/dashboard/resources/:resourceId"
             element={
               <ProtectedRoute requiredRole="ADMIN">
                 <ResourceDetailsPage />
+=======
+            path="/reservations/user"
+            element={
+              <ProtectedRoute requiredRoles={['USER', 'ADMIN']}>
+                <UserPanel />
+>>>>>>> d2149b7 (backend and frontend changes)
               </ProtectedRoute>
             }
           />
 
+<<<<<<< HEAD
           {/* Customer-facing facilities routes */}
           <Route path="/customer/resources" element={<CustomerFacilitiesPage />} />
           <Route path="/customer/resources/:resourceId" element={<CustomerResourceDetailsPage />} />
@@ -288,6 +297,9 @@ function App() {
           <Route path="/reservations/admin" element={<AdminPanel />} />
 
           {/* Shared routes - multiple roles */}
+=======
+          {/* Notifications */}
+>>>>>>> d2149b7 (backend and frontend changes)
           <Route
             path="/dashboard/notifications"
             element={
@@ -298,8 +310,11 @@ function App() {
           />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+<<<<<<< HEAD
           <Route path="*" element={<UnauthorizedPage />} />
+=======
+          <Route path="*" element={<Navigate to="/" replace />} />
+>>>>>>> d2149b7 (backend and frontend changes)
         </Routes>
       </BrowserRouter>
     </AuthProvider>
