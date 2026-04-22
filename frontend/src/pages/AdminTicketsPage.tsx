@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ticketService, type TicketStatus, type TicketPriority, type TicketCategory } from '../services/ticketService';
 import { analyticsService, type AnalyticsData } from '../services/analyticsService';
 import KPICard from '../components/KPICard';
+import TicketCategoryChart from '../components/TicketCategoryChart';
 
 type TechnicianFilter = 'ALL' | 'UNASSIGNED' | string;
 
@@ -588,6 +589,10 @@ const AdminTicketsPage = () => {
           padding: 0 24px 24px;
         }
 
+        .analytics-section {
+          padding: 0 24px 16px;
+        }
+
         .kpi-grid {
           display: flex;
           gap: 12px;
@@ -765,6 +770,11 @@ const AdminTicketsPage = () => {
               </div>
             ) : null}
           </div>
+        </div>
+
+        {/* Ticket Categories Chart Section */}
+        <div className="analytics-section">
+          <TicketCategoryChart />
         </div>
 
         <div className="content-section">
