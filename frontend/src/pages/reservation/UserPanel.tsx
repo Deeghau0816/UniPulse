@@ -7,15 +7,15 @@ import { MyReservationsList } from '../../components/reservation/MyReservationsL
 import { NotificationPanel } from '../../components/reservation/NotificationPanel';
 
 // Hard-coded demo user; replace with OAuth user in Module E
-const DEMO_USER = { id: 'user-001', name: 'Alice Johnson' };
+const DEMO_USER = { id: '1', name: 'Test User' };
 
 type Tab = 'dashboard' | 'request' | 'reservations' | 'notifications';
 
 const navColors: Record<Tab, { active: string; glow: string; hover: string }> = {
-  dashboard:     { active: '#002d75', glow: 'rgba(0, 35, 92, 0.45)',  hover: '#002679' },
-  request:       { active: '#002d75', glow: 'rgba(0, 35, 92, 0.45)',  hover: '#002679'},
-  reservations:  { active: '#002d75', glow: 'rgba(0, 35, 92, 0.45)',  hover: '#002679'},
-  notifications: { active: '#002d75', glow: 'rgba(0, 35, 92, 0.45)',  hover: '#002679'},
+  dashboard:     { active: '#ea580c', glow: 'rgba(249, 115, 22, 0.25)',  hover: '#c2410c' },
+  request:       { active: '#ea580c', glow: 'rgba(249, 115, 22, 0.25)',  hover: '#c2410c'},
+  reservations:  { active: '#ea580c', glow: 'rgba(249, 115, 22, 0.25)',  hover: '#c2410c'},
+  notifications: { active: '#ea580c', glow: 'rgba(249, 115, 22, 0.25)',  hover: '#c2410c'},
 };
 
 const UserPanel: React.FC = () => {
@@ -77,11 +77,7 @@ const UserPanel: React.FC = () => {
 
         {/* Brand */}
         <div style={{ padding: '0 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.25)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <span style={{ fontSize: '24px' }}>🏛️</span>
-            <span style={{ color: '#1a1a2e', fontWeight: 800, fontSize: '18px' }}>UniPulse</span>
-          </div>
-          <div style={{ fontSize: '11px', color: 'rgb(0, 0, 0)', marginLeft: '34px' }}>User Control Panel</div>
+          <div style={{ color: '#1a1a2e', fontWeight: 800, fontSize: '18px', marginBottom: '4px' }}>User Control Panel</div>
         </div>
 
         {/* User Info */}
@@ -89,10 +85,10 @@ const UserPanel: React.FC = () => {
           <div style={{
             width: '48px', height: '48px',
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #3B82F6, #6366F1)',
+            background: 'linear-gradient(135deg, #ea580c, #fb923c)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '22px', marginBottom: '10px',
-            boxShadow: '0 4px 12px rgba(59,130,246,0.4)',
+            boxShadow: '0 4px 12px rgba(249,115,22,0.4)',
           }}>👤</div>
           <div style={{ color: '#1a1a2e', fontWeight: 700, fontSize: '16px' }}>{DEMO_USER.name}</div>
           <div style={{ color: 'rgba(20,20,40,0.55)', fontSize: '13px' }}>Student – USER role</div>
@@ -195,24 +191,24 @@ const UserPanel: React.FC = () => {
             onClick={() => { setActiveTab('request'); }}
             style={{
               padding: '12px 20px',
-              background: 'linear-gradient(135deg, #3B82F6, #6366F1)',
+              background: 'linear-gradient(135deg, #ea580c, #fb923c)',
               color: '#FFFFFF',
               border: 'none',
               borderRadius: '8px',
               fontSize: '15px',
               fontWeight: 700,
               cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(59,130,246,0.3)',
+              boxShadow: '0 4px 12px rgba(249,115,22,0.3)',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(59,130,246,0.4), 0 4px 12px rgba(0,0,0,0.15)';
-              e.currentTarget.style.background = 'linear-gradient(135deg, #2563EB, #4F46E5)';
+              e.currentTarget.style.boxShadow = '0 8px 25px rgba(249,115,22,0.4), 0 4px 12px rgba(0,0,0,0.15)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, #c2410c, #f97316)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0) scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(59,130,246,0.3)';
-              e.currentTarget.style.background = 'linear-gradient(135deg, #3B82F6, #6366F1)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(249,115,22,0.3)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, #ea580c, #fb923c)';
             }}
           >
             New Booking
