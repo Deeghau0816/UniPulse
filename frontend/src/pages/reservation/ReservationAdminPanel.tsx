@@ -93,10 +93,10 @@ const AdminPanel: React.FC = () => {
   }, [activeTab, aggregateBookingsByHour]);
 
   const navItems: Array<{ id: AdminTab; label: string; accent: string }> = [
-    { id: 'dashboard',        label: 'Dashboard',          accent: '#638bf1' },
-    { id: 'all-reservations', label: 'All Requests',       accent: '#f59f0b' },
-    { id: 'calendar',         label: 'Calendar View',      accent: '#10b91b' },
-    { id: 'peak-hours',       label: 'Peak Booking Hours', accent: '#f65c5c' },
+    { id: 'dashboard',        label: 'Dashboard',          accent: '#ea580c' },
+    { id: 'all-reservations', label: 'All Requests',       accent: '#ea580c' },
+    { id: 'calendar',         label: 'Calendar View',      accent: '#ea580c' },
+    { id: 'peak-hours',       label: 'Peak Booking Hours', accent: '#ea580c' },
   ];
 
   const summaryCards = [
@@ -134,12 +134,12 @@ const AdminPanel: React.FC = () => {
       <aside style={{
         width: '248px',
         flexShrink: 0,
-        background: 'linear-gradient(135deg, #9CA3AF, #4B5563)',
+        background: 'linear-gradient(135deg, #fed7aa, #fb923c)',
         display: 'flex',
         flexDirection: 'column',
         padding: '22px 0',
         /* right shadow creates separation from main */
-        boxShadow: '4px 0 20px rgba(99,102,241,0.09), 2px 0 6px rgba(0,0,0,0.07)',
+        boxShadow: '4px 0 20px rgba(249,115,22,0.09), 2px 0 6px rgba(0,0,0,0.07)',
         borderRight: '1px solid rgba(255,255,255,0.75)',
         position: 'relative',
       }}>
@@ -153,26 +153,25 @@ const AdminPanel: React.FC = () => {
         {/* ── Brand ── */}
         <div style={{
           padding: '0 18px 20px',
-          borderBottom: '1px solid rgba(99,102,241,0.13)',
+          borderBottom: '1px solid rgba(249,115,22,0.13)',
           position: 'relative',
         }}>
-          <div style={{ color: '#1E1B4B', fontWeight: 800, fontSize: '17px', letterSpacing: '-0.4px', lineHeight: 1.2 }}>UniPulse</div>
-          <div style={{ fontSize: '10.5px', color: '#6B7280', fontWeight: 500, letterSpacing: '0.2px', marginTop: '2px' }}>Admin Control Panel</div>
+          <div style={{ color: '#1E1B4B', fontWeight: 800, fontSize: '17px', letterSpacing: '-0.4px', lineHeight: 1.2 }}>Admin Control Panel</div>
         </div>
 
         {/* ── Admin Badge ── */}
         <div style={{
           padding: '14px 18px',
-          borderBottom: '1px solid rgba(99,102,241,0.13)',
+          borderBottom: '1px solid rgba(249,115,22,0.13)',
           position: 'relative',
         }}>
           <div style={{ color: '#1E1B4B', fontWeight: 700, fontSize: '13.5px' }}>{ADMIN.name}</div>
           <div style={{
             display: 'inline-block', marginTop: '4px', padding: '2px 9px',
-            background: 'linear-gradient(90deg,#6366F1,#8B5CF6)',
+            background: 'linear-gradient(90deg,#ea580c,#fb923c)',
             borderRadius: '10px', fontSize: '9.5px', fontWeight: 800,
             color: '#FFFFFF', letterSpacing: '1.2px',
-            boxShadow: '0 2px 8px rgba(99,102,241,0.38)',
+            boxShadow: '0 2px 8px rgba(249,115,22,0.38)',
           }}>ADMIN</div>
         </div>
 

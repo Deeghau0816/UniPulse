@@ -15,10 +15,16 @@ interface AnalyticsData {
 }
 
 class AnalyticsService {
-  private readonly baseUrl = 'http://localhost:8083/api/analytics';
+  private readonly baseUrl = 'http://localhost:8081/api/analytics';
 
   async getOverallAnalytics(): Promise<AnalyticsData> {
-    const response = await fetch(`${this.baseUrl}/overall`);
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${this.baseUrl}/overall`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch overall analytics');
     }
@@ -26,7 +32,13 @@ class AnalyticsService {
   }
 
   async getTodayAnalytics(): Promise<AnalyticsData> {
-    const response = await fetch(`${this.baseUrl}/today`);
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${this.baseUrl}/today`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch today analytics');
     }
@@ -34,7 +46,13 @@ class AnalyticsService {
   }
 
   async getWeekAnalytics(): Promise<AnalyticsData> {
-    const response = await fetch(`${this.baseUrl}/week`);
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${this.baseUrl}/week`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch week analytics');
     }
@@ -42,7 +60,13 @@ class AnalyticsService {
   }
 
   async getMonthAnalytics(): Promise<AnalyticsData> {
-    const response = await fetch(`${this.baseUrl}/month`);
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${this.baseUrl}/month`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch month analytics');
     }
@@ -50,7 +74,13 @@ class AnalyticsService {
   }
 
   async getYearAnalytics(): Promise<AnalyticsData> {
-    const response = await fetch(`${this.baseUrl}/year`);
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${this.baseUrl}/year`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch year analytics');
     }
@@ -58,8 +88,15 @@ class AnalyticsService {
   }
 
   async getCustomAnalytics(startDate: string, endDate: string): Promise<AnalyticsData> {
+    const token = localStorage.getItem('authToken');
     const response = await fetch(
-      `${this.baseUrl}/custom?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+      `${this.baseUrl}/custom?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      }
     );
     if (!response.ok) {
       throw new Error('Failed to fetch custom analytics');
@@ -68,7 +105,13 @@ class AnalyticsService {
   }
 
   async getKPISummary(): Promise<AnalyticsData> {
-    const response = await fetch(`${this.baseUrl}/kpi`);
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${this.baseUrl}/kpi`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch KPI summary');
     }

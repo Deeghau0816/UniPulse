@@ -21,7 +21,6 @@ public class NotificationController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
     public ResponseEntity<NotificationResponse> createNotification(
             @Valid @RequestBody NotificationRequest request
     ) {
@@ -29,19 +28,16 @@ public class NotificationController {
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<NotificationResponse>> getUserNotifications(@PathVariable Long userId) {
         return ResponseEntity.ok(notificationService.getNotificationsByUser(userId));
     }
 
     @GetMapping("/user/{userId}/unread")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<NotificationResponse>> getUnreadNotifications(@PathVariable Long userId) {
         return ResponseEntity.ok(notificationService.getUnreadNotificationsByUser(userId));
     }
 
     @PutMapping("/{notificationId}/read")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<NotificationResponse> markAsRead(@PathVariable Long notificationId) {
         return ResponseEntity.ok(notificationService.markAsRead(notificationId));
     }

@@ -4,7 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import './App.css';
 
-// Pages
+// Pages - Tickets
 import LoginPage from './pages/LoginPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import MyTicketsPage from './pages/MyTicketsPage';
@@ -23,6 +23,15 @@ import CustomerResourceDetailsPage from './pages/CustomerResourceDetailsPage';
 import UserPanel from './pages/reservation/UserPanel';
 import AdminPanel from './pages/reservation/ReservationAdminPanel';
 
+// Pages - Facilities & Reservations
+import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
+import ResourceDetailsPage from './pages/ResourceDetailsPage';
+import AddResourcePage from './pages/AddResourcePage';
+import CustomerFacilitiesPage from './pages/CustomerFacilitiesPage';
+import CustomerResourceDetailsPage from './pages/CustomerResourceDetailsPage';
+import UserPanel from './pages/reservation/UserPanel';
+import AdminPanel from './pages/reservation/ReservationAdminPanel';
+
 function App() {
   return (
     <AuthProvider>
@@ -33,7 +42,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-          {/* User routes - USER role only */}
+          {/* User routes */}
           <Route
             path="/dashboard/my-tickets"
             element={
@@ -59,7 +68,7 @@ function App() {
             }
           />
 
-          {/* Technician routes - TECHNICIAN role only */}
+          {/* Technician routes */}
           <Route
             path="/dashboard/technician/tickets"
             element={
@@ -77,7 +86,7 @@ function App() {
             }
           />
 
-          {/* Admin routes - ADMIN role only */}
+          {/* Admin routes */}
           <Route
             path="/dashboard/admin/tickets"
             element={
@@ -139,7 +148,7 @@ function App() {
             }
           />
 
-          {/* Fallback route for unauthorized access */}
+          {/* Fallback */}
           <Route path="*" element={<UnauthorizedPage />} />
         </Routes>
       </BrowserRouter>
@@ -148,4 +157,3 @@ function App() {
 }
 
 export default App;
-

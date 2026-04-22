@@ -9,11 +9,17 @@ const NotificationsPage = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
+  // Get current user ID - hardcoded for testing
+  const getCurrentUserId = (): number => {
+    return 1; // Use hardcoded user ID for testing
+  };
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
         setLoading(true);
-        const notificationData = await notificationService.getAllNotifications();
+        const userId = getCurrentUserId();
+        const notificationData = await notificationService.getAllNotifications(userId);
         setNotifications(notificationData);
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
@@ -33,18 +39,29 @@ const NotificationsPage = () => {
 
   const unreadCount = notifications.filter((item) => !item.isRead).length;
 
-  const markAsRead = (id: number): void => {
-    setNotifications((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, isRead: true } : item
-      )
-    );
+  const markAsRead = async (id: number): Promise<void> => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, isRead: true } : item
+        )
+      );
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
   };
 
-  const markAllAsRead = (): void => {
-    setNotifications((prev) =>
-      prev.map((item) => ({ ...item, isRead: true }))
-    );
+  const markAllAsRead = async (): Promise<void> => {
+    try {
+      const userId = getCurrentUserId();
+      await notificationService.markAllAsRead(userId);
+      setNotifications((prev) =>
+        prev.map((item) => ({ ...item, isRead: true }))
+      );
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+    }
   };
 
   const getNotificationClass = (type: NotificationType): string => {

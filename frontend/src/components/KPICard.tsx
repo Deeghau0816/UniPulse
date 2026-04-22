@@ -26,34 +26,34 @@ const KPICard = ({
   const getColorClasses = () => {
     const baseClasses = {
       primary: {
-        bg: 'linear-gradient(135deg, #fb923c, #ffffff)',
-        lightBg: '#fff7ed',
-        text: '#ea580c',
-        border: '#fdba74'
+        bg: 'linear-gradient(135deg, #3B82F6, #ffffff)',
+        lightBg: '#EFF6FF',
+        text: '#3B82F6',
+        border: '#93C5FD'
       },
       success: {
-        bg: 'linear-gradient(135deg, #c0bab5, #ffffff)',
-        lightBg: '#fff7ed',
-        text: '#ea580c',
-        border: '#fdba74'
+        bg: 'linear-gradient(135deg, #10B981, #ffffff)',
+        lightBg: '#ECFDF5',
+        text: '#10B981',
+        border: '#6EE7B7'
       },
       warning: {
-        bg: 'linear-gradient(135deg, #fb923c, #ffffff)',
-        lightBg: '#fff7ed',
-        text: '#ea580c',
-        border: '#fdba74'
+        bg: 'linear-gradient(135deg, #F59E0B, #ffffff)',
+        lightBg: '#FFFBEB',
+        text: '#F59E0B',
+        border: '#FCD34D'
       },
       danger: {
-        bg: 'linear-gradient(135deg, #fb923c, #ffffff)',
-        lightBg: '#fff7ed',
-        text: '#ea580c',
-        border: '#fdba74'
+        bg: 'linear-gradient(135deg, #EF4444, #ffffff)',
+        lightBg: '#FEF2F2',
+        text: '#EF4444',
+        border: '#FCA5A5'
       },
       info: {
-        bg: 'linear-gradient(135deg, #fb923c, #ffffff)',
-        lightBg: '#fff7ed',
-        text: '#ea580c',
-        border: '#fdba74'
+        bg: 'linear-gradient(135deg, #8B5CF6, #ffffff)',
+        lightBg: '#EDE9FE',
+        text: '#8B5CF6',
+        border: '#C4B5FD'
       }
     };
     
@@ -172,7 +172,7 @@ const KPICard = ({
         .kpi-content {
           position: relative;
           z-index: 2;
-          color: white;
+          color: ${colors.text};
         }
         
         .kpi-header {

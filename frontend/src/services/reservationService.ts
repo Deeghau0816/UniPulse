@@ -139,24 +139,24 @@ export const reservationService = {
 
 export const notificationService = {
   getByUser: async (userId: string): Promise<UserNotification[]> => {
-    const res = await apiClient.get<ApiResponse<UserNotification[]>>(`/notifications/user/${userId}`);
+    const res = await apiClient.get<ApiResponse<UserNotification[]>>(`/reservation-notifications/user/${userId}`);
     return res.data.data;
   },
 
   getUnreadCount: async (userId: string): Promise<number> => {
-    const res = await apiClient.get<ApiResponse<number>>(`/notifications/user/${userId}/unread-count`);
+    const res = await apiClient.get<ApiResponse<number>>(`/reservation-notifications/user/${userId}/unread-count`);
     return res.data.data;
   },
 
   markAllRead: async (userId: string): Promise<void> => {
-    await apiClient.put(`/notifications/user/${userId}/mark-all-read`);
+    await apiClient.put(`/reservation-notifications/user/${userId}/mark-all-read`);
   },
 
   markOneRead: async (id: number): Promise<void> => {
-    await apiClient.put(`/notifications/${id}/read`);
+    await apiClient.put(`/reservation-notifications/${id}/read`);
   },
 
   deleteNotification: async (id: number): Promise<void> => {
-    await apiClient.delete(`/notifications/${id}`);
+    await apiClient.delete(`/reservation-notifications/${id}`);
   },
 };

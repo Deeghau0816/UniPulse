@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'http://localhost:8081/api';
 
 export type NotificationType = 'STATUS_CHANGE' | 'NEW_COMMENT' | 'ASSIGNMENT';
 export type FilterType = 'ALL' | 'UNREAD' | NotificationType;
@@ -14,25 +14,110 @@ export interface NotificationItem {
 }
 
 class NotificationService {
-  // Mock notifications for now - in a real app, this would fetch from backend
-  private mockNotifications: NotificationItem[] = [];
+  private readonly API_BASE_URL = 'http://localhost:8081/api';
 
-  async getAllNotifications(): Promise<NotificationItem[]> {
-    // For now, return empty array since backend doesn't have notification endpoints
-    // In future, this would be: return fetch(`${API_BASE_URL}/notifications`).then(res => res.json());
-    return this.mockNotifications;
+  async getAllNotifications(userId: number): Promise<NotificationItem[]> {
+    try {
+      const response = await fetch(`${this.API_BASE_URL}/notifications/user/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Backend returns array directly, not wrapped in data object
+      const notifications = Array.isArray(data) ? data : data.data || [];
+      
+      // Transform backend notification format to frontend format
+      return notifications.map((notif: any) => ({
+        id: notif.id,
+        type: this.getNotificationTypeFromTitle(notif.title),
+        title: notif.title,
+        message: notif.message,
+        relatedTicketId: this.extractTicketId(notif.title, notif.message),
+        isRead: notif.isRead,
+        createdAt: notif.createdAt
+      }));
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      throw error;
+    }
+  }
+
+  async getUnreadNotifications(userId: number): Promise<NotificationItem[]> {
+    try {
+      const response = await fetch(`${this.API_BASE_URL}/notifications/user/${userId}/unread`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Backend returns array directly, not wrapped in data object
+      const notifications = Array.isArray(data) ? data : data.data || [];
+      
+      // Transform backend notification format to frontend format
+      return notifications.map((notif: any) => ({
+        id: notif.id,
+        type: this.getNotificationTypeFromTitle(notif.title),
+        title: notif.title,
+        message: notif.message,
+        relatedTicketId: this.extractTicketId(notif.title, notif.message),
+        isRead: notif.isRead,
+        createdAt: notif.createdAt
+      }));
+    } catch (error) {
+      console.error('Error fetching unread notifications:', error);
+      throw error;
+    }
   }
 
   async markAsRead(id: number): Promise<void> {
-    // Mock implementation - would call backend API
-    this.mockNotifications = this.mockNotifications.map(item =>
-      item.id === id ? { ...item, isRead: true } : item
-    );
+    try {
+      const response = await fetch(`${this.API_BASE_URL}/notifications/${id}/read`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw error;
+    }
   }
 
-  async markAllAsRead(): Promise<void> {
-    // Mock implementation - would call backend API
-    this.mockNotifications = this.mockNotifications.map(item => ({ ...item, isRead: true }));
+  async markAllAsRead(userId: number): Promise<void> {
+    try {
+      const response = await fetch(`${this.API_BASE_URL}/notifications/user/${userId}/read-all`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      throw error;
+    }
   }
 
   generateMockNotification(ticketId: string, type: NotificationType, message: string): NotificationItem {
@@ -58,6 +143,23 @@ class NotificationService {
       default:
         return 'Notification';
     }
+  }
+
+  private getNotificationTypeFromTitle(title: string): NotificationType {
+    if (title.includes('Status') || title.includes('status')) {
+      return 'STATUS_CHANGE';
+    } else if (title.includes('Comment') || title.includes('comment')) {
+      return 'NEW_COMMENT';
+    } else if (title.includes('Assigned') || title.includes('Assignment')) {
+      return 'ASSIGNMENT';
+    }
+    return 'STATUS_CHANGE'; // Default type
+  }
+
+  private extractTicketId(title: string, message: string): string {
+    // Extract ticket ID from title or message using regex
+    const ticketMatch = title.match(/#(\w+)/) || message.match(/#(\w+)/);
+    return ticketMatch ? ticketMatch[1] : 'UNKNOWN';
   }
 }
 
