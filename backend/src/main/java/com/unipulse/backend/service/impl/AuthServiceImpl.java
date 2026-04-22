@@ -1,8 +1,10 @@
 package com.unipulse.backend.service.impl;
 
+import com.unipulse.backend.Mapper.UserMapper;
 import com.unipulse.backend.Repository.NotificationRepository;
 import com.unipulse.backend.Repository.UserRepository;
 import com.unipulse.backend.dto.AuthResponse;
+import com.unipulse.backend.dto.CompleteProfileRequest;
 import com.unipulse.backend.dto.LoginRequest;
 import com.unipulse.backend.dto.RegisterRequest;
 import com.unipulse.backend.model.AuthProvider;
@@ -46,12 +48,21 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Email is already registered");
         }
 
+        if (userRepository.findBySliitId(request.getSliitId()).isPresent()) {
+            throw new RuntimeException("SLIIT ID is already registered");
+        }
+
+        Role selectedRole = parseAllowedSignupRole(request.getRole());
+
         User user = new User();
-        user.setFullName(request.getFullName());
-        user.setEmail(request.getEmail());
+        user.setFirstName(request.getFirstName().trim());
+        user.setLastName(request.getLastName().trim());
+        user.setSliitId(request.getSliitId().trim());
+        user.setEmail(request.getEmail().trim().toLowerCase());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.STUDENT);
+        user.setRole(selectedRole);
         user.setProvider(AuthProvider.LOCAL);
+        user.setProfileCompleted(true);
 
         User savedUser = userRepository.save(user);
 
@@ -72,19 +83,14 @@ public class AuthServiceImpl implements AuthService {
             System.out.println("Registration email failed: " + e.getMessage());
         }
 
-        return new AuthResponse(
-                "User registered successfully",
-                savedUser.getId(),
-                savedUser.getFullName(),
-                savedUser.getEmail(),
-                savedUser.getRole().name(),
-                null
-        );
+        String jwtToken = generateTokenForUser(savedUser);
+
+        return new AuthResponse(jwtToken, UserMapper.toDto(savedUser));
     }
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -108,25 +114,63 @@ public class AuthServiceImpl implements AuthService {
             System.out.println("Login email failed: " + e.getMessage());
         }
 
+        String jwtToken = generateTokenForUser(user);
+
+        return new AuthResponse(jwtToken, UserMapper.toDto(user));
+    }
+
+    @Override
+    public AuthResponse completeProfile(String email, CompleteProfileRequest request) {
+        User user = userRepository.findByEmail(email.trim().toLowerCase())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String sliitId = request.getSliitId().trim();
+
+        userRepository.findBySliitId(sliitId)
+                .filter(existingUser -> !existingUser.getId().equals(user.getId()))
+                .ifPresent(existingUser -> {
+                    throw new RuntimeException("SLIIT ID is already registered");
+                });
+
+        Role selectedRole = parseAllowedSignupRole(request.getRole());
+
+        user.setSliitId(sliitId);
+        user.setRole(selectedRole);
+        user.setProfileCompleted(true);
+
+        User savedUser = userRepository.save(user);
+
+        String jwtToken = generateTokenForUser(savedUser);
+
+        return new AuthResponse(jwtToken, UserMapper.toDto(savedUser));
+    }
+
+    private Role parseAllowedSignupRole(String rawRole) {
+        if (rawRole == null || rawRole.isBlank()) {
+            throw new RuntimeException("Role is required");
+        }
+
+        Role role;
+        try {
+            role = Role.valueOf(rawRole.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException("Invalid role");
+        }
+
+        if (role != Role.STUDENT && role != Role.LECTURER) {
+            throw new RuntimeException("Only STUDENT or LECTURER can be selected during signup");
+        }
+
+        return role;
+    }
+
+    private String generateTokenForUser(User user) {
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
         );
 
-        String jwtToken = userJwtService.generateToken(
-                userDetails,
-                user.getId(),
-                user.getRole().name()
-        );
-
-        return new AuthResponse(
-                "Login successful",
-                user.getId(),
-                user.getFullName(),
-                user.getEmail(),
-                user.getRole().name(),
-                jwtToken
-        );
+        return userJwtService.generateToken(userDetails, user);
     }
 }

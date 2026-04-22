@@ -21,7 +21,7 @@ const apiClient = axios.create({
 
 // Auth token interceptor (for Module E OAuth2 integration)
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('token') ?? localStorage.getItem('authToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });

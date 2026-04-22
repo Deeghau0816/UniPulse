@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/api/reservation-notifications")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173")
 public class ReservationNotificationController {
@@ -46,10 +46,12 @@ public class ReservationNotificationController {
     @PutMapping("/{id}/read")
     @Transactional
     public ResponseEntity<ApiResponse<ReservationNotificationDTO>> markOneRead(@PathVariable Long id) {
-        return notificationRepository.findById(id).map(n -> {
-            n.setRead(true);
-            notificationRepository.save(n);
-            return ResponseEntity.ok(ApiResponse.success("Marked as read", ReservationNotificationDTO.fromEntity(n)));
+        return notificationRepository.findById(id).map(notification -> {
+            notification.setRead(true);
+            notificationRepository.save(notification);
+            return ResponseEntity.ok(
+                    ApiResponse.success("Marked as read", ReservationNotificationDTO.fromEntity(notification))
+            );
         }).orElse(ResponseEntity.notFound().build());
     }
 
