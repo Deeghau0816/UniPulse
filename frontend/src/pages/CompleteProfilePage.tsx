@@ -92,7 +92,8 @@ export default function CompleteProfilePage() {
                 className="block w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all sm:text-sm"
               >
                 <option value="STUDENT">Student</option>
-                <option value="LECTURER">Lecturer</option>
+                <option value="ACADEMIC">Academic Staff</option>
+                <option value="NON_ACADEMIC">Non-Academic Staff</option>
               </select>
             </div>
           </div>

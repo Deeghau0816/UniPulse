@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
 import Navbar from '../components/Navbar';
 import BottomBar from '../components/BottomBar';
 import { Shield, Check, X, Search, Filter, ShieldCheck, Clock } from 'lucide-react';
@@ -6,82 +7,111 @@ import { Shield, Check, X, Search, Filter, ShieldCheck, Clock } from 'lucide-rea
 type RoleRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 interface AdminRoleRequest {
-  id: string;
+  id: number;
   userName: string;
   userEmail: string;
   currentRole: string;
   requestedRole: string;
   reason: string;
   status: RoleRequestStatus;
-  date: string;
+  createdAt: string;
 }
+
+const API_BASE_URL = 'http://localhost:8081';
+
+const roleLabel = (role: string) => {
+  switch ((role || '').toUpperCase()) {
+    case 'STUDENT':
+      return 'Student';
+    case 'ACADEMIC':
+      return 'Academic Staff';
+    case 'NON_ACADEMIC':
+      return 'Non-Academic Staff';
+    case 'TECHNICIAN':
+      return 'Technician';
+    case 'SYSTEM_ADMIN':
+      return 'System Admin';
+    default:
+      return role;
+  }
+};
 
 export default function AdminRoleRequestsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'ALL' | RoleRequestStatus>('PENDING');
+  const [requests, setRequests] = useState<AdminRoleRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const [requests, setRequests] = useState<AdminRoleRequest[]>([
-    {
-      id: 'REQ-101',
-      userName: 'John Doe',
-      userEmail: 'john.doe@university.edu',
-      currentRole: 'STUDENT',
-      requestedRole: 'TECHNICIAN',
-      reason: 'Joined the campus IT support team for the current semester.',
-      status: 'PENDING',
-      date: '2023-11-05',
-    },
-    {
-      id: 'REQ-102',
-      userName: 'Jane Smith',
-      userEmail: 'jane.smith@university.edu',
-      currentRole: 'FACULTY',
-      requestedRole: 'ADMIN',
-      reason: 'Requires admin rights to configure new department resources.',
-      status: 'PENDING',
-      date: '2023-11-06',
-    },
-    {
-      id: 'REQ-103',
-      userName: 'Alice Johnson',
-      userEmail: 'alice.j@university.edu',
-      currentRole: 'STUDENT',
-      requestedRole: 'FACULTY',
-      reason: 'I am a TA and need faculty access for grading.',
-      status: 'REJECTED',
-      date: '2023-11-01',
-    },
-    {
-      id: 'REQ-104',
-      userName: 'Bob Wilson',
-      userEmail: 'bob.w@university.edu',
-      currentRole: 'TECHNICIAN',
-      requestedRole: 'ADMIN',
-      reason: 'Promoted to lead technician, need system configuration access.',
-      status: 'APPROVED',
-      date: '2023-10-28',
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/users/admin/role-requests`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setRequests(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch admin role requests:', error);
+      setRequests([]);
+    } finally {
+      setLoading(false);
     }
-  ]);
-
-  const handleApprove = (id: string) => {
-    setRequests(requests.map(req => 
-      req.id === id ? { ...req, status: 'APPROVED' } : req
-    ));
   };
 
-  const handleReject = (id: string) => {
-    setRequests(requests.map(req => 
-      req.id === id ? { ...req, status: 'REJECTED' } : req
-    ));
+  const handleApprove = async (id: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `${API_BASE_URL}/api/users/admin/role-requests/${id}/approve`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      await fetchRequests();
+    } catch (error: any) {
+      console.error(error);
+      alert(error?.response?.data?.message || 'Failed to approve request');
+    }
   };
 
-  const filteredRequests = requests.filter(req => {
-    const matchesSearch = req.userName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          req.userEmail.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === 'ALL' || req.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  const handleReject = async (id: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `${API_BASE_URL}/api/users/admin/role-requests/${id}/reject`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      await fetchRequests();
+    } catch (error: any) {
+      console.error(error);
+      alert(error?.response?.data?.message || 'Failed to reject request');
+    }
+  };
+
+  const filteredRequests = useMemo(() => {
+    return requests.filter((req) => {
+      const matchesSearch =
+        req.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        req.userEmail.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesFilter = filterStatus === 'ALL' || req.status === filterStatus;
+      return matchesSearch && matchesFilter;
+    });
+  }, [requests, searchQuery, filterStatus]);
 
   const getStatusBadge = (status: RoleRequestStatus) => {
     switch (status) {
@@ -99,8 +129,6 @@ export default function AdminRoleRequestsPage() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16 mb-20 sm:mb-0">
-        
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <Shield className="w-8 h-8 text-blue-700" />
@@ -112,10 +140,7 @@ export default function AdminRoleRequestsPage() {
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-          
-          {/* Toolbar */}
           <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-4 justify-between items-center">
-            
             <div className="relative w-full sm:w-72">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="w-4 h-4 text-slate-400" />
@@ -144,7 +169,6 @@ export default function AdminRoleRequestsPage() {
             </div>
           </div>
 
-          {/* Table Container for horizontal scrolling on mobile */}
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -157,7 +181,13 @@ export default function AdminRoleRequestsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-                {filteredRequests.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                      Loading requests...
+                    </td>
+                  </tr>
+                ) : filteredRequests.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                       No requests found matching the current filters.
@@ -172,16 +202,22 @@ export default function AdminRoleRequestsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-xs font-semibold">{req.currentRole}</span>
+                          <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-xs font-semibold">
+                            {roleLabel(req.currentRole)}
+                          </span>
                           <span className="text-slate-400">→</span>
-                          <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">{req.requestedRole}</span>
+                          <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">
+                            {roleLabel(req.requestedRole)}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <p className="truncate max-w-xs text-slate-600" title={req.reason}>
                           {req.reason}
                         </p>
-                        <div className="text-xs text-slate-400 mt-1">{req.date}</div>
+                        <div className="text-xs text-slate-400 mt-1">
+                          {new Date(req.createdAt).toLocaleDateString()}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         {getStatusBadge(req.status)}
@@ -214,7 +250,6 @@ export default function AdminRoleRequestsPage() {
               </tbody>
             </table>
           </div>
-
         </div>
       </main>
 

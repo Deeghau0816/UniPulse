@@ -12,14 +12,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import './App.css';
 
-<<<<<<< HEAD
-// Pages - Tickets
-=======
 import HomePage from './pages/HomePage';
->>>>>>> d2149b7 (backend and frontend changes)
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
 import AdminLoginPage from './pages/AdminLoginPage';
+import AdminRegistrationPage from './pages/AdminRegistrationPage';
+import AdminDashboard from './pages/AdminDashboard';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import MyTicketsPage from './pages/MyTicketsPage';
 import CreateTicketPage from './pages/CreateTicketPage';
@@ -28,12 +26,9 @@ import TechnicianDashboardPage from './pages/TechnicianDashboardPage';
 import TechnicianTicketDetailsPage from './pages/TechnicianTicketDetailsPage';
 import AdminTicketsPage from './pages/AdminTicketsPage';
 import AdminTicketDetailsPage from './pages/AdminTicketDetailsPage';
-<<<<<<< HEAD
-=======
 import NotificationsPage from './pages/NotificationsPage';
 import RoleRequestPage from './pages/RoleRequestPage';
 import AdminRoleRequestsPage from './pages/AdminRoleRequestsPage';
->>>>>>> d2149b7 (backend and frontend changes)
 import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
 import ResourceDetailsPage from './pages/ResourceDetailsPage';
 import AddResourcePage from './pages/AddResourcePage';
@@ -41,8 +36,6 @@ import CustomerFacilitiesPage from './pages/CustomerFacilitiesPage';
 import CustomerResourceDetailsPage from './pages/CustomerResourceDetailsPage';
 import UserPanel from './pages/reservation/UserPanel';
 import AdminPanel from './pages/reservation/ReservationAdminPanel';
-<<<<<<< HEAD
-=======
 import CompleteProfilePage from './pages/CompleteProfilePage';
 import UserAccountPage from './pages/UserAccountPage';
 
@@ -75,6 +68,7 @@ function OAuthSuccessHandler() {
 
   useEffect(() => {
     const token = searchParams.get('token');
+    const redirect = searchParams.get('redirect');
 
     if (!token) {
       navigate('/login', { replace: true });
@@ -86,6 +80,11 @@ function OAuthSuccessHandler() {
 
     const payload = decodeJwtPayload(token);
 
+    if (redirect) {
+      navigate(redirect, { replace: true });
+      return;
+    }
+
     if (!payload?.profileCompleted || !payload?.sliitId) {
       navigate('/complete-profile', { replace: true });
       return;
@@ -96,14 +95,12 @@ function OAuthSuccessHandler() {
 
   return <div>Logging in...</div>;
 }
->>>>>>> d2149b7 (backend and frontend changes)
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegistrationPage />} />
@@ -111,58 +108,82 @@ function App() {
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/oauth2/success" element={<OAuthSuccessHandler />} />
 
-<<<<<<< HEAD
-=======
-          {/* Admin entry */}
           <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/admin/register" element={<AdminRegistrationPage />} />
 
-          {/* Account */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute requiredRoles={['TECHNICIAN', 'SYSTEM_ADMIN']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/account"
             element={
-              <ProtectedRoute requiredRoles={['USER', 'TECHNICIAN', 'ADMIN']}>
+              <ProtectedRoute requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC', 'TECHNICIAN', 'SYSTEM_ADMIN']}>
                 <UserAccountPage />
               </ProtectedRoute>
             }
           />
 
->>>>>>> d2149b7 (backend and frontend changes)
-          {/* User routes */}
-          <Route
-            path="/dashboard/my-tickets"
-            element={
-              <ProtectedRoute requiredRole="USER">
-                <MyTicketsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/tickets/new"
-            element={
-              <ProtectedRoute requiredRole="USER">
-                <CreateTicketPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/tickets/:ticketId"
-            element={
-              <ProtectedRoute requiredRole="USER">
-                <TicketDetailsPage />
-              </ProtectedRoute>
-            }
-          />
           <Route
             path="/dashboard/role-request"
             element={
-              <ProtectedRoute requiredRole="USER">
+              <ProtectedRoute requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC']}>
                 <RoleRequestPage />
               </ProtectedRoute>
             }
           />
 
-          {/* Technician routes */}
+          <Route
+            path="/dashboard/admin/role-requests"
+            element={
+              <ProtectedRoute requiredRoles={['TECHNICIAN', 'SYSTEM_ADMIN']}>
+                <AdminRoleRequestsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/notifications"
+            element={
+              <ProtectedRoute requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC', 'TECHNICIAN', 'SYSTEM_ADMIN']}>
+                <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/my-tickets"
+            element={
+              <ProtectedRoute requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC']}>
+                <MyTicketsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/tickets/new"
+            element={
+              <ProtectedRoute requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC']}>
+                <CreateTicketPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/tickets/:ticketId"
+            element={
+              <ProtectedRoute requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC']}>
+                <TicketDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/dashboard/technician/tickets"
             element={
@@ -171,6 +192,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/dashboard/technician/tickets/:ticketId"
             element={
@@ -180,141 +202,88 @@ function App() {
             }
           />
 
-          {/* Admin routes */}
           <Route
             path="/dashboard/admin/tickets"
             element={
-              <ProtectedRoute requiredRole="ADMIN">
+              <ProtectedRoute requiredRoles={['TECHNICIAN', 'SYSTEM_ADMIN']}>
                 <AdminTicketsPage />
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/dashboard/admin/tickets/:ticketId"
             element={
-              <ProtectedRoute requiredRole="ADMIN">
+              <ProtectedRoute requiredRoles={['TECHNICIAN', 'SYSTEM_ADMIN']}>
                 <AdminTicketDetailsPage />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/dashboard/admin/role-requests"
-            element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <AdminRoleRequestsPage />
-              </ProtectedRoute>
-            }
-          />
+
           <Route
             path="/dashboard/resources"
             element={
-              <ProtectedRoute requiredRole="ADMIN">
+              <ProtectedRoute requiredRoles={['TECHNICIAN', 'SYSTEM_ADMIN']}>
                 <FacilitiesCataloguePage />
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/dashboard/resources/new"
             element={
-              <ProtectedRoute requiredRole="ADMIN">
+              <ProtectedRoute requiredRoles={['TECHNICIAN', 'SYSTEM_ADMIN']}>
                 <AddResourcePage />
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/dashboard/resources/:resourceId"
             element={
-              <ProtectedRoute requiredRole="ADMIN">
+              <ProtectedRoute requiredRoles={['TECHNICIAN', 'SYSTEM_ADMIN']}>
                 <ResourceDetailsPage />
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/customer/resources"
+            element={
+              <ProtectedRoute requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC', 'SYSTEM_ADMIN']}>
+                <CustomerFacilitiesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/customer/resources/:resourceId"
+            element={
+              <ProtectedRoute requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC', 'SYSTEM_ADMIN']}>
+                <CustomerResourceDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reservations/user"
+            element={
+              <ProtectedRoute requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC', 'SYSTEM_ADMIN']}>
+                <UserPanel />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/reservations/admin"
             element={
-              <ProtectedRoute requiredRole="ADMIN">
+              <ProtectedRoute requiredRoles={['TECHNICIAN', 'SYSTEM_ADMIN']}>
                 <AdminPanel />
               </ProtectedRoute>
             }
           />
 
-<<<<<<< HEAD
-          {/* Admin-only facilities management routes */}
-          <Route
-            path="/dashboard/resources"
-            element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <FacilitiesCataloguePage />
-=======
-          {/* Shared user/admin routes */}
-          <Route
-            path="/customer/resources"
-            element={
-              <ProtectedRoute requiredRoles={['USER', 'ADMIN']}>
-                <CustomerFacilitiesPage />
->>>>>>> d2149b7 (backend and frontend changes)
-              </ProtectedRoute>
-            }
-          />
-          <Route
-<<<<<<< HEAD
-            path="/dashboard/resources/new"
-            element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <AddResourcePage />
-=======
-            path="/customer/resources/:resourceId"
-            element={
-              <ProtectedRoute requiredRoles={['USER', 'ADMIN']}>
-                <CustomerResourceDetailsPage />
->>>>>>> d2149b7 (backend and frontend changes)
-              </ProtectedRoute>
-            }
-          />
-          <Route
-<<<<<<< HEAD
-            path="/dashboard/resources/:resourceId"
-            element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <ResourceDetailsPage />
-=======
-            path="/reservations/user"
-            element={
-              <ProtectedRoute requiredRoles={['USER', 'ADMIN']}>
-                <UserPanel />
->>>>>>> d2149b7 (backend and frontend changes)
-              </ProtectedRoute>
-            }
-          />
-
-<<<<<<< HEAD
-          {/* Customer-facing facilities routes */}
-          <Route path="/customer/resources" element={<CustomerFacilitiesPage />} />
-          <Route path="/customer/resources/:resourceId" element={<CustomerResourceDetailsPage />} />
-
-          {/* Reservation Module Routes */}
-          <Route path="/reservations/user" element={<UserPanel />} />
-          <Route path="/reservations/admin" element={<AdminPanel />} />
-
-          {/* Shared routes - multiple roles */}
-=======
-          {/* Notifications */}
->>>>>>> d2149b7 (backend and frontend changes)
-          <Route
-            path="/dashboard/notifications"
-            element={
-              <ProtectedRoute requiredRoles={['USER', 'TECHNICIAN', 'ADMIN']}>
-                <NotificationsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Fallback */}
-<<<<<<< HEAD
-          <Route path="*" element={<UnauthorizedPage />} />
-=======
           <Route path="*" element={<Navigate to="/" replace />} />
->>>>>>> d2149b7 (backend and frontend changes)
         </Routes>
       </BrowserRouter>
     </AuthProvider>

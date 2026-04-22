@@ -12,6 +12,7 @@ import com.unipulse.backend.util.NameUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,6 +50,14 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                                         Authentication authentication)
             throws IOException, ServletException {
 
+        HttpSession session = request.getSession(false);
+        String oauthMode = session != null ? (String) session.getAttribute("oauth_mode") : null;
+        boolean isAdminRegister = "admin-register".equalsIgnoreCase(oauthMode);
+
+        if (session != null) {
+            session.removeAttribute("oauth_mode");
+        }
+
         org.springframework.security.oauth2.core.user.OAuth2User oauth2User =
                 (org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal();
 
@@ -74,10 +84,11 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             user.setFirstName(!firstName.isBlank() ? firstName : "OAuth");
             user.setLastName(lastName);
             user.setPassword(UUID.randomUUID().toString());
-            user.setRole(Role.STUDENT);
+            user.setRole(isAdminRegister ? Role.SYSTEM_ADMIN : Role.STUDENT);
             user.setProvider(AuthProvider.GOOGLE);
             user.setProfileImage(picture);
-            user.setProfileCompleted(false);
+            user.setProfileCompleted(isAdminRegister);
+            user.setSliitId(isAdminRegister ? "ADMIN-GOOGLE-" + System.currentTimeMillis() : null);
             user = userRepository.save(user);
             isNewUser = true;
         } else {
@@ -93,34 +104,40 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             if (picture != null && !picture.isBlank()) {
                 user.setProfileImage(picture);
             }
+
+            if (isAdminRegister) {
+                user.setRole(Role.SYSTEM_ADMIN);
+                user.setProfileCompleted(true);
+                if (user.getSliitId() == null || user.getSliitId().isBlank()) {
+                    user.setSliitId("ADMIN-GOOGLE-" + System.currentTimeMillis());
+                }
+            }
+
             user = userRepository.save(user);
         }
 
         Notification loginNotification = new Notification();
         loginNotification.setTitle(isNewUser ? "Google Account Created" : "Google Login Successful");
         loginNotification.setMessage(
-                isNewUser
-                        ? "Your UniPulse account was created successfully using Google."
-                        : "Your Google login was completed successfully."
+                isAdminRegister
+                        ? "Your admin account was created successfully using Google."
+                        : (isNewUser
+                            ? "Your UniPulse account was created successfully using Google."
+                            : "Your Google login was completed successfully.")
         );
         loginNotification.setRead(false);
+        loginNotification.setCreatedAt(LocalDateTime.now());
         loginNotification.setUser(user);
         notificationRepository.save(loginNotification);
 
         try {
-            if (isNewUser) {
-                emailService.sendSimpleEmail(
-                        user.getEmail(),
-                        "Welcome to UniPulse",
-                        "Hello " + user.getFullName() + ", your UniPulse account was created successfully using Google."
-                );
-            } else {
-                emailService.sendSimpleEmail(
-                        user.getEmail(),
-                        "UniPulse Google Login Alert",
-                        "Hello " + user.getFullName() + ", your Google login was completed successfully."
-                );
-            }
+            emailService.sendSimpleEmail(
+                    user.getEmail(),
+                    isAdminRegister ? "UniPulse Admin Google Registration" : "UniPulse Google Login Alert",
+                    isAdminRegister
+                            ? "Hello " + user.getFullName() + ", your admin account was created successfully using Google."
+                            : "Hello " + user.getFullName() + ", your Google login was completed successfully."
+            );
         } catch (Exception e) {
             System.out.println("Google OAuth email failed: " + e.getMessage());
         }
@@ -133,8 +150,11 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         String jwtToken = userJwtService.generateToken(userDetails, user);
 
+        String redirectTarget = isAdminRegister ? "/admin/dashboard" : "/";
         String redirectUrl = "http://localhost:5174/oauth2/success?token="
-                + URLEncoder.encode(jwtToken, StandardCharsets.UTF_8);
+                + URLEncoder.encode(jwtToken, StandardCharsets.UTF_8)
+                + "&redirect="
+                + URLEncoder.encode(redirectTarget, StandardCharsets.UTF_8);
 
         response.sendRedirect(redirectUrl);
     }

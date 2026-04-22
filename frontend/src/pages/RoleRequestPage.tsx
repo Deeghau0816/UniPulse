@@ -1,84 +1,101 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
 import Navbar from '../components/Navbar';
 import BottomBar from '../components/BottomBar';
 import { UserPlus, Clock, CheckCircle, XCircle, ChevronDown, Send } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 type RoleRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 interface RoleRequest {
-  id: string;
+  id: number;
   requestedRole: string;
   reason: string;
   status: RoleRequestStatus;
-  date: string;
+  createdAt: string;
 }
 
+const API_BASE_URL = 'http://localhost:8081';
+
 const roleLabelMap: Record<string, string> = {
-  USER: 'Student',
   STUDENT: 'Student',
-  FACULTY: 'Lecturer',
-  LECTURER: 'Lecturer',
+  ACADEMIC: 'Academic Staff',
+  NON_ACADEMIC: 'Non-Academic Staff',
   TECHNICIAN: 'Technician',
-  ADMIN: 'Admin',
+  SYSTEM_ADMIN: 'System Admin',
 };
 
 export default function RoleRequestPage() {
-  const [role, setRole] = useState('LECTURER');
+  const { user } = useAuth();
+  const [role, setRole] = useState('ACADEMIC');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
+  const [requests, setRequests] = useState<RoleRequest[]>([]);
+  const [fetching, setFetching] = useState(true);
 
-  const [requests, setRequests] = useState<RoleRequest[]>([
-    {
-      id: 'REQ-001',
-      requestedRole: 'TECHNICIAN',
-      reason: 'I joined the IT Support team this semester.',
-      status: 'APPROVED',
-      date: '2026-04-12',
-    },
-    {
-      id: 'REQ-002',
-      requestedRole: 'ADMIN',
-      reason: 'Need admin access for system configuration duties.',
-      status: 'REJECTED',
-      date: '2026-04-15',
-    },
-    {
-      id: 'REQ-003',
-      requestedRole: 'LECTURER',
-      reason: 'I was recently appointed as a lecturer.',
-      status: 'PENDING',
-      date: '2026-04-18',
-    },
-  ]);
+  const availableRoles = useMemo(
+    () => [
+      { value: 'ACADEMIC', label: 'Academic Staff' },
+      { value: 'NON_ACADEMIC', label: 'Non-Academic Staff' },
+      { value: 'TECHNICIAN', label: 'Technician' },
+      { value: 'SYSTEM_ADMIN', label: 'System Admin' },
+      { value: 'STUDENT', label: 'Student' },
+    ],
+    []
+  );
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchRequests();
+    }
+  }, [user?.id]);
+
+  const fetchRequests = async () => {
+    try {
+      setFetching(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/users/${user?.id}/role-requests`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setRequests(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch role requests:', error);
+      setRequests([]);
+    } finally {
+      setFetching(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reason.trim()) return;
+    if (!reason.trim() || !user?.id) return;
 
     setLoading(true);
 
     try {
-      // TODO: Replace with real backend API call
-      // Example:
-      // await axios.post('http://localhost:8081/api/role-requests', {
-      //   requestedRole: role,
-      //   reason,
-      // });
+      const token = localStorage.getItem('token');
 
-      const newReq: RoleRequest = {
-        id: `REQ-00${requests.length + 1}`,
-        requestedRole: role,
-        reason,
-        status: 'PENDING',
-        date: new Date().toISOString().split('T')[0],
-      };
+      await axios.post(
+        `${API_BASE_URL}/api/users/${user.id}/role-requests`,
+        {
+          requestedRole: role,
+          reason,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      setRequests([newReq, ...requests]);
       setReason('');
+      await fetchRequests();
       alert('Role change request submitted. Admin will review it.');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to submit role request:', error);
-      alert('Failed to submit role request.');
+      alert(error?.response?.data?.message || 'Failed to submit role request.');
     } finally {
       setLoading(false);
     }
@@ -143,10 +160,11 @@ export default function RoleRequestPage() {
                       onChange={(e) => setRole(e.target.value)}
                       className="block w-full appearance-none rounded-lg border border-slate-300 bg-white py-2.5 pl-4 pr-10 text-slate-900 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-600 focus:outline-none sm:text-sm"
                     >
-                      <option value="STUDENT">Student</option>
-                      <option value="LECTURER">Lecturer</option>
-                      <option value="TECHNICIAN">Technician</option>
-                      <option value="ADMIN">Admin</option>
+                      {availableRoles.map((item) => (
+                        <option key={item.value} value={item.value}>
+                          {item.label}
+                        </option>
+                      ))}
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                       <ChevronDown className="h-4 w-4 text-slate-400" />
@@ -193,7 +211,9 @@ export default function RoleRequestPage() {
               </div>
 
               <div className="divide-y divide-slate-100">
-                {requests.length === 0 ? (
+                {fetching ? (
+                  <div className="p-8 text-center text-slate-500">Loading requests...</div>
+                ) : requests.length === 0 ? (
                   <div className="p-8 text-center text-slate-500">
                     No role requests found.
                   </div>
@@ -207,13 +227,13 @@ export default function RoleRequestPage() {
                               {roleLabelMap[req.requestedRole] || req.requestedRole}
                             </span>
                             <span className="text-xs font-medium text-slate-400">
-                              ID: {req.id}
+                              ID: REQ-{req.id}
                             </span>
                           </div>
                           <p className="text-sm text-slate-600">{req.reason}</p>
                           <div className="mt-2 flex items-center gap-1 text-xs font-medium text-slate-400">
                             <Clock className="h-3.5 w-3.5" />
-                            Submitted on {req.date}
+                            Submitted on {new Date(req.createdAt).toLocaleDateString()}
                           </div>
                         </div>
                         <div className="flex-shrink-0">{getStatusBadge(req.status)}</div>

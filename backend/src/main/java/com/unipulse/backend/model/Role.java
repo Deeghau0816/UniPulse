@@ -2,6 +2,8 @@ package com.unipulse.backend.model;
 
 public enum Role {
     STUDENT,
-    LECTURER,
-    ADMIN
+    ACADEMIC,
+    NON_ACADEMIC,
+    TECHNICIAN,
+    SYSTEM_ADMIN
 }
