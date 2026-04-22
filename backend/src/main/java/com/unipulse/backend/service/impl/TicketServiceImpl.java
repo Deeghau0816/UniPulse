@@ -1,13 +1,9 @@
 package com.unipulse.backend.service.impl;
 
-import com.unipulse.backend.Repository.TicketAttachmentRepository;
-import com.unipulse.backend.Repository.TicketMessageRepository;
-import com.unipulse.backend.Repository.TicketRepository;
-import com.unipulse.backend.service.NotificationService;
-import com.unipulse.backend.dto.NotificationRequest;
 import com.unipulse.backend.dto.AssignTechnicianRequest;
 import com.unipulse.backend.dto.MessageRequest;
 import com.unipulse.backend.dto.MessageResponse;
+import com.unipulse.backend.dto.NotificationRequest;
 import com.unipulse.backend.dto.ResolutionUpdateRequest;
 import com.unipulse.backend.dto.TicketAttachmentResponse;
 import com.unipulse.backend.dto.TicketRequest;
@@ -21,6 +17,7 @@ import com.unipulse.backend.model.TicketAttachment;
 import com.unipulse.backend.Repository.TicketRepository;
 import com.unipulse.backend.Repository.TicketAttachmentRepository;
 import com.unipulse.backend.Repository.TicketMessageRepository;
+import com.unipulse.backend.service.NotificationService;
 import com.unipulse.backend.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -74,14 +72,7 @@ public class TicketServiceImpl implements TicketService {
                 .build();
 
         Ticket savedTicket = ticketRepository.save(ticket);
-        
-        // Handle attachments if provided
-        if (attachments != null && !attachments.isEmpty()) {
-            for (MultipartFile file : attachments) {
-                uploadAttachment(savedTicket.getId(), file);
-            }
-        }
-        
+        uploadAttachments(savedTicket.getId(), attachments);
         return mapToResponse(savedTicket);
     }
 
@@ -104,14 +95,7 @@ public class TicketServiceImpl implements TicketService {
         ticket.setTechnicianType(request.getTechnicianType());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
-        
-        // Handle attachments if provided
-        if (attachments != null && !attachments.isEmpty()) {
-            for (MultipartFile file : attachments) {
-                uploadAttachment(updatedTicket.getId(), file);
-            }
-        }
-        
+        uploadAttachments(updatedTicket.getId(), attachments);
         return mapToResponse(updatedTicket);
     }
 //gggg
@@ -293,6 +277,17 @@ public class TicketServiceImpl implements TicketService {
                 .stream()
                 .map(MessageResponse::fromEntity)
                 .toList();
+    }
+
+    private void uploadAttachments(Long ticketId, List<MultipartFile> attachments) {
+        if (attachments == null || attachments.isEmpty()) {
+            return;
+        }
+
+        attachments.stream()
+                .filter(Objects::nonNull)
+                .filter(file -> !file.isEmpty())
+                .forEach(file -> uploadAttachment(ticketId, file));
     }
 
     private Ticket getTicketEntityById(Long id) {
