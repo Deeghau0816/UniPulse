@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8083/api';
+const API_BASE_URL = 'http://localhost:8081/api';
 
 export type NotificationType = 'STATUS_CHANGE' | 'NEW_COMMENT' | 'ASSIGNMENT';
 export type FilterType = 'ALL' | 'UNREAD' | NotificationType;
@@ -14,7 +14,7 @@ export interface NotificationItem {
 }
 
 class NotificationService {
-  private readonly API_BASE_URL = 'http://localhost:8083/api';
+  private readonly API_BASE_URL = 'http://localhost:8081/api';
 
   async getAllNotifications(userId: number): Promise<NotificationItem[]> {
     try {
