@@ -9,11 +9,9 @@ const NotificationsPage = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Get current user ID - in a real app, this would come from auth context
+  // Get current user ID - hardcoded for testing
   const getCurrentUserId = (): number => {
-    // For demo purposes, using a hardcoded user ID
-    // In production, this would come from authentication context
-    return 1; // This should match the createdBy field in your tickets
+    return 1; // Use hardcoded user ID for testing
   };
 
   useEffect(() => {
