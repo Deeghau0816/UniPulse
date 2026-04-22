@@ -4,7 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import './App.css';
 
-// Pages
+// Pages - Tickets
 import LoginPage from './pages/LoginPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import MyTicketsPage from './pages/MyTicketsPage';
@@ -15,6 +15,8 @@ import TechnicianTicketDetailsPage from './pages/TechnicianTicketDetailsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import AdminTicketsPage from './pages/AdminTicketsPage';
 import AdminTicketDetailsPage from './pages/AdminTicketDetailsPage';
+
+// Pages - Facilities & Reservations
 import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
 import ResourceDetailsPage from './pages/ResourceDetailsPage';
 import AddResourcePage from './pages/AddResourcePage';
@@ -33,7 +35,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-          {/* User routes - USER role only */}
+          {/* User routes */}
           <Route
             path="/dashboard/my-tickets"
             element={
@@ -59,7 +61,7 @@ function App() {
             }
           />
 
-          {/* Technician routes - TECHNICIAN role only */}
+          {/* Technician routes */}
           <Route
             path="/dashboard/technician/tickets"
             element={
@@ -77,7 +79,7 @@ function App() {
             }
           />
 
-          {/* Admin routes - ADMIN role only */}
+          {/* Admin routes */}
           <Route
             path="/dashboard/admin/tickets"
             element={
@@ -95,7 +97,20 @@ function App() {
             }
           />
 
-          {/* Shared routes - multiple roles */}
+          {/* Facilities - Admin */}
+          <Route path="/dashboard/resources" element={<FacilitiesCataloguePage />} />
+          <Route path="/dashboard/resources/new" element={<AddResourcePage />} />
+          <Route path="/dashboard/resources/:resourceId" element={<ResourceDetailsPage />} />
+
+          {/* Facilities - Customer */}
+          <Route path="/customer/resources" element={<CustomerFacilitiesPage />} />
+          <Route path="/customer/resources/:resourceId" element={<CustomerResourceDetailsPage />} />
+
+          {/* Reservations */}
+          <Route path="/reservations/user" element={<UserPanel />} />
+          <Route path="/reservations/admin" element={<AdminPanel />} />
+
+          {/* Shared routes */}
           <Route
             path="/dashboard/notifications"
             element={
@@ -105,116 +120,12 @@ function App() {
             }
           />
 
-          {/* Admin-only facilities management routes */}
-          <Route
-            path="/dashboard/resources"
-            element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <FacilitiesCataloguePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/resources/new"
-            element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <AddResourcePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/resources/:resourceId"
-            element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <ResourceDetailsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Customer-facing facilities routes */}
-          <Route
-            path="/customer/resources"
-            element={
-              <ProtectedRoute requiredRole="USER">
-                <CustomerFacilitiesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/customer/resources/:resourceId"
-            element={
-              <ProtectedRoute requiredRole="USER">
-                <CustomerResourceDetailsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Reservation Module Routes */}
-          <Route
-            path="/reservations/user"
-            element={
-              <ProtectedRoute requiredRole="USER">
-                <UserPanel />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reservations/admin"
-            element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <AdminPanel />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Fallback route for unauthorized access */}
+          {/* Fallback */}
           <Route path="*" element={<UnauthorizedPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
-import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
-import ResourceDetailsPage from './pages/ResourceDetailsPage';
-import AddResourcePage from './pages/AddResourcePage';
-import CustomerFacilitiesPage from './pages/CustomerFacilitiesPage';
-import CustomerResourceDetailsPage from './pages/CustomerResourceDetailsPage';
-import UserPanel from './pages/reservation/UserPanel';
-import AdminPanel from './pages/reservation/ReservationAdminPanel';
-
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-
-        <Route path="/dashboard/my-tickets" element={<MyTicketsPage />} />
-        <Route path="/dashboard/tickets/new" element={<CreateTicketPage />} />
-        <Route path="/dashboard/tickets/:ticketId" element={<TicketDetailsPage />} />
-
-        <Route
-          path="/dashboard/technician/tickets"
-          element={<TechnicianDashboardPage />}
-        />
-
-        <Route path="/dashboard/notifications" element={<NotificationsPage />} />
-        <Route path="/dashboard/admin/tickets" element={<AdminTicketsPage />} />
-
-        {/* Admin-only facilities management routes */}
-        <Route path="/dashboard/resources" element={<FacilitiesCataloguePage />} />
-        <Route path="/dashboard/resources/new" element={<AddResourcePage />} />
-        <Route path="/dashboard/resources/:resourceId" element={<ResourceDetailsPage />} />
-
-        {/* Customer-facing facilities routes */}
-        <Route path="/customer/resources" element={<CustomerFacilitiesPage />} />
-        <Route path="/customer/resources/:resourceId" element={<CustomerResourceDetailsPage />} />
-
-         {/* Reservation Module Routes */}
-        <Route path="/reservations/user"   element={<UserPanel />} />
-        <Route path="/reservations/admin"  element={<AdminPanel />} />
-      </Routes>
-    </BrowserRouter>
   );
 }
 
 export default App;
-
