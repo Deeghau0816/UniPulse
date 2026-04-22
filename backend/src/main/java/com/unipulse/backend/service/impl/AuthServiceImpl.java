@@ -42,7 +42,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse register(RegisterRequest request) {
-
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email is already registered");
         }
@@ -63,11 +62,15 @@ public class AuthServiceImpl implements AuthService {
         registerNotification.setUser(savedUser);
         notificationRepository.save(registerNotification);
 
-        emailService.sendSimpleEmail(
-                savedUser.getEmail(),
-                "UniPulse Registration Successful",
-                "Hello " + savedUser.getFullName() + ", your account was created successfully."
-        );
+        try {
+            emailService.sendSimpleEmail(
+                    savedUser.getEmail(),
+                    "UniPulse Registration Successful",
+                    "Hello " + savedUser.getFullName() + ", your account was created successfully."
+            );
+        } catch (Exception e) {
+            System.out.println("Registration email failed: " + e.getMessage());
+        }
 
         return new AuthResponse(
                 "User registered successfully",
@@ -81,7 +84,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
-
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -96,11 +98,15 @@ public class AuthServiceImpl implements AuthService {
         loginNotification.setUser(user);
         notificationRepository.save(loginNotification);
 
-        emailService.sendSimpleEmail(
-                user.getEmail(),
-                "UniPulse Login Alert",
-                "Hello " + user.getFullName() + ", your login was completed successfully."
-        );
+        try {
+            emailService.sendSimpleEmail(
+                    user.getEmail(),
+                    "UniPulse Login Alert",
+                    "Hello " + user.getFullName() + ", your login was completed successfully."
+            );
+        } catch (Exception e) {
+            System.out.println("Login email failed: " + e.getMessage());
+        }
 
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
