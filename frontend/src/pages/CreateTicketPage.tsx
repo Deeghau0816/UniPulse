@@ -146,6 +146,10 @@ const CreateTicketPage = () => {
 
     if (!formData.location.trim()) {
       newErrors.location = 'Location / resource is required.';
+    } else if (formData.location.trim().length < 3) {
+      newErrors.location = 'Location must be at least 3 characters.';
+    } else if (formData.location.trim().length > 200) {
+      newErrors.location = 'Location cannot exceed 200 characters.';
     }
 
     if (!formData.priority) {
@@ -154,12 +158,22 @@ const CreateTicketPage = () => {
 
     if (!formData.preferredContact.trim()) {
       newErrors.preferredContact = 'Preferred contact is required.';
+    } else {
+      // Validate contact format (phone number or email)
+      const phoneRegex = /^[0-9\s\-\+\(\)]{10,20}$/;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      
+      if (!phoneRegex.test(formData.preferredContact.trim()) && !emailRegex.test(formData.preferredContact.trim())) {
+        newErrors.preferredContact = 'Please enter a valid phone number or email address.';
+      }
     }
 
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required.';
     } else if (formData.description.trim().length < 20) {
       newErrors.description = 'Description must be at least 20 characters.';
+    } else if (formData.description.trim().length > 1000) {
+      newErrors.description = 'Description cannot exceed 1000 characters.';
     }
 
     setErrors(newErrors);
@@ -227,7 +241,7 @@ const CreateTicketPage = () => {
       
       if (error instanceof Error) {
         if (error.message.includes('Failed to fetch')) {
-          errorMessage = 'Backend server is not responding. Please check if backend is running on http://localhost:8081';
+          errorMessage = 'Backend server is not responding. Please check if backend is running on http://localhost:8083';
         } else if (error.message.includes('Network error')) {
           errorMessage = 'Network connection failed. Please check your internet connection';
         } else if (error.message.includes('HTTP error')) {

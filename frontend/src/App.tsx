@@ -13,6 +13,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 import HomePage from './pages/HomePage';
+// Pages - Tickets
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -252,6 +253,41 @@ function App() {
           />
 
           {/* Notifications */}
+          {/* Admin-only facilities management routes */}
+          <Route
+            path="/dashboard/resources"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <FacilitiesCataloguePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/resources/new"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AddResourcePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/resources/:resourceId"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <ResourceDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Customer-facing facilities routes */}
+          <Route path="/customer/resources" element={<CustomerFacilitiesPage />} />
+          <Route path="/customer/resources/:resourceId" element={<CustomerResourceDetailsPage />} />
+
+          {/* Reservation Module Routes */}
+          <Route path="/reservations/user" element={<UserPanel />} />
+          <Route path="/reservations/admin" element={<AdminPanel />} />
+
+          {/* Shared routes - multiple roles */}
           <Route
             path="/dashboard/notifications"
             element={
@@ -263,6 +299,7 @@ function App() {
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<UnauthorizedPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

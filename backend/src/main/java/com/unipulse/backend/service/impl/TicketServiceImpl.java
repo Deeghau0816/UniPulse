@@ -3,6 +3,7 @@ package com.unipulse.backend.service.impl;
 import com.unipulse.backend.dto.AssignTechnicianRequest;
 import com.unipulse.backend.dto.MessageRequest;
 import com.unipulse.backend.dto.MessageResponse;
+import com.unipulse.backend.dto.NotificationRequest;
 import com.unipulse.backend.dto.ResolutionUpdateRequest;
 import com.unipulse.backend.dto.TicketAttachmentResponse;
 import com.unipulse.backend.dto.TicketRequest;
@@ -16,6 +17,7 @@ import com.unipulse.backend.model.TicketAttachment;
 import com.unipulse.backend.Repository.TicketRepository;
 import com.unipulse.backend.Repository.TicketAttachmentRepository;
 import com.unipulse.backend.Repository.TicketMessageRepository;
+import com.unipulse.backend.service.NotificationService;
 import com.unipulse.backend.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,7 @@ public class TicketServiceImpl implements TicketService {
     private final TicketRepository ticketRepository;
     private final TicketAttachmentRepository attachmentRepository;
     private final TicketMessageRepository messageRepository;
+    private final NotificationService notificationService;
 
     @Override
     public List<TicketResponse> getAllTickets() {
@@ -77,6 +80,11 @@ public class TicketServiceImpl implements TicketService {
     public TicketResponse updateTicket(Long id, TicketRequest request, List<MultipartFile> attachments) {
         Ticket ticket = getTicketEntityById(id);
 
+        // Check if ticket can be updated (no technician assigned yet)
+        if (ticket.getAssignedTechnician() != null && !ticket.getAssignedTechnician().trim().isEmpty()) {
+            throw new IllegalStateException("Ticket cannot be updated after a technician has been assigned. Contact the technician for any changes.");
+        }
+
         ticket.setCategory(request.getCategory());
         ticket.setLocation(request.getLocation());
         ticket.setPriority(request.getPriority());
@@ -90,7 +98,7 @@ public class TicketServiceImpl implements TicketService {
         uploadAttachments(updatedTicket.getId(), attachments);
         return mapToResponse(updatedTicket);
     }
-
+//gggg
     @Override
     public void deleteTicket(Long id) {
         Ticket ticket = getTicketEntityById(id);
@@ -100,9 +108,14 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public TicketResponse updateTicketStatus(Long id, TicketStatusUpdateRequest request) {
         Ticket ticket = getTicketEntityById(id);
+        TicketStatus oldStatus = ticket.getStatus();
         ticket.setStatus(request.getStatus());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
+        
+        // Create notification for ticket status change
+        createStatusChangeNotification(ticket, oldStatus, request.getStatus());
+        
         return mapToResponse(updatedTicket);
     }
 
@@ -113,6 +126,9 @@ public class TicketServiceImpl implements TicketService {
         ticket.setTechnicianType(request.getTechnicianType());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
+        
+        // Create notification for technician assignment
+        createAssignmentNotification(ticket, request.getAssignedTechnician());
         return mapToResponse(updatedTicket);
     }
 
@@ -123,6 +139,10 @@ public class TicketServiceImpl implements TicketService {
         ticket.setRejectionReason(request.getRejectionReason());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
+        
+        // Create notification for resolution update
+        createResolutionNotification(ticket, request.getResolutionNotes());
+        
         return mapToResponse(updatedTicket);
     }
 
@@ -240,6 +260,12 @@ public class TicketServiceImpl implements TicketService {
                 .build();
         
         TicketMessage savedMessage = messageRepository.save(message);
+        
+        // Create notification for new comment (only notify ticket creator, not the commenter)
+        if (!request.getSenderName().equals(ticket.getCreatedBy())) {
+            createCommentNotification(ticket, request.getSenderName());
+        }
+        
         return MessageResponse.fromEntity(savedMessage);
     }
 
@@ -310,5 +336,100 @@ public class TicketServiceImpl implements TicketService {
                 .updatedAt(ticket.getUpdatedAt())
                 .attachments(attachments)
                 .build();
+    }
+
+    private void createStatusChangeNotification(Ticket ticket, TicketStatus oldStatus, TicketStatus newStatus) {
+        if (ticket.getCreatedBy() != null && !oldStatus.equals(newStatus)) {
+            String title = "Ticket #" + ticket.getTicketCode() + " Status Updated";
+            String message = String.format("Your ticket #%s status was changed from %s to %s", 
+                ticket.getTicketCode(), oldStatus, newStatus);
+            
+            try {
+                NotificationRequest notificationRequest = new NotificationRequest();
+                // Use a default user ID (1) for "Current User" since we don't have user mapping
+                Long userId = getUserIdFromCreatedBy(ticket.getCreatedBy());
+                notificationRequest.setUserId(userId);
+                notificationRequest.setTitle(title);
+                notificationRequest.setMessage(message);
+                
+                notificationService.createNotification(notificationRequest);
+            } catch (Exception e) {
+                // Log error but don't fail the ticket update
+                System.err.println("Failed to create notification: " + e.getMessage());
+            }
+        }
+    }
+
+    private void createAssignmentNotification(Ticket ticket, String assignedTechnician) {
+        if (ticket.getCreatedBy() != null && assignedTechnician != null) {
+            String title = "Ticket #" + ticket.getTicketCode() + " Assigned";
+            String message = String.format("Your ticket #%s has been assigned to %s", 
+                ticket.getTicketCode(), assignedTechnician);
+            
+            try {
+                NotificationRequest notificationRequest = new NotificationRequest();
+                Long userId = getUserIdFromCreatedBy(ticket.getCreatedBy());
+                notificationRequest.setUserId(userId);
+                notificationRequest.setTitle(title);
+                notificationRequest.setMessage(message);
+                
+                notificationService.createNotification(notificationRequest);
+            } catch (Exception e) {
+                System.err.println("Failed to create assignment notification: " + e.getMessage());
+            }
+        }
+    }
+
+    private void createCommentNotification(Ticket ticket, String commenterName) {
+        if (ticket.getCreatedBy() != null) {
+            String title = "New Comment on Ticket #" + ticket.getTicketCode();
+            String message = String.format("A new comment was added to your ticket #%s by %s", 
+                ticket.getTicketCode(), commenterName);
+            
+            try {
+                NotificationRequest notificationRequest = new NotificationRequest();
+                Long userId = getUserIdFromCreatedBy(ticket.getCreatedBy());
+                notificationRequest.setUserId(userId);
+                notificationRequest.setTitle(title);
+                notificationRequest.setMessage(message);
+                
+                notificationService.createNotification(notificationRequest);
+            } catch (Exception e) {
+                System.err.println("Failed to create comment notification: " + e.getMessage());
+            }
+        }
+    }
+
+    private void createResolutionNotification(Ticket ticket, String resolutionNotes) {
+        if (ticket.getCreatedBy() != null && resolutionNotes != null && !resolutionNotes.trim().isEmpty()) {
+            String title = "Ticket #" + ticket.getTicketCode() + " Resolved";
+            String message = String.format("Your ticket #%s has been resolved: %s", 
+                ticket.getTicketCode(), resolutionNotes);
+            
+            try {
+                NotificationRequest notificationRequest = new NotificationRequest();
+                Long userId = getUserIdFromCreatedBy(ticket.getCreatedBy());
+                notificationRequest.setUserId(userId);
+                notificationRequest.setTitle(title);
+                notificationRequest.setMessage(message);
+                
+                notificationService.createNotification(notificationRequest);
+            } catch (Exception e) {
+                System.err.println("Failed to create resolution notification: " + e.getMessage());
+            }
+        }
+    }
+
+    private Long getUserIdFromCreatedBy(String createdBy) {
+        // For demo purposes, return a default user ID
+        // In production, this would map user names to actual user IDs
+        if ("Current User".equals(createdBy)) {
+            return 1L; // Default user ID for demo
+        }
+        try {
+            return Long.parseLong(createdBy);
+        } catch (NumberFormatException e) {
+            return 1L; // Default fallback
+        }
     }
 }
