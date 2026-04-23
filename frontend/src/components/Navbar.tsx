@@ -5,7 +5,9 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function Navbar() {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { userPortalUser, logout } = useAuth();
+
+  const user = userPortalUser;
 
   const linkClass = (path: string) =>
     `text-sm font-semibold transition ${
@@ -77,7 +79,7 @@ export default function Navbar() {
                 </Link>
 
                 <button
-                  onClick={logout}
+                  onClick={() => logout('user')}
                   className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
                 >
                   Logout

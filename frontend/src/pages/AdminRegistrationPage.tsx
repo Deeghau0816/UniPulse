@@ -30,7 +30,7 @@ export default function AdminRegistrationPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const googleLoginUrl = 'http://localhost:8081/api/auth/admin/google/start';
+  const googleRegisterUrl = 'http://localhost:8081/api/auth/admin/google/register/start';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +69,7 @@ export default function AdminRegistrationPage() {
         throw new Error(data?.message || 'Admin registration failed');
       }
 
-      login(data.user, data.token);
+      login(data.user, data.token, 'admin');
       navigate('/admin/dashboard', { replace: true });
     } catch (err) {
       console.error(err);
@@ -322,7 +322,7 @@ export default function AdminRegistrationPage() {
             </div>
 
             <a
-              href={googleLoginUrl}
+              href={googleRegisterUrl}
               className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               <svg viewBox="0 0 48 48" className="h-5 w-5">

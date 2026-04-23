@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 
 export type UserRole =
   | 'STUDENT'
@@ -7,6 +8,8 @@ export type UserRole =
   | 'NON_ACADEMIC'
   | 'TECHNICIAN'
   | 'SYSTEM_ADMIN';
+
+export type PortalSide = 'user' | 'admin';
 
 export interface User {
   id: string;
@@ -52,36 +55,53 @@ interface JwtPayload {
   sliitId?: string;
   provider?: string;
   profileCompleted?: boolean;
+  exp?: number;
+}
+
+interface SessionState {
+  user: User | null;
+  token: string | null;
 }
 
 interface AuthContextType {
   user: User | null;
+  userPortalUser: User | null;
+  adminPortalUser: User | null;
   loading: boolean;
-  login: (user: RawUser, token?: string) => void;
-  logout: () => void;
-  updateUser: (userData: Partial<User>) => void;
+  currentPortal: PortalSide;
+  login: (user: RawUser, token?: string, portal?: PortalSide) => void;
+  logout: (portal?: PortalSide) => void;
+  updateUser: (userData: Partial<User>, portal?: PortalSide) => void;
   isAuthenticated: boolean;
-  hasRole: (role: UserRole) => boolean;
-  hasAnyRole: (roles: UserRole[]) => boolean;
+  isUserAuthenticated: boolean;
+  isAdminAuthenticated: boolean;
+  hasRole: (role: UserRole, portal?: PortalSide) => boolean;
+  hasAnyRole: (roles: UserRole[], portal?: PortalSide) => boolean;
+  getToken: (portal?: PortalSide) => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+const USER_TOKEN_STORAGE_KEY = 'user_token';
+const USER_DATA_STORAGE_KEY = 'user_data';
+const ADMIN_TOKEN_STORAGE_KEY = 'admin_token';
+const ADMIN_DATA_STORAGE_KEY = 'admin_data';
+const LEGACY_TOKEN_STORAGE_KEY = 'token';
+const LEGACY_TOKEN_STORAGE_KEY_ALT = 'authToken';
+const LEGACY_USER_STORAGE_KEY = 'user';
+
+const isAdminPortalPath = (pathname: string): boolean => {
+  return (
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/dashboard/admin') ||
+    pathname.startsWith('/dashboard/resources') ||
+    pathname.startsWith('/dashboard/technician') ||
+    pathname.startsWith('/reservations/admin')
+  );
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-const TOKEN_STORAGE_KEY = 'token';
-const LEGACY_TOKEN_STORAGE_KEY = 'authToken';
-const USER_STORAGE_KEY = 'user';
+const getPortalFromPath = (pathname: string): PortalSide =>
+  isAdminPortalPath(pathname) ? 'admin' : 'user';
 
 const decodeJwtPayload = (token: string): JwtPayload | null => {
   try {
@@ -99,6 +119,12 @@ const decodeJwtPayload = (token: string): JwtPayload | null => {
     console.error('Error decoding JWT payload:', error);
     return null;
   }
+};
+
+const isTokenExpired = (token: string): boolean => {
+  const payload = decodeJwtPayload(token);
+  if (!payload?.exp) return true;
+  return payload.exp * 1000 <= Date.now();
 };
 
 const normalizeRole = (rawRole?: string): UserRole => {
@@ -173,89 +199,203 @@ const buildUserFromPayload = (payload: JwtPayload): User => {
   };
 };
 
+const loadSessionFromStorage = (
+  tokenKey: string,
+  userKey: string
+): SessionState => {
+  const storedToken = localStorage.getItem(tokenKey);
+
+  if (storedToken) {
+    if (!isTokenExpired(storedToken)) {
+      const payload = decodeJwtPayload(storedToken);
+      if (payload) {
+        const userFromToken = buildUserFromPayload(payload);
+        localStorage.setItem(userKey, JSON.stringify(userFromToken));
+        return { user: userFromToken, token: storedToken };
+      }
+    }
+
+    localStorage.removeItem(tokenKey);
+    localStorage.removeItem(userKey);
+  }
+
+  const storedUser = localStorage.getItem(userKey);
+  if (storedUser) {
+    try {
+      return { user: JSON.parse(storedUser) as User, token: null };
+    } catch (error) {
+      console.error('Error parsing stored user data:', error);
+      localStorage.removeItem(userKey);
+    }
+  }
+
+  return { user: null, token: null };
+};
+
+const clearSessionStorage = (portal: PortalSide) => {
+  if (portal === 'admin') {
+    localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(ADMIN_DATA_STORAGE_KEY);
+  } else {
+    localStorage.removeItem(USER_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_DATA_STORAGE_KEY);
+  }
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const location = useLocation();
+  const currentPortal = useMemo<PortalSide>(
+    () => getPortalFromPath(location.pathname),
+    [location.pathname]
+  );
+
+  const [userSession, setUserSession] = useState<SessionState>({ user: null, token: null });
+  const [adminSession, setAdminSession] = useState<SessionState>({ user: null, token: null });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken =
-      localStorage.getItem(TOKEN_STORAGE_KEY) ??
-      localStorage.getItem(LEGACY_TOKEN_STORAGE_KEY);
+    const userToken =
+      localStorage.getItem(USER_TOKEN_STORAGE_KEY) ??
+      localStorage.getItem(LEGACY_TOKEN_STORAGE_KEY) ??
+      localStorage.getItem(LEGACY_TOKEN_STORAGE_KEY_ALT);
 
-    if (storedToken) {
-      const payload = decodeJwtPayload(storedToken);
+    const userData =
+      localStorage.getItem(USER_DATA_STORAGE_KEY) ??
+      localStorage.getItem(LEGACY_USER_STORAGE_KEY);
 
-      if (payload) {
-        const userFromToken = buildUserFromPayload(payload);
-        setUser(userFromToken);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userFromToken));
-        setLoading(false);
-        return;
-      }
-
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-      localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
+    if (!localStorage.getItem(USER_TOKEN_STORAGE_KEY) && userToken) {
+      localStorage.setItem(USER_TOKEN_STORAGE_KEY, userToken);
+    }
+    if (!localStorage.getItem(USER_DATA_STORAGE_KEY) && userData) {
+      localStorage.setItem(USER_DATA_STORAGE_KEY, userData);
     }
 
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser) as User);
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        localStorage.removeItem(USER_STORAGE_KEY);
-      }
-    }
+    localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY_ALT);
+    localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
 
+    setUserSession(loadSessionFromStorage(USER_TOKEN_STORAGE_KEY, USER_DATA_STORAGE_KEY));
+    setAdminSession(loadSessionFromStorage(ADMIN_TOKEN_STORAGE_KEY, ADMIN_DATA_STORAGE_KEY));
     setLoading(false);
   }, []);
 
-  const login = (userData: RawUser, token?: string) => {
-    const normalizedUser = normalizeUser(userData);
-    setUser(normalizedUser);
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedUser));
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setUserSession((prev) => {
+        if (prev.token && isTokenExpired(prev.token)) {
+          clearSessionStorage('user');
+          return { user: null, token: null };
+        }
+        return prev;
+      });
 
-    if (token) {
-      localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      setAdminSession((prev) => {
+        if (prev.token && isTokenExpired(prev.token)) {
+          clearSessionStorage('admin');
+          return { user: null, token: null };
+        }
+        return prev;
+      });
+    }, 30000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const login = (userData: RawUser, token?: string, portal: PortalSide = currentPortal) => {
+    const normalizedUser = normalizeUser(userData);
+    const session: SessionState = {
+      user: normalizedUser,
+      token: token ?? null,
+    };
+
+    if (portal === 'admin') {
+      setAdminSession(session);
+      localStorage.setItem(ADMIN_DATA_STORAGE_KEY, JSON.stringify(normalizedUser));
+      if (token) localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
+    } else {
+      setUserSession(session);
+      localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(normalizedUser));
+      if (token) localStorage.setItem(USER_TOKEN_STORAGE_KEY, token);
     }
   };
 
-  const updateUser = (userData: Partial<User>) => {
-    setUser((prev) => {
-      if (!prev) return prev;
-      const updated = { ...prev, ...userData };
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated));
-      return updated;
+  const updateUser = (userData: Partial<User>, portal: PortalSide = currentPortal) => {
+    if (portal === 'admin') {
+      setAdminSession((prev) => {
+        if (!prev.user) return prev;
+        const updatedUser = { ...prev.user, ...userData };
+        localStorage.setItem(ADMIN_DATA_STORAGE_KEY, JSON.stringify(updatedUser));
+        return { ...prev, user: updatedUser };
+      });
+      return;
+    }
+
+    setUserSession((prev) => {
+      if (!prev.user) return prev;
+      const updatedUser = { ...prev.user, ...userData };
+      localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(updatedUser));
+      return { ...prev, user: updatedUser };
     });
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem(USER_STORAGE_KEY);
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
+  const logout = (portal: PortalSide = currentPortal) => {
+    if (portal === 'admin') {
+      setAdminSession({ user: null, token: null });
+      clearSessionStorage('admin');
+      return;
+    }
+
+    setUserSession({ user: null, token: null });
+    clearSessionStorage('user');
     localStorage.removeItem('selectedTechnician');
   };
 
-  const isAuthenticated = !!user;
+  const getPortalUser = (portal: PortalSide) =>
+    portal === 'admin' ? adminSession.user : userSession.user;
 
-  const hasRole = (role: UserRole): boolean => {
-    return user?.role === role;
+  const getToken = (portal: PortalSide = currentPortal) =>
+    portal === 'admin' ? adminSession.token : userSession.token;
+
+  const isAuthenticated = !!getPortalUser(currentPortal);
+  const isUserAuthenticated = !!userSession.user;
+  const isAdminAuthenticated = !!adminSession.user;
+
+  const hasRole = (role: UserRole, portal: PortalSide = currentPortal): boolean => {
+    return getPortalUser(portal)?.role === role;
   };
 
-  const hasAnyRole = (roles: UserRole[]): boolean => {
-    return user ? roles.includes(user.role) : false;
+  const hasAnyRole = (roles: UserRole[], portal: PortalSide = currentPortal): boolean => {
+    const portalUser = getPortalUser(portal);
+    return portalUser ? roles.includes(portalUser.role) : false;
   };
 
   const value: AuthContextType = {
-    user,
+    user: getPortalUser(currentPortal),
+    userPortalUser: userSession.user,
+    adminPortalUser: adminSession.user,
     loading,
+    currentPortal,
     login,
     logout,
     updateUser,
     isAuthenticated,
+    isUserAuthenticated,
+    isAdminAuthenticated,
     hasRole,
     hasAnyRole,
+    getToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

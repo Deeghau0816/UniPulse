@@ -10,7 +10,7 @@ import {
   Zap,
   User,
   IdCard,
-  GraduationCap
+  GraduationCap,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -29,7 +29,7 @@ export default function RegistrationPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const googleLoginUrl = 'http://localhost:8081/oauth2/authorization/google';
+  const googleRegisterUrl = 'http://localhost:8081/api/auth/google/register/start';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +74,7 @@ export default function RegistrationPage() {
         throw new Error(message);
       }
 
-      login(data.user, data.token);
+      login(data.user, data.token, 'user');
       navigate('/', { replace: true });
     } catch (err) {
       console.error(err);
@@ -144,7 +144,7 @@ export default function RegistrationPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <a
-              href={googleLoginUrl}
+              href={googleRegisterUrl}
               className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold py-3 px-4 rounded-lg transition-colors focus:ring-2 focus:ring-slate-200 outline-none shadow-sm"
             >
               <svg viewBox="0 0 48 48" className="w-5 h-5">

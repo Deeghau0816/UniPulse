@@ -43,7 +43,7 @@ const API_BASE_URL = 'http://localhost:8081';
 
 export default function UserAccountPage() {
   const navigate = useNavigate();
-  const { logout, updateUser } = useAuth();
+  const { logout, updateUser, userPortalUser, getToken } = useAuth();
 
   const [user, setUser] = useState<UserData>({
     firstName: '',
@@ -73,12 +73,35 @@ export default function UserAccountPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
+    if (userPortalUser) {
+      const localMappedUser: UserData = {
+        id: String(userPortalUser.id),
+        firstName: userPortalUser.firstName || '',
+        lastName: userPortalUser.lastName || '',
+        fullName:
+          userPortalUser.name ||
+          `${userPortalUser.firstName || ''} ${userPortalUser.lastName || ''}`.trim(),
+        email: userPortalUser.email || '',
+        sliitId: userPortalUser.sliitId || '',
+        role: userPortalUser.role || 'STUDENT',
+        profileImage: userPortalUser.profileImage || '',
+      };
+
+      setUser(localMappedUser);
+      setFormData(localMappedUser);
+    }
+
     fetchProfile();
-  }, []);
+  }, [userPortalUser]);
 
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getToken('user');
+
+      if (!token) {
+        return;
+      }
+
       const response = await axios.get(`${API_BASE_URL}/api/users/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -101,17 +124,20 @@ export default function UserAccountPage() {
 
       setUser(mappedUser);
       setFormData(mappedUser);
-      localStorage.setItem('user', JSON.stringify(mappedUser));
-      updateUser({
-        id: mappedUser.id,
-        firstName: mappedUser.firstName,
-        lastName: mappedUser.lastName,
-        name: mappedUser.fullName,
-        email: mappedUser.email,
-        sliitId: mappedUser.sliitId,
-        role: mappedUser.role as any,
-        profileImage: mappedUser.profileImage || null,
-      });
+
+      updateUser(
+        {
+          id: mappedUser.id,
+          firstName: mappedUser.firstName,
+          lastName: mappedUser.lastName,
+          name: mappedUser.fullName,
+          email: mappedUser.email,
+          sliitId: mappedUser.sliitId,
+          role: mappedUser.role as any,
+          profileImage: mappedUser.profileImage || null,
+        },
+        'user'
+      );
     } catch (error) {
       console.error('Failed to fetch profile:', error);
     }
@@ -158,7 +184,7 @@ export default function UserAccountPage() {
 
     try {
       setIsSaving(true);
-      const token = localStorage.getItem('token');
+      const token = getToken('user');
 
       const payload = {
         firstName: formData.firstName,
@@ -191,17 +217,21 @@ export default function UserAccountPage() {
       setFormData(updatedUser);
       setPassword('');
       setConfirmPassword('');
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      updateUser({
-        id: updatedUser.id,
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        name: updatedUser.fullName,
-        email: updatedUser.email,
-        sliitId: updatedUser.sliitId,
-        role: updatedUser.role as any,
-        profileImage: updatedUser.profileImage || null,
-      });
+
+      updateUser(
+        {
+          id: updatedUser.id,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          name: updatedUser.fullName,
+          email: updatedUser.email,
+          sliitId: updatedUser.sliitId,
+          role: updatedUser.role as any,
+          profileImage: updatedUser.profileImage || null,
+        },
+        'user'
+      );
+
       setIsEditing(false);
       alert('Profile updated successfully.');
     } catch (error: any) {
@@ -222,7 +252,7 @@ export default function UserAccountPage() {
   const handleDeleteAccount = async () => {
     try {
       setIsDeleting(true);
-      const token = localStorage.getItem('token');
+      const token = getToken('user');
 
       await axios.delete(`${API_BASE_URL}/api/users/me`, {
         headers: {
@@ -230,9 +260,7 @@ export default function UserAccountPage() {
         },
       });
 
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      logout();
+      logout('user');
       navigate('/', { replace: true });
     } catch (error: any) {
       console.error('Failed to delete account:', error);

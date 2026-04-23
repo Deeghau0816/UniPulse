@@ -51,8 +51,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             throws IOException, ServletException {
 
         HttpSession session = request.getSession(false);
-        String oauthMode = session != null ? (String) session.getAttribute("oauth_mode") : null;
-        boolean isAdminRegister = "admin-register".equalsIgnoreCase(oauthMode);
+        String oauthMode = session != null ? (String) session.getAttribute("oauth_mode") : "user-login";
 
         if (session != null) {
             session.removeAttribute("oauth_mode");
@@ -67,81 +66,180 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String familyName = (String) oauth2User.getAttributes().get("family_name");
         String picture = (String) oauth2User.getAttributes().get("picture");
 
+        if (email == null || email.isBlank()) {
+          response.sendRedirect("http://localhost:5174/login?error=" +
+                  URLEncoder.encode("Google account email not found.", StandardCharsets.UTF_8));
+          return;
+        }
+
+        String normalizedEmail = email.trim().toLowerCase();
         String[] splitName = NameUtils.splitFullName(fullName);
         String firstName = (givenName != null && !givenName.isBlank()) ? givenName : splitName[0];
         String lastName = (familyName != null && !familyName.isBlank()) ? familyName : splitName[1];
 
-        if (email == null || email.isBlank()) {
-            throw new RuntimeException("Email not found from OAuth2");
+        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+
+        switch (oauthMode) {
+            case "user-login" -> handleUserLogin(response, user, firstName, lastName, picture);
+            case "user-register" -> handleUserRegister(response, normalizedEmail, user, firstName, lastName, picture);
+            case "admin-login" -> handleAdminLogin(response, user, firstName, lastName, picture);
+            case "admin-register" -> handleAdminRegister(response, normalizedEmail, user, firstName, lastName, picture);
+            default -> handleUserLogin(response, user, firstName, lastName, picture);
+        }
+    }
+
+    private void handleUserLogin(HttpServletResponse response,
+                                 User user,
+                                 String firstName,
+                                 String lastName,
+                                 String picture) throws IOException {
+        if (user == null) {
+            response.sendRedirect("http://localhost:5174/register?error=" +
+                    URLEncoder.encode("No account found for this Google email. Please register first.", StandardCharsets.UTF_8));
+            return;
         }
 
-        User user = userRepository.findByEmail(email.trim().toLowerCase()).orElse(null);
-        boolean isNewUser = false;
+        syncOAuthDetails(user, firstName, lastName, picture);
+        user = userRepository.save(user);
 
+        saveNotification(user, "Google Login Successful", "Your Google login was completed successfully.");
+        sendLoginEmail(user, "UniPulse Google Login Alert",
+                "Hello " + user.getFullName() + ", your Google login was completed successfully.");
+
+        String redirectTarget = (user.isProfileCompleted() && user.getSliitId() != null && !user.getSliitId().isBlank())
+                ? "/"
+                : "/complete-profile?after=home";
+
+        response.sendRedirect(buildOAuthSuccessRedirect(user, redirectTarget));
+    }
+
+    private void handleUserRegister(HttpServletResponse response,
+                                    String email,
+                                    User user,
+                                    String firstName,
+                                    String lastName,
+                                    String picture) throws IOException {
         if (user == null) {
             user = new User();
-            user.setEmail(email.trim().toLowerCase());
+            user.setEmail(email);
             user.setFirstName(!firstName.isBlank() ? firstName : "OAuth");
             user.setLastName(lastName);
             user.setPassword(UUID.randomUUID().toString());
-            user.setRole(isAdminRegister ? Role.SYSTEM_ADMIN : Role.STUDENT);
+            user.setRole(Role.STUDENT);
             user.setProvider(AuthProvider.GOOGLE);
             user.setProfileImage(picture);
-            user.setProfileCompleted(isAdminRegister);
-            user.setSliitId(isAdminRegister ? "ADMIN-GOOGLE-" + System.currentTimeMillis() : null);
+            user.setProfileCompleted(false);
+            user.setSliitId(null);
             user = userRepository.save(user);
-            isNewUser = true;
+
+            saveNotification(user, "Google Account Created", "Your Google registration started successfully.");
+            sendLoginEmail(user, "UniPulse Google Registration",
+                    "Hello " + user.getFullName() + ", complete your profile to finish registration.");
+
+            response.sendRedirect(buildOAuthSuccessRedirect(user, "/complete-profile?after=login"));
+            return;
+        }
+
+        syncOAuthDetails(user, firstName, lastName, picture);
+        user = userRepository.save(user);
+
+        if (!user.isProfileCompleted() || user.getSliitId() == null || user.getSliitId().isBlank()) {
+            response.sendRedirect(buildOAuthSuccessRedirect(user, "/complete-profile?after=login"));
+            return;
+        }
+
+        response.sendRedirect("http://localhost:5174/login?success=" +
+                URLEncoder.encode("Account already exists. Please sign in.", StandardCharsets.UTF_8));
+    }
+
+    private void handleAdminLogin(HttpServletResponse response,
+                                  User user,
+                                  String firstName,
+                                  String lastName,
+                                  String picture) throws IOException {
+        if (user == null || !isAdminUser(user)) {
+            response.sendRedirect("http://localhost:5174/admin/login?error=" +
+                    URLEncoder.encode("No authorized admin account found for this Google email.", StandardCharsets.UTF_8));
+            return;
+        }
+
+        syncOAuthDetails(user, firstName, lastName, picture);
+        user = userRepository.save(user);
+
+        saveNotification(user, "Admin Google Login Successful", "Your admin Google login was completed successfully.");
+        response.sendRedirect(buildOAuthSuccessRedirect(user, "/admin/dashboard"));
+    }
+
+    private void handleAdminRegister(HttpServletResponse response,
+                                     String email,
+                                     User user,
+                                     String firstName,
+                                     String lastName,
+                                     String picture) throws IOException {
+        if (user == null) {
+            user = new User();
+            user.setEmail(email);
+            user.setFirstName(!firstName.isBlank() ? firstName : "Admin");
+            user.setLastName(lastName);
+            user.setPassword(UUID.randomUUID().toString());
+            user.setRole(Role.SYSTEM_ADMIN);
+            user.setProvider(AuthProvider.GOOGLE);
+            user.setProfileImage(picture);
+            user.setProfileCompleted(true);
+            user.setSliitId("ADMIN-GOOGLE-" + System.currentTimeMillis());
+            user = userRepository.save(user);
         } else {
-            if (user.getProvider() == null) {
-                user.setProvider(AuthProvider.GOOGLE);
+            syncOAuthDetails(user, firstName, lastName, picture);
+            user.setRole(Role.SYSTEM_ADMIN);
+            user.setProfileCompleted(true);
+            if (user.getSliitId() == null || user.getSliitId().isBlank()) {
+                user.setSliitId("ADMIN-GOOGLE-" + System.currentTimeMillis());
             }
-            if (user.getFirstName() == null || user.getFirstName().isBlank()) {
-                user.setFirstName(!firstName.isBlank() ? firstName : user.getEmail());
-            }
-            if (user.getLastName() == null || user.getLastName().isBlank()) {
-                user.setLastName(lastName);
-            }
-            if (picture != null && !picture.isBlank()) {
-                user.setProfileImage(picture);
-            }
-
-            if (isAdminRegister) {
-                user.setRole(Role.SYSTEM_ADMIN);
-                user.setProfileCompleted(true);
-                if (user.getSliitId() == null || user.getSliitId().isBlank()) {
-                    user.setSliitId("ADMIN-GOOGLE-" + System.currentTimeMillis());
-                }
-            }
-
             user = userRepository.save(user);
         }
 
-        Notification loginNotification = new Notification();
-        loginNotification.setTitle(isNewUser ? "Google Account Created" : "Google Login Successful");
-        loginNotification.setMessage(
-                isAdminRegister
-                        ? "Your admin account was created successfully using Google."
-                        : (isNewUser
-                            ? "Your UniPulse account was created successfully using Google."
-                            : "Your Google login was completed successfully.")
-        );
-        loginNotification.setRead(false);
-        loginNotification.setCreatedAt(LocalDateTime.now());
-        loginNotification.setUser(user);
-        notificationRepository.save(loginNotification);
+        saveNotification(user, "Admin Account Ready", "Your admin Google registration was completed successfully.");
+        response.sendRedirect(buildOAuthSuccessRedirect(user, "/admin/dashboard"));
+    }
 
+    private void syncOAuthDetails(User user, String firstName, String lastName, String picture) {
+        if (user.getProvider() == null) {
+            user.setProvider(AuthProvider.GOOGLE);
+        }
+        if (user.getFirstName() == null || user.getFirstName().isBlank()) {
+            user.setFirstName(!firstName.isBlank() ? firstName : user.getEmail());
+        }
+        if (user.getLastName() == null || user.getLastName().isBlank()) {
+            user.setLastName(lastName);
+        }
+        if (picture != null && !picture.isBlank()) {
+            user.setProfileImage(picture);
+        }
+    }
+
+    private boolean isAdminUser(User user) {
+        return user.getRole() == Role.TECHNICIAN || user.getRole() == Role.SYSTEM_ADMIN;
+    }
+
+    private void saveNotification(User user, String title, String message) {
+        Notification notification = new Notification();
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setRead(false);
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setUser(user);
+        notificationRepository.save(notification);
+    }
+
+    private void sendLoginEmail(User user, String subject, String body) {
         try {
-            emailService.sendSimpleEmail(
-                    user.getEmail(),
-                    isAdminRegister ? "UniPulse Admin Google Registration" : "UniPulse Google Login Alert",
-                    isAdminRegister
-                            ? "Hello " + user.getFullName() + ", your admin account was created successfully using Google."
-                            : "Hello " + user.getFullName() + ", your Google login was completed successfully."
-            );
+            emailService.sendSimpleEmail(user.getEmail(), subject, body);
         } catch (Exception e) {
             System.out.println("Google OAuth email failed: " + e.getMessage());
         }
+    }
 
+    private String buildOAuthSuccessRedirect(User user, String redirectTarget) {
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
@@ -150,12 +248,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         String jwtToken = userJwtService.generateToken(userDetails, user);
 
-        String redirectTarget = isAdminRegister ? "/admin/dashboard" : "/";
-        String redirectUrl = "http://localhost:5174/oauth2/success?token="
+        return "http://localhost:5174/oauth2/success?token="
                 + URLEncoder.encode(jwtToken, StandardCharsets.UTF_8)
                 + "&redirect="
                 + URLEncoder.encode(redirectTarget, StandardCharsets.UTF_8);
-
-        response.sendRedirect(redirectUrl);
     }
 }

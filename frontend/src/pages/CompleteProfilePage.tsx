@@ -1,16 +1,19 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, GraduationCap, IdCard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function CompleteProfilePage() {
   const navigate = useNavigate();
-  const { user, login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, login, getToken, logout } = useAuth();
 
   const [sliitId, setSliitId] = useState(user?.sliitId || '');
   const [role, setRole] = useState('STUDENT');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const after = searchParams.get('after') || 'home';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +21,7 @@ export default function CompleteProfilePage() {
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
+      const token = getToken('user');
 
       const response = await fetch('http://localhost:8081/api/auth/complete-profile', {
         method: 'PUT',
@@ -38,7 +41,14 @@ export default function CompleteProfilePage() {
         throw new Error(data?.message || 'Failed to complete profile');
       }
 
-      login(data.user, data.token);
+      login(data.user, data.token, 'user');
+
+      if (after === 'login') {
+        logout('user');
+        navigate('/login', { replace: true });
+        return;
+      }
+
       navigate('/', { replace: true });
     } catch (err) {
       console.error(err);

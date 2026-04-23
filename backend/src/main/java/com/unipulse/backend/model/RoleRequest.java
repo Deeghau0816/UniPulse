@@ -18,9 +18,18 @@ public class RoleRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
+
+    @Column(nullable = false)
+    private String requesterName;
+
+    @Column(nullable = false)
+    private String requesterEmail;
+
+    @Column(nullable = false)
+    private boolean userDeleted = false;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

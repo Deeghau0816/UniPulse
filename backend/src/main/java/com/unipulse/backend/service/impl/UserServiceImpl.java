@@ -100,7 +100,6 @@ public class UserServiceImpl implements UserService {
             user.setPassword(passwordEncoder.encode(request.getPassword().trim()));
         }
 
-        // role is NOT updated here
         return userRepository.save(user);
     }
 
@@ -108,6 +107,28 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deleteMyProfile(String email) {
         User user = getCurrentUser(email);
+        preserveRoleRequestsThenDeleteUser(user);
+    }
+
+    @Override
+    @Transactional
+    public void deleteUserById(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        preserveRoleRequestsThenDeleteUser(user);
+    }
+
+    private void preserveRoleRequestsThenDeleteUser(User user) {
+        List<RoleRequest> userRoleRequests = roleRequestRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+        for (RoleRequest roleRequest : userRoleRequests) {
+            roleRequest.setRequesterName(user.getFullName());
+            roleRequest.setRequesterEmail(user.getEmail());
+            roleRequest.setUserDeleted(true);
+            roleRequest.setUser(null);
+        }
+        roleRequestRepository.saveAll(userRoleRequests);
+
+        notificationRepository.deleteByUserId(user.getId());
         userRepository.delete(user);
     }
 
@@ -127,6 +148,9 @@ public class UserServiceImpl implements UserService {
 
         RoleRequest roleRequest = new RoleRequest();
         roleRequest.setUser(user);
+        roleRequest.setRequesterName(user.getFullName());
+        roleRequest.setRequesterEmail(user.getEmail());
+        roleRequest.setUserDeleted(false);
         roleRequest.setCurrentRole(user.getRole());
         roleRequest.setRequestedRole(request.getRequestedRole());
         roleRequest.setReason(request.getReason());
@@ -211,6 +235,10 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("This request has already been reviewed");
         }
 
+        if (roleRequest.isUserDeleted() || roleRequest.getUser() == null) {
+            throw new RuntimeException("User account deleted. This request cannot be reviewed.");
+        }
+
         User user = roleRequest.getUser();
         user.setRole(roleRequest.getRequestedRole());
         userRepository.save(user);
@@ -249,6 +277,10 @@ public class UserServiceImpl implements UserService {
 
         if (roleRequest.getStatus() != RoleRequest.Status.PENDING) {
             throw new RuntimeException("This request has already been reviewed");
+        }
+
+        if (roleRequest.isUserDeleted() || roleRequest.getUser() == null) {
+            throw new RuntimeException("User account deleted. This request cannot be reviewed.");
         }
 
         roleRequest.setStatus(RoleRequest.Status.REJECTED);

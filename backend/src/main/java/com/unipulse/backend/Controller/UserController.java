@@ -65,6 +65,12 @@ public class UserController {
         return ResponseEntity.ok("Account deleted successfully");
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
+        userService.deleteUserById(id);
+        return ResponseEntity.ok("User deleted successfully");
+    }
+
     @PostMapping("/{userId}/role-requests")
     public ResponseEntity<RoleRequestResponse> createRoleRequest(
             @PathVariable Long userId,

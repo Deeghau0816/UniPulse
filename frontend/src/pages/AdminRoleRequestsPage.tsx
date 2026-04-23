@@ -8,13 +8,16 @@ type RoleRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 interface AdminRoleRequest {
   id: number;
-  userName: string;
-  userEmail: string;
+  userId: number | null;
+  fullName: string;
+  email: string;
   currentRole: string;
   requestedRole: string;
   reason: string;
   status: RoleRequestStatus;
   createdAt: string;
+  reviewedAt?: string | null;
+  userDeleted: boolean;
 }
 
 const API_BASE_URL = 'http://localhost:8081';
@@ -64,11 +67,13 @@ export default function AdminRoleRequestsPage() {
     }
   };
 
-  const handleApprove = async (id: number) => {
+  const handleApprove = async (request: AdminRoleRequest) => {
+    if (request.userDeleted) return;
+
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `${API_BASE_URL}/api/users/admin/role-requests/${id}/approve`,
+        `${API_BASE_URL}/api/users/admin/role-requests/${request.id}/approve`,
         {},
         {
           headers: {
@@ -83,11 +88,13 @@ export default function AdminRoleRequestsPage() {
     }
   };
 
-  const handleReject = async (id: number) => {
+  const handleReject = async (request: AdminRoleRequest) => {
+    if (request.userDeleted) return;
+
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `${API_BASE_URL}/api/users/admin/role-requests/${id}/reject`,
+        `${API_BASE_URL}/api/users/admin/role-requests/${request.id}/reject`,
         {},
         {
           headers: {
@@ -105,8 +112,8 @@ export default function AdminRoleRequestsPage() {
   const filteredRequests = useMemo(() => {
     return requests.filter((req) => {
       const matchesSearch =
-        req.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        req.userEmail.toLowerCase().includes(searchQuery.toLowerCase());
+        req.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        req.email.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesFilter = filterStatus === 'ALL' || req.status === filterStatus;
       return matchesSearch && matchesFilter;
@@ -197,8 +204,13 @@ export default function AdminRoleRequestsPage() {
                   filteredRequests.map((req) => (
                     <tr key={req.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-900">{req.userName}</div>
-                        <div className="text-slate-500 text-xs mt-0.5">{req.userEmail}</div>
+                        <div className="font-semibold text-slate-900">{req.fullName}</div>
+                        <div className="text-slate-500 text-xs mt-0.5">{req.email}</div>
+                        {req.userDeleted && (
+                          <div className="mt-2 text-xs font-semibold text-red-600">
+                            User account deleted
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -224,22 +236,28 @@ export default function AdminRoleRequestsPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         {req.status === 'PENDING' ? (
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleApprove(req.id)}
-                              className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition-colors"
-                              title="Approve"
-                            >
-                              <Check className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => handleReject(req.id)}
-                              className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition-colors"
-                              title="Reject"
-                            >
-                              <X className="w-5 h-5" />
-                            </button>
-                          </div>
+                          req.userDeleted ? (
+                            <span className="text-red-600 text-xs font-semibold">
+                              Action disabled
+                            </span>
+                          ) : (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleApprove(req)}
+                                className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition-colors"
+                                title="Approve"
+                              >
+                                <Check className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => handleReject(req)}
+                                className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition-colors"
+                                title="Reject"
+                              >
+                                <X className="w-5 h-5" />
+                              </button>
+                            </div>
+                          )
                         ) : (
                           <span className="text-slate-400 text-xs italic">Reviewed</span>
                         )}
