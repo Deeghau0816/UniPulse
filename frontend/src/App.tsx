@@ -22,6 +22,7 @@ import CustomerFacilitiesPage from './pages/CustomerFacilitiesPage';
 import CustomerResourceDetailsPage from './pages/CustomerResourceDetailsPage';
 import UserPanel from './pages/reservation/UserPanel';
 import AdminPanel from './pages/reservation/ReservationAdminPanel';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
@@ -79,6 +80,14 @@ function App() {
 
           {/* Admin routes - ADMIN role only */}
           <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/dashboard/admin/tickets"
             element={
               <ProtectedRoute requiredRole="ADMIN">
@@ -127,7 +136,14 @@ function App() {
 
           {/* Reservation Module Routes */}
           <Route path="/reservations/user" element={<UserPanel />} />
-          <Route path="/reservations/admin" element={<AdminPanel />} />
+          <Route
+            path="/reservations/admin"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AdminPanel />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Shared routes - multiple roles */}
           <Route

@@ -1503,6 +1503,10 @@ const LoginPage = () => {
                <button onClick={() => navigate('/reservations/admin')} style={navBtnStyle}>
                 Admin Dashboard (Booking Management)
               </button>
+
+              <button onClick={() => navigate('/admin/dashboard')} style={navBtnStyle}>
+                Unified Admin Dashboard
+              </button>
             </div>
 
 
