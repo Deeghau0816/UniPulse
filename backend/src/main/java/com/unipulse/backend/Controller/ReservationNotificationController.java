@@ -46,10 +46,12 @@ public class ReservationNotificationController {
     @PutMapping("/{id}/read")
     @Transactional
     public ResponseEntity<ApiResponse<ReservationNotificationDTO>> markOneRead(@PathVariable Long id) {
-        return notificationRepository.findById(id).map(n -> {
-            n.setRead(true);
-            notificationRepository.save(n);
-            return ResponseEntity.ok(ApiResponse.success("Marked as read", ReservationNotificationDTO.fromEntity(n)));
+        return notificationRepository.findById(id).map(notification -> {
+            notification.setRead(true);
+            notificationRepository.save(notification);
+            return ResponseEntity.ok(
+                    ApiResponse.success("Marked as read", ReservationNotificationDTO.fromEntity(notification))
+            );
         }).orElse(ResponseEntity.notFound().build());
     }
 

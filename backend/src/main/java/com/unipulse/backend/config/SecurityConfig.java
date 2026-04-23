@@ -46,32 +46,38 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/tickets/**").permitAll()
-                        .requestMatchers("/api/resources/**").permitAll()
-                        .requestMatchers("/api/reservations/**").permitAll()
-                        .requestMatchers("/api/analytics/**").permitAll()
-                        .requestMatchers("/api/notifications/**").permitAll()
-                        .requestMatchers("/api/reservation-notifications/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/admin/register", "/api/auth/login", "/api/auth/admin/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/admin/google/start").permitAll()
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/resources/**").permitAll()
-                        .requestMatchers("/api/analytics/**").permitAll()
+
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/complete-profile").authenticated()
+
                         .requestMatchers("/api/tickets/**").permitAll()
+                        .requestMatchers("/api/resources/**").permitAll()
                         .requestMatchers("/api/reservations/**").permitAll()
+                        .requestMatchers("/api/analytics/**").permitAll()
                         .requestMatchers("/api/reservation-notifications/**").permitAll()
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/me").authenticated()
+
+                        .requestMatchers("/api/users/admin/**").hasAnyRole("TECHNICIAN", "SYSTEM_ADMIN")
+                        .requestMatchers("/api/users/*/role-requests").authenticated()
+                        .requestMatchers("/api/notifications/**").authenticated()
                         .requestMatchers("/api/attachments/**").authenticated()
+
+                        .requestMatchers("/api/users/**").hasAnyRole("TECHNICIAN", "SYSTEM_ADMIN")
                         .anyRequest().authenticated()
                 )
-                // Note: OAuth2 login disabled - enable when OAuth2 client credentials are configured
-                // .oauth2Login(oauth -> oauth
-                //         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                //         .successHandler(oAuth2LoginSuccessHandler)
-                // )
+                .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2LoginSuccessHandler)
+                )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(userJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

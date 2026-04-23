@@ -1,5 +1,8 @@
 package com.unipulse.backend.service;
 
+import com.unipulse.backend.dto.RoleRequestCreateRequest;
+import com.unipulse.backend.dto.RoleRequestResponse;
+import com.unipulse.backend.dto.UpdateUserRequest;
 import com.unipulse.backend.model.User;
 
 import java.util.List;
@@ -9,4 +12,14 @@ public interface UserService {
     List<User> getAllUsers();
     Optional<User> getUserById(Long id);
     Optional<User> getUserByEmail(String email);
+
+    User getCurrentUser(String email);
+    User updateMyProfile(String email, UpdateUserRequest request);
+    void deleteMyProfile(String email);
+
+    RoleRequestResponse createRoleRequest(Long userId, RoleRequestCreateRequest request);
+    List<RoleRequestResponse> getMyRoleRequests(Long userId);
+    List<RoleRequestResponse> getAllRoleRequests();
+    RoleRequestResponse approveRoleRequest(Long requestId);
+    RoleRequestResponse rejectRoleRequest(Long requestId);
 }
