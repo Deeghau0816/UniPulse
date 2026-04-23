@@ -322,10 +322,11 @@ const AdminTicketsPage = () => {
         }
 
         .page-subtitle {
-          font-size: 15px;
+          font-size: 20px;
           line-height: 1.7;
-          color: #52525b;
+          color: #111186;
           max-width: 760px;
+          font-weight: 400;
         }
 
         .header-right {
@@ -348,9 +349,6 @@ const AdminTicketsPage = () => {
 
         .quick-links {
           display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-          justify-content: flex-end;
         }
 
         .quick-btn {
@@ -377,6 +375,35 @@ const AdminTicketsPage = () => {
           z-index: 2;
         }
 
+        .quick-btn:hover {
+          background: #f0f9ff;
+        }
+
+        .content-section {
+          padding: 0 72px 72px;
+          position: relative;
+          z-index: 2;
+        }
+
+        .content-container {
+          max-width: 1400px;
+          margin: 0 auto;
+        }
+
+        .ticket-id {
+          font-size: 13px;
+          font-weight: 700;
+          color: #ea580c;
+          margin-bottom: 8px;
+        }
+
+        .ticket-category {
+          font-size: 22px;
+          font-weight: 800;
+          color: #1e3a8a;
+          margin-bottom: 6px;
+        }
+
         .content-container {
           max-width: 1400px;
           margin: 0 auto;
@@ -384,11 +411,11 @@ const AdminTicketsPage = () => {
 
         .filter-card {
           background: rgba(255,255,255,0.92);
-          border: 1px solid #e4e4e7;
+          border: 1px solid #1e3a8a;
           border-radius: 22px;
           padding: 22px;
           margin-bottom: 22px;
-          box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+          box-shadow: 0 10px 24px rgba(30, 58, 138, 0.05);
         }
 
         .filter-grid {
@@ -417,14 +444,14 @@ const AdminTicketsPage = () => {
         .input:focus,
         .select:focus,
         .assign-select:focus {
-          border-color: #f97316;
-          box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+          border-color: #1e3a8a;
+          box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.12);
         }
 
         .clear-btn {
-          border: 1px solid #d4d4d8;
+          border: 1px solid #1e3a8a;
           background: #ffffff;
-          color: #111111;
+          color: #1e3a8a;
           padding: 14px 18px;
           border-radius: 14px;
           font-size: 14px;
@@ -434,7 +461,7 @@ const AdminTicketsPage = () => {
 
         .results-text {
           font-size: 14px;
-          color: #52525b;
+          color: #1e3a8a;
           margin-bottom: 18px;
         }
 
@@ -446,7 +473,7 @@ const AdminTicketsPage = () => {
 
         .ticket-card {
           background: rgba(255,255,255,0.92);
-          border: 1px solid #e4e4e7;
+          border: 1px solid #ea580c;
           border-radius: 22px;
           padding: 22px;
           box-shadow: 0 10px 24px rgba(0,0,0,0.05);
@@ -492,30 +519,33 @@ const AdminTicketsPage = () => {
         }
 
         .badge {
-          padding: 8px 12px;
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 700;
-          border: 1px solid transparent;
-          white-space: nowrap;
-          text-transform: uppercase;
-        }
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 16px;        /* rounded rectangle */
+  border: 1px solid;
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 130px;
+  justify-content: center;
+}
 
-        .status-open { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
-        .status-progress { background: #fff7ed; color: #ea580c; border-color: #fb923c; }
-        .status-resolved { background: #f4f4f5; color: #18181b; border-color: #d4d4d8; }
-        .status-closed { background: #fafafa; color: #3f3f46; border-color: #d4d4d8; }
-        .status-rejected { background: #111111; color: #ffffff; border-color: #111111; }
+        .status-open      { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
+.status-progress  { background: #fefce8; color: #a16207; border-color: #fde047; }
+.status-resolved  { background: #f0fdf4; color: #166534; border-color: #86efac; }
+.status-closed    { background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; }
+.status-rejected  { background: #fdf2f8; color: #9d174d; border-color: #f9a8d4; }
 
-        .priority-low { background: #fafafa; color: #52525b; border-color: #d4d4d8; }
-        .priority-medium { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
-        .priority-high { background: #ffedd5; color: #c2410c; border-color: #fb923c; }
-        .priority-critical { background: #111111; color: #ffffff; border-color: #111111; }
+.priority-low      { background: #f8fafc; color: #475569; border-color: #cbd5e1; }
+.priority-medium   { background: #fefce8; color: #a16207; border-color: #fde047; }
+.priority-high     { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
+.priority-critical { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
 
         .ticket-description {
           font-size: 14px;
           line-height: 1.7;
-          color: #3f3f46;
+          color: #1e3a8a;
           margin-bottom: 16px;
         }
 
@@ -536,14 +566,14 @@ const AdminTicketsPage = () => {
         .meta-label {
           font-size: 11px;
           font-weight: 700;
-          color: #71717a;
+          color: #1e3a8a;
           margin-bottom: 6px;
           text-transform: uppercase;
         }
 
         .meta-value {
           font-size: 13px;
-          color: #111111;
+          color: #1e3a8a;
           line-height: 1.5;
         }
 
@@ -565,12 +595,12 @@ const AdminTicketsPage = () => {
           align-items: center;
           gap: 12px;
           padding-top: 16px;
-          border-top: 1px solid #e4e4e7;
+          border-top: 1px solid #1e3a8a;
         }
 
         .ticket-date {
           font-size: 13px;
-          color: #71717a;
+          color: #1e3a8a;
         }
 
         .details-btn {
@@ -701,6 +731,7 @@ const AdminTicketsPage = () => {
               <p className="page-subtitle">
                 Review all incident tickets, monitor progress, assign technicians, and track key performance metrics.
               </p>
+              <br></br>
             </div>
 
             <div className="header-right">

@@ -120,7 +120,7 @@ const MessageChat = ({
           flex-direction: column;
           height: 500px;
           background: #ffffff;
-          border: 1px solid #e4e4e7;
+          border: 1px solid  #f97316;
           border-radius: 16px;
           overflow: hidden;
         }
@@ -161,13 +161,13 @@ const MessageChat = ({
 
         .message.sent {
           align-self: flex-end;
-          background: linear-gradient(135deg, #3b82f6, #60a5fa);
-          color: white;
+          background: linear-gradient(135deg, #93baf9, #c0d8f5);
+          color: black;
         }
 
         .message.received {
           align-self: flex-start;
-          background: #f8fafc;
+          background: linear-gradient(135deg, #eecea3, #ece6d9);
           border: 1px solid #e4e4e7;
           color: #111111;
         }
