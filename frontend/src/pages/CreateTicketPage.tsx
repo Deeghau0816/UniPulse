@@ -349,10 +349,11 @@ const CreateTicketPage = () => {
         }
 
         .page-subtitle {
-          font-size: 15px;
+          font-size: 20px;
           line-height: 1.8;
-          color: #52525b;
+          color: #03037e;
           max-width: 760px;
+          font-weight: 400;
         }
 
         .header-actions {
@@ -366,7 +367,7 @@ const CreateTicketPage = () => {
           border-radius: 14px;
           border: 1px solid #d4d4d8;
           background: #ffffff;
-          color: #111111;
+          color: #11057a;
           font-size: 14px;
           font-weight: 700;
           cursor: pointer;
@@ -425,7 +426,7 @@ const CreateTicketPage = () => {
         .label {
           font-size: 14px;
           font-weight: 700;
-          color: #111111;
+          color: #090786;
         }
 
         .input,
@@ -433,7 +434,7 @@ const CreateTicketPage = () => {
         .textarea {
           width: 100%;
           border-radius: 14px;
-          border: 1px solid #d4d4d8;
+          border: 1px solid  #f97316;
           background: #ffffff;
           color: #111111;
           padding: 14px 16px;
@@ -590,7 +591,7 @@ const CreateTicketPage = () => {
 
         .secondary-btn {
           background: #ffffff;
-          color: #111111;
+          color: #070a70;
           border: 1px solid #d4d4d8;
         }
 

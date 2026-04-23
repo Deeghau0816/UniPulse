@@ -191,13 +191,16 @@ const NotificationsPage = () => {
           margin-bottom: 10px;
           color: #111111;
           letter-spacing: -0.02em;
+          
+
         }
 
         .page-subtitle {
-          font-size: 15px;
+          font-size: 20px;
           line-height: 1.7;
-          color: #52525b;
+          color: #03034f;
           max-width: 760px;
+          font-weight: 500;
         }
 
         .header-right {
@@ -375,7 +378,7 @@ const NotificationsPage = () => {
           width: 10px;
           height: 10px;
           border-radius: 50%;
-          background: #f97316;
+          background: #f91616;
         }
 
         .notification-title {
@@ -422,15 +425,16 @@ const NotificationsPage = () => {
 
         .view-btn:hover {
           transform: translateY(-1px);
+          background: #f7a848;
         }
 
         .read-btn {
-          background: #111111;
+          background: #070268;
           color: #ffffff;
         }
 
         .read-btn:hover {
-          background: #27272a;
+          background: #0a0a84;
         }
 
         .empty-state {
@@ -505,6 +509,7 @@ const NotificationsPage = () => {
             <div>
               <h1 className="page-title">Notifications</h1>
               <p className="page-subtitle">
+                <br></br>
                 View ticket-related alerts including status updates, technician assignments, and new comments on your incident tickets.
               </p>
             </div>
@@ -519,12 +524,7 @@ const NotificationsPage = () => {
                 <button className="quick-btn" onClick={() => navigate('/dashboard/tickets/new')}>
                   Create Ticket
                 </button>
-                <button
-                  className="quick-btn"
-                  onClick={() => navigate('/dashboard/technician/tickets')}
-                >
-                  Technician Dashboard
-                </button>
+                
               </div>
             </div>
           </div>

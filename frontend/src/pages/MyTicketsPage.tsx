@@ -299,10 +299,11 @@ const MyTicketsPage = () => {
         }
 
         .page-subtitle {
-          font-size: 15px;
+          font-size: 20px;
           line-height: 1.7;
-          color: #52525b;
+          color: #0a0a72;
           max-width: 760px;
+          font-weight: 400;
         }
 
         .header-actions {
@@ -335,7 +336,7 @@ const MyTicketsPage = () => {
         .secondary-btn {
           border: 1px solid #d4d4d8;
           background: #ffffff;
-          color: #111111;
+          color: #1b0a8b;
         }
 
         .secondary-btn:hover {
@@ -392,7 +393,7 @@ const MyTicketsPage = () => {
           border-radius: 14px;
           border: 1px solid #d4d4d8;
           background: #ffffff;
-          color: #111111;
+          color: #1b0a8b;
           font-size: 14px;
           font-weight: 700;
           cursor: pointer;
@@ -426,6 +427,7 @@ const MyTicketsPage = () => {
           border: 1px solid #e4e4e7;
           border-radius: 22px;
           padding: 22px;
+          border-color:  #f97316;
           box-shadow: 0 10px 24px rgba(0,0,0,0.05);
           transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
@@ -433,6 +435,7 @@ const MyTicketsPage = () => {
         .ticket-card:hover {
           transform: translateY(-3px);
           box-shadow: 0 14px 30px rgba(0,0,0,0.07);
+        
         }
 
         .ticket-header {
@@ -479,16 +482,16 @@ const MyTicketsPage = () => {
           text-transform: uppercase;
         }
 
-        .status-open { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
-        .status-progress { background: #fff7ed; color: #ea580c; border-color: #fb923c; }
-        .status-resolved { background: #f4f4f5; color: #18181b; border-color: #d4d4d8; }
-        .status-closed { background: #fafafa; color: #3f3f46; border-color: #d4d4d8; }
-        .status-rejected { background: #111111; color: #ffffff; border-color: #111111; }
+        .status-open      { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
+        .status-progress  { background: #fefce8; color: #a16207; border-color: #fde047; }
+        .status-resolved  { background: #f0fdf4; color: #166534; border-color: #86efac; }
+        .status-closed    { background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; }
+        .status-rejected  { background: #fdf2f8; color: #9d174d; border-color: #f9a8d4; }
 
-        .priority-low { background: #fafafa; color: #52525b; border-color: #d4d4d8; }
-        .priority-medium { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
-        .priority-high { background: #ffedd5; color: #c2410c; border-color: #fb923c; }
-        .priority-critical { background: #111111; color: #ffffff; border-color: #111111; }
+        .priority-low      { background: #f8fafc; color: #475569; border-color: #cbd5e1; }
+.priority-medium   { background: #fefce8; color: #a16207; border-color: #fde047; }
+.priority-high     { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
+.priority-critical { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
 
         .ticket-description {
           color: #3f3f46;

@@ -26,34 +26,34 @@ const KPICard = ({
   const getColorClasses = () => {
     const baseClasses = {
       primary: {
-        bg: 'linear-gradient(135deg, #3B82F6, #ffffff)',
+        bg: 'linear-gradient(135deg, #93C5FD, #ffffff)',
         lightBg: '#EFF6FF',
-        text: '#3B82F6',
-        border: '#93C5FD'
+        text: '#1D4ED8',
+        border: '#BFDBFE'
       },
       success: {
-        bg: 'linear-gradient(135deg, #10B981, #ffffff)',
+        bg: 'linear-gradient(135deg, #6EE7B7, #ffffff)',
         lightBg: '#ECFDF5',
-        text: '#10B981',
-        border: '#6EE7B7'
+        text: '#065F46',
+        border: '#A7F3D0'
       },
       warning: {
-        bg: 'linear-gradient(135deg, #F59E0B, #ffffff)',
+        bg: 'linear-gradient(135deg, #FCD34D, #ffffff)',
         lightBg: '#FFFBEB',
-        text: '#F59E0B',
-        border: '#FCD34D'
+        text: '#92400E',
+        border: '#FDE68A'
       },
       danger: {
-        bg: 'linear-gradient(135deg, #EF4444, #ffffff)',
+        bg: 'linear-gradient(135deg, #FCA5A5, #ffffff)',
         lightBg: '#FEF2F2',
-        text: '#EF4444',
-        border: '#FCA5A5'
+        text: '#991B1B',
+        border: '#FECACA'
       },
       info: {
-        bg: 'linear-gradient(135deg, #f5e28e, #ffffff)',
+        bg: 'linear-gradient(135deg, white, #f1e1b3)',
         lightBg: '#EDE9FE',
-        text: '#000000',
-        border: '#C4B5FD'
+        text: 'black',
+        borderColor: '#0d0d8a90'
       }
     };
     
@@ -128,8 +128,9 @@ const KPICard = ({
     <div className={`kpi-card ${sizes.card}`}>
       <style>{`
         .kpi-card {
+          borderColor: #000;
           background: ${colors.bg};
-          border-radius: 16px;
+          border-radius: 18px;
           padding: 24px;
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
           position: relative;
