@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const googleLoginUrl = 'http://localhost:8081/oauth2/authorization/google';
+  const googleLoginUrl = 'http://localhost:8081/api/auth/google/login/start';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,10 +46,10 @@ export default function LoginPage() {
         throw new Error(message);
       }
 
-      login(data.user, data.token);
+      login(data.user, data.token, 'user');
 
       if (!data.user.profileCompleted || !data.user.sliitId) {
-        navigate('/complete-profile', { replace: true });
+        navigate('/complete-profile?after=home', { replace: true });
         return;
       }
 

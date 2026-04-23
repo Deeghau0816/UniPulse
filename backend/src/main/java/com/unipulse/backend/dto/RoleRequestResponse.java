@@ -19,19 +19,23 @@ public class RoleRequestResponse {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime reviewedAt;
+    private boolean userDeleted;
 
     public static RoleRequestResponse fromEntity(RoleRequest roleRequest) {
+        Long userId = roleRequest.getUser() != null ? roleRequest.getUser().getId() : null;
+
         return new RoleRequestResponse(
                 roleRequest.getId(),
-                roleRequest.getUser().getId(),
-                roleRequest.getUser().getFullName(),
-                roleRequest.getUser().getEmail(),
+                userId,
+                roleRequest.getRequesterName(),
+                roleRequest.getRequesterEmail(),
                 roleRequest.getCurrentRole().name(),
                 roleRequest.getRequestedRole().name(),
                 roleRequest.getReason(),
                 roleRequest.getStatus().name(),
                 roleRequest.getCreatedAt(),
-                roleRequest.getReviewedAt()
+                roleRequest.getReviewedAt(),
+                roleRequest.isUserDeleted()
         );
     }
 }

@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const googleLoginUrl = 'http://localhost:8081/api/auth/admin/google/start';
+  const googleLoginUrl = 'http://localhost:8081/api/auth/admin/google/login/start';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,14 +49,14 @@ export default function AdminLoginPage() {
 
         if (message.toLowerCase().includes('not registered')) {
           alert(message);
-          navigate('/register', { replace: true });
+          navigate('/admin/register', { replace: true });
           return;
         }
 
         throw new Error(message);
       }
 
-      login(data.user, data.token);
+      login(data.user, data.token, 'admin');
       navigate('/admin/dashboard', { replace: true });
     } catch (error) {
       console.error(error);

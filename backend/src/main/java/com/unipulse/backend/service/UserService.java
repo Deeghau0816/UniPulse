@@ -17,6 +17,8 @@ public interface UserService {
     User updateMyProfile(String email, UpdateUserRequest request);
     void deleteMyProfile(String email);
 
+    void deleteUserById(Long userId);
+
     RoleRequestResponse createRoleRequest(Long userId, RoleRequestCreateRequest request);
     List<RoleRequestResponse> getMyRoleRequests(Long userId);
     List<RoleRequestResponse> getAllRoleRequests();
