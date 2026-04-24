@@ -5,10 +5,10 @@ import com.unipulse.backend.Repository.UserRepository;
 import com.unipulse.backend.dto.NotificationRequest;
 import com.unipulse.backend.dto.NotificationResponse;
 import com.unipulse.backend.model.Notification;
-import com.unipulse.backend.model.Role;
 import com.unipulse.backend.model.User;
 import com.unipulse.backend.service.NotificationService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -40,34 +40,70 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public List<NotificationResponse> getNotificationsByUser(Long userId) {
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId)
+    public List<NotificationResponse> getNotificationsByUser(Long userId, String currentUserEmail) {
+        User currentUser = getValidatedUser(userId, currentUserEmail);
+
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(currentUser.getId())
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
     @Override
-    public List<NotificationResponse> getUnreadNotificationsByUser(Long userId) {
-        return notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId)
+    public List<NotificationResponse> getUnreadNotificationsByUser(Long userId, String currentUserEmail) {
+        User currentUser = getValidatedUser(userId, currentUserEmail);
+
+        return notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(currentUser.getId())
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
     @Override
-    public NotificationResponse markAsRead(Long notificationId) {
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
-
+    @Transactional
+    public NotificationResponse markAsRead(Long notificationId, String currentUserEmail) {
+        Notification notification = getValidatedNotification(notificationId, currentUserEmail);
         notification.setRead(true);
         Notification updated = notificationRepository.save(notification);
-
         return mapToResponse(updated);
     }
 
-    private boolean isAdmin(User user) {
-        return user.getRole() == Role.TECHNICIAN || user.getRole() == Role.SYSTEM_ADMIN;
+    @Override
+    @Transactional
+    public void markAllAsRead(Long userId, String currentUserEmail) {
+        User currentUser = getValidatedUser(userId, currentUserEmail);
+
+        List<Notification> unreadNotifications =
+                notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(currentUser.getId());
+
+        unreadNotifications.forEach(notification -> notification.setRead(true));
+        notificationRepository.saveAll(unreadNotifications);
+    }
+
+    private User getValidatedUser(Long userId, String currentUserEmail) {
+        User currentUser = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+        if (!currentUser.getId().equals(userId)) {
+            throw new RuntimeException("You cannot access another user's notifications");
+        }
+
+        return currentUser;
+    }
+
+    private Notification getValidatedNotification(Long notificationId, String currentUserEmail) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+
+        if (notification.getUser() == null || notification.getUser().getEmail() == null) {
+            throw new RuntimeException("Notification owner not found");
+        }
+
+        if (!notification.getUser().getEmail().equalsIgnoreCase(currentUserEmail)) {
+            throw new RuntimeException("You cannot update another user's notification");
+        }
+
+        return notification;
     }
 
     private NotificationResponse mapToResponse(Notification notification) {

@@ -208,7 +208,7 @@ function AppRoutes() {
         element={
           <ProtectedRoute
             portal="user"
-            requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC']}
+            requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC', 'TECHNICIAN', 'SYSTEM_ADMIN']}
           >
             <RoleRequestPage />
           </ProtectedRoute>

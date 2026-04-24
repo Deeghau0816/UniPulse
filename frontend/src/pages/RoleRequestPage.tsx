@@ -1,198 +1,284 @@
 import { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import { Shield, Send, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import BottomBar from '../components/BottomBar';
-import { UserPlus, Clock, CheckCircle, XCircle, ChevronDown, Send } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-
-type RoleRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
-
-interface RoleRequest {
-  id: number;
-  requestedRole: string;
-  reason: string;
-  status: RoleRequestStatus;
-  createdAt: string;
-}
 
 const API_BASE_URL = 'http://localhost:8081';
 
-const roleLabelMap: Record<string, string> = {
-  STUDENT: 'Student',
-  ACADEMIC: 'Academic Staff',
-  NON_ACADEMIC: 'Non-Academic Staff',
-  TECHNICIAN: 'Technician',
-  SYSTEM_ADMIN: 'System Admin',
-};
+type RoleValue =
+  | 'STUDENT'
+  | 'ACADEMIC'
+  | 'NON_ACADEMIC'
+  | 'TECHNICIAN'
+  | 'SYSTEM_ADMIN';
+
+interface RoleRequestItem {
+  id: number;
+  currentRole: string;
+  requestedRole: string;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  reviewedAt?: string | null;
+  userDeleted?: boolean;
+}
 
 export default function RoleRequestPage() {
-  const { user } = useAuth();
-  const [role, setRole] = useState('ACADEMIC');
-  const [reason, setReason] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [requests, setRequests] = useState<RoleRequest[]>([]);
-  const [fetching, setFetching] = useState(true);
+  const { userPortalUser, getToken } = useAuth();
 
-  const availableRoles = useMemo(
-    () => [
+  const [requestedRole, setRequestedRole] = useState<RoleValue | ''>('');
+  const [reason, setReason] = useState('');
+  const [requests, setRequests] = useState<RoleRequestItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const currentRole = (userPortalUser?.role || '').toUpperCase() as RoleValue;
+
+  const availableRoleOptions = useMemo(() => {
+    const allRoles: { value: RoleValue; label: string }[] = [
+      { value: 'STUDENT', label: 'Student' },
       { value: 'ACADEMIC', label: 'Academic Staff' },
       { value: 'NON_ACADEMIC', label: 'Non-Academic Staff' },
       { value: 'TECHNICIAN', label: 'Technician' },
       { value: 'SYSTEM_ADMIN', label: 'System Admin' },
-      { value: 'STUDENT', label: 'Student' },
-    ],
-    []
-  );
+    ];
+
+    return allRoles.filter((role) => role.value !== currentRole);
+  }, [currentRole]);
 
   useEffect(() => {
-    if (user?.id) {
-      fetchRequests();
+    if (!requestedRole && availableRoleOptions.length > 0) {
+      setRequestedRole(availableRoleOptions[0].value);
     }
-  }, [user?.id]);
+  }, [availableRoleOptions, requestedRole]);
 
-  const fetchRequests = async () => {
-    try {
-      setFetching(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE_URL}/api/users/${user?.id}/role-requests`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setRequests(response.data || []);
-    } catch (error) {
-      console.error('Failed to fetch role requests:', error);
-      setRequests([]);
-    } finally {
-      setFetching(false);
-    }
-  };
+  useEffect(() => {
+    fetchMyRequests();
+  }, [userPortalUser?.id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reason.trim() || !user?.id) return;
+  const fetchMyRequests = async () => {
+    if (!userPortalUser?.id) return;
 
-    setLoading(true);
+    const token = getToken('user');
+    if (!token) return;
 
     try {
-      const token = localStorage.getItem('token');
+      setHistoryLoading(true);
 
-      await axios.post(
-        `${API_BASE_URL}/api/users/${user.id}/role-requests`,
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/${userPortalUser.id}/role-requests`,
         {
-          requestedRole: role,
-          reason,
-        },
-        {
+          method: 'GET',
           headers: {
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
         }
       );
 
+      const raw = await response.text();
+      const data = raw ? JSON.parse(raw) : [];
+
+      if (!response.ok) {
+        throw new Error(data?.message || 'Failed to fetch role requests');
+      }
+
+      setRequests(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!userPortalUser?.id) {
+      alert('User not found. Please login again.');
+      return;
+    }
+
+    const token = getToken('user');
+    if (!token) {
+      alert('Session expired. Please login again.');
+      return;
+    }
+
+    if (!requestedRole) {
+      alert('Please select a role.');
+      return;
+    }
+
+    if (requestedRole === currentRole) {
+      alert('You already have this role.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/${userPortalUser.id}/role-requests`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            requestedRole,
+            reason,
+          }),
+        }
+      );
+
+      const raw = await response.text();
+      let data: any = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        data = { message: raw };
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.message || 'Failed to submit role request.');
+      }
+
+      alert('Role request submitted successfully.');
       setReason('');
-      await fetchRequests();
-      alert('Role change request submitted. Admin will review it.');
-    } catch (error: any) {
-      console.error('Failed to submit role request:', error);
-      alert(error?.response?.data?.message || 'Failed to submit role request.');
+      await fetchMyRequests();
+    } catch (err) {
+      console.error(err);
+      const message =
+        err instanceof Error ? err.message : 'Failed to submit role request.';
+      setError(message);
+      alert(message);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadge = (status: RoleRequestStatus) => {
+  const getRoleLabel = (role: string) => {
+    switch ((role || '').toUpperCase()) {
+      case 'STUDENT':
+        return 'Student';
+      case 'ACADEMIC':
+        return 'Academic Staff';
+      case 'NON_ACADEMIC':
+        return 'Non-Academic Staff';
+      case 'TECHNICIAN':
+        return 'Technician';
+      case 'SYSTEM_ADMIN':
+        return 'System Admin';
+      default:
+        return role;
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'PENDING':
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
-            <Clock className="h-3.5 w-3.5" />
-            Pending Review
-          </span>
-        );
       case 'APPROVED':
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-            <CheckCircle className="h-3.5 w-3.5" />
-            Approved
-          </span>
-        );
+        return 'bg-emerald-100 text-emerald-700';
       case 'REJECTED':
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
-            <XCircle className="h-3.5 w-3.5" />
-            Rejected
-          </span>
-        );
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-amber-100 text-amber-700';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'APPROVED':
+        return <CheckCircle2 className="h-4 w-4" />;
+      case 'REJECTED':
+        return <XCircle className="h-4 w-4" />;
+      default:
+        return <Clock className="h-4 w-4" />;
     }
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
 
-      <main className="mx-auto mt-16 mb-20 flex-1 w-full max-w-5xl px-4 py-8 sm:mb-0 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-slate-900">
-            <UserPlus className="h-8 w-8 text-blue-600" />
-            Role Requests
-          </h1>
-          <p className="mt-1 text-slate-500">
-            Request a change to your current role.
-          </p>
-        </div>
+      <main className="flex-1 px-4 py-10 mt-16 mb-20 sm:mb-0">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <Shield className="h-8 w-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-slate-900">Role Requests</h1>
+            </div>
+            <p className="text-slate-600">
+              Request a change to your current role.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-4 border-b border-slate-100 pb-3 text-lg font-bold text-slate-900">
-                New Request
-              </h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">New Request</h2>
+
+              <div className="mb-4 rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Current Role</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {getRoleLabel(currentRole)}
+                </p>
+              </div>
+
+              {error && (
+                <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  <AlertCircle className="h-4 w-4 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-semibold text-slate-700">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Requested Role
                   </label>
-                  <div className="relative">
-                    <select
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                      className="block w-full appearance-none rounded-lg border border-slate-300 bg-white py-2.5 pl-4 pr-10 text-slate-900 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-600 focus:outline-none sm:text-sm"
-                    >
-                      {availableRoles.map((item) => (
-                        <option key={item.value} value={item.value}>
-                          {item.label}
+                  <select
+                    value={requestedRole}
+                    onChange={(e) => setRequestedRole(e.target.value as RoleValue)}
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none focus:border-blue-500"
+                    required
+                  >
+                    {availableRoleOptions.length === 0 ? (
+                      <option value="">No other roles available</option>
+                    ) : (
+                      availableRoleOptions.map((role) => (
+                        <option key={role.value} value={role.value}>
+                          {role.label}
                         </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <ChevronDown className="h-4 w-4 text-slate-400" />
-                    </div>
-                  </div>
+                      ))
+                    )}
+                  </select>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-semibold text-slate-700">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Reason for Request
                   </label>
                   <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    rows={4}
-                    placeholder="Briefly explain why you need this role..."
-                    className="block w-full resize-none rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-600 focus:outline-none sm:text-sm"
+                    rows={5}
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none focus:border-blue-500 resize-none"
+                    placeholder="Explain why you need this role change..."
                     required
                   />
                 </div>
 
                 <button
                   type="submit"
-                  disabled={loading || !reason.trim()}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+                  disabled={loading || availableRoleOptions.length === 0}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    <div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                   ) : (
                     <>
                       <Send className="h-4 w-4" />
@@ -202,46 +288,47 @@ export default function RoleRequestPage() {
                 </button>
               </form>
             </div>
-          </div>
 
-          <div className="lg:col-span-2">
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
-                <h2 className="text-lg font-bold text-slate-900">Request History</h2>
-              </div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">Request History</h2>
 
-              <div className="divide-y divide-slate-100">
-                {fetching ? (
-                  <div className="p-8 text-center text-slate-500">Loading requests...</div>
-                ) : requests.length === 0 ? (
-                  <div className="p-8 text-center text-slate-500">
-                    No role requests found.
-                  </div>
-                ) : (
-                  requests.map((req) => (
-                    <div key={req.id} className="p-6 transition-colors hover:bg-slate-50">
-                      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-3">
-                            <span className="font-semibold text-slate-900">
-                              {roleLabelMap[req.requestedRole] || req.requestedRole}
-                            </span>
-                            <span className="text-xs font-medium text-slate-400">
-                              ID: REQ-{req.id}
-                            </span>
-                          </div>
-                          <p className="text-sm text-slate-600">{req.reason}</p>
-                          <div className="mt-2 flex items-center gap-1 text-xs font-medium text-slate-400">
-                            <Clock className="h-3.5 w-3.5" />
-                            Submitted on {new Date(req.createdAt).toLocaleDateString()}
-                          </div>
+              {historyLoading ? (
+                <div className="py-10 text-center text-slate-500">Loading...</div>
+              ) : requests.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 py-12 text-center text-slate-500">
+                  No role requests found.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {requests.map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-2xl border border-slate-200 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-slate-900">
+                            {getRoleLabel(item.currentRole)} → {getRoleLabel(item.requestedRole)}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-600">{item.reason}</p>
+                          <p className="mt-2 text-xs text-slate-400">
+                            {new Date(item.createdAt).toLocaleString()}
+                          </p>
                         </div>
-                        <div className="flex-shrink-0">{getStatusBadge(req.status)}</div>
+
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadge(
+                            item.status
+                          )}`}
+                        >
+                          {getStatusIcon(item.status)}
+                          {item.status}
+                        </span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

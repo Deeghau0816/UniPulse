@@ -40,7 +40,7 @@ public class User {
     @Column(nullable = false)
     private AuthProvider provider = AuthProvider.LOCAL;
 
-    @Column(name = "profile_image")
+    @Column(name = "profile_image", columnDefinition = "LONGTEXT")
     private String profileImage;
 
     @Column(name = "profile_completed", nullable = false)
