@@ -2,18 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { resourceService, type ResourceResponse, type ResourceType } from '../services/resourceService';
 import {
-  Building2,
   Search,
   Filter,
   Users,
   MapPin,
   Calendar,
-  ArrowRight,
-  Ticket,
-  Bell,
-  Wrench,
   Home,
 } from 'lucide-react';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 
 const CustomerFacilitiesPage = () => {
   const navigate = useNavigate();
@@ -120,68 +116,7 @@ const CustomerFacilitiesPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Navbar - Same as HomePage */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Building2 className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                Smart Campus
-              </span>
-            </Link>
-            
-            <div className="hidden xl:flex items-center gap-6">
-              <button
-                onClick={() => navigate('/customer/resources')}
-                className="flex items-center gap-2 text-sm font-medium text-blue-600"
-              >
-                <Building2 className="w-4 h-4" />
-                Browse Resources
-              </button>
-              <button
-                onClick={() => navigate('/dashboard/my-tickets')}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Ticket className="w-4 h-4" />
-                My Tickets
-              </button>
-              <button
-                onClick={() => navigate('/dashboard/technician/tickets')}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Wrench className="w-4 h-4" />
-                Technician
-              </button>
-              <button
-                onClick={() => navigate('/dashboard/notifications')}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Bell className="w-4 h-4" />
-                Notifications
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/login')}
-                className="hidden sm:block text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => navigate('/login')}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
-              >
-                Get Started
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <UnifiedNavbar portal="user" />
 
       {/* Main Content */}
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
@@ -348,7 +283,7 @@ const CustomerFacilitiesPage = () => {
                         <button
                           onClick={(e) => handleQuickBook(e, resource.id)}
                           disabled={resource.status !== 'ACTIVE'}
-                          className="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Book Now
                         </button>

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { resourceService, type ResourceType, type ResourceStatus } from '../services/resourceService';
 import {
-  Building2,
   Search,
   Filter,
   Users,
@@ -10,17 +9,16 @@ import {
   Calendar,
   ArrowRight,
   Plus,
-  Ticket,
-  Bell,
-  Wrench,
-  LayoutDashboard,
-  Home,
   BarChart3,
   Clock,
   TrendingUp,
   PieChart,
   Activity,
+  Building2,
+  Home,
+  LayoutDashboard,
 } from 'lucide-react';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 
 type Resource = {
   id: string;
@@ -189,69 +187,8 @@ const FacilitiesCataloguePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Navbar - Same as HomePage */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Building2 className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                Smart Campus
-              </span>
-            </Link>
-            
-            <div className="hidden xl:flex items-center gap-6">
-              <button
-                onClick={() => navigate('/customer/resources')}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Building2 className="w-4 h-4" />
-                Browse Resources
-              </button>
-              <button
-                onClick={() => navigate('/dashboard/my-tickets')}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Ticket className="w-4 h-4" />
-                My Tickets
-              </button>
-              <button
-                onClick={() => navigate('/dashboard/technician/tickets')}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Wrench className="w-4 h-4" />
-                Technician
-              </button>
-              <button
-                onClick={() => navigate('/dashboard/notifications')}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Bell className="w-4 h-4" />
-                Notifications
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/login')}
-                className="hidden sm:block text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => navigate('/login')}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
-              >
-                Get Started
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-white">
+      <UnifiedNavbar portal="admin" />
 
       {/* Main Content */}
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
@@ -279,8 +216,8 @@ const FacilitiesCataloguePage = () => {
                   onClick={() => setShowAnalytics(!showAnalytics)}
                   className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-all ${
                     showAnalytics
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:shadow-lg hover:shadow-emerald-500/30'
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-blue-500/30'
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:shadow-lg hover:shadow-orange-500/30'
+                      : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/30'
                   }`}
                 >
                   <BarChart3 className="w-4 h-4" />
@@ -288,7 +225,7 @@ const FacilitiesCataloguePage = () => {
                 </button>
                 <button
                   onClick={() => navigate('/dashboard/resources/new')}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all"
                 >
                   <Plus className="w-4 h-4" />
                   Add Resource
@@ -309,7 +246,7 @@ const FacilitiesCataloguePage = () => {
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                     <BarChart3 className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -353,10 +290,10 @@ const FacilitiesCataloguePage = () => {
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
                       <div className="flex items-center gap-2 mb-2">
-                        <Building2 className="w-4 h-4 text-emerald-600" />
-                        <span className="text-sm font-medium text-emerald-700">Resources Used</span>
+                        <Building2 className="w-4 h-4 text-orange-600" />
+                        <span className="text-sm font-medium text-orange-700">Resources Used</span>
                       </div>
                       <div className="text-2xl font-bold text-slate-900">{analytics.totalResourcesUsed}</div>
                       <div className="text-xs text-slate-600 mt-1">
@@ -364,10 +301,10 @@ const FacilitiesCataloguePage = () => {
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
                       <div className="flex items-center gap-2 mb-2">
-                        <Clock className="w-4 h-4 text-purple-600" />
-                        <span className="text-sm font-medium text-purple-700">Avg Duration</span>
+                        <Clock className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-700">Avg Duration</span>
                       </div>
                       <div className="text-2xl font-bold text-slate-900">
                         {analytics.averageReservationDuration.toFixed(1)}h
@@ -612,7 +549,7 @@ const FacilitiesCataloguePage = () => {
                 {filteredResources.map((resource) => (
                   <div
                     key={resource.id}
-                    className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-slate-900/10 hover:border-slate-300 transition-all"
+                    className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-slate-900/10 hover:border-blue-300 transition-all"
                   >
                     {/* Card Header */}
                     <div className="relative h-48 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
@@ -659,7 +596,7 @@ const FacilitiesCataloguePage = () => {
                         </span>
                         <button
                           onClick={() => navigate(`/dashboard/resources/${resource.id}`)}
-                          className="flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+                          className="flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all"
                         >
                           View Details
                           <ArrowRight className="w-4 h-4" />

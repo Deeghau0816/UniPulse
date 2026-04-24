@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ticketService, type TicketStatus, type TicketPriority } from '../services/ticketService';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 
 type Attachment = {
   id: number;
@@ -152,6 +153,7 @@ const AdminTicketDetailsPage = () => {
 
   return (
     <>
+      <UnifiedNavbar portal="admin" />
       <style>{`
         * {
           box-sizing: border-box;

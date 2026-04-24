@@ -5,6 +5,7 @@ import type { ReservationSummary, ReservationRecord } from '../../types/reservat
 import { ReservationRequestForm } from '../../components/reservation/ReservationRequestForm';
 import { MyReservationsList } from '../../components/reservation/MyReservationsList';
 import { NotificationPanel } from '../../components/reservation/NotificationPanel';
+import UnifiedNavbar from '../../components/UnifiedNavbar';
 
 // Hard-coded demo user; replace with OAuth user in Module E
 const DEMO_USER = { id: '1', name: 'Test User' };
@@ -64,6 +65,7 @@ const UserPanel: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', fontFamily: "'Inter','Segoe UI',sans-serif", display: 'flex', fontSize: '16px' }}>
+      <UnifiedNavbar portal="user" />
 
       {/* ── Sidebar ── */}
       <aside style={{

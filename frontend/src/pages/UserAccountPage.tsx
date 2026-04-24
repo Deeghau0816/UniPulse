@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Navbar from '../components/Navbar';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 import BottomBar from '../components/BottomBar';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -289,7 +289,7 @@ export default function UserAccountPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <Navbar />
+      <UnifiedNavbar portal="user" />
 
       <main className="mt-16 mb-20 flex-1 px-4 py-10 sm:mb-0">
         <div className="mx-auto max-w-5xl">

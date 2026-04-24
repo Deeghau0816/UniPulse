@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ticketService, type TicketStatus, type TicketPriority, type TicketCategory } from '../services/ticketService';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 
 type Ticket = {
   id: string;
@@ -208,6 +209,7 @@ const MyTicketsPage = () => {
 
   return (
     <>
+      <UnifiedNavbar portal="user" />
       <style>{`
         * {
           box-sizing: border-box;

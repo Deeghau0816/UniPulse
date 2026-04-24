@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ticketService, type TicketPriority, type TicketCategory } from '../services/ticketService';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 
 type FormDataState = {
   category: TicketCategory | '';
@@ -258,6 +259,7 @@ const CreateTicketPage = () => {
 
   return (
     <>
+      <UnifiedNavbar portal="user" />
       <style>{`
         * {
           box-sizing: border-box;

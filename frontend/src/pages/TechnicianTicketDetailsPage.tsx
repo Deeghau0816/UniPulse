@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ticketService, type TicketStatus, type TicketPriority } from '../services/ticketService';
 import StatusIndicator from '../components/StatusIndicator';
 import MessageChat from '../components/MessageChat';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 
 type Attachment = {
   id: number;
@@ -197,6 +198,7 @@ const TechnicianTicketDetailsPage = () => {
 
   return (
     <>
+      <UnifiedNavbar portal="admin" />
       <style>{`
         * {
           box-sizing: border-box;

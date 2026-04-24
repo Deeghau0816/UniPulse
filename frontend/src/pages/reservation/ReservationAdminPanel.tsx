@@ -3,6 +3,7 @@ import { reservationService } from '../../services/reservationService';
 import type { ReservationSummary } from '../../types/reservation';
 import { AllReservationsTable } from '../../components/reservationadmin/AllReservationsTable';
 import { ReservationCalendarView } from '../../components/reservationadmin/ReservationCalendarView';
+import UnifiedNavbar from '../../components/UnifiedNavbar';
 
 const ADMIN = { name: 'Admin User' };
 
@@ -129,6 +130,8 @@ const AdminPanel: React.FC = () => {
         }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
+
+      <UnifiedNavbar portal="admin" />
 
       {/* ══════════════ SIDEBAR ══════════════ */}
       <aside style={{

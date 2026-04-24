@@ -1,17 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { resourceService, type ResourceRequest } from '../services/resourceService';
-import {
-  Building2,
-  ArrowLeft,
-  Plus,
-  Ticket,
-  Bell,
-  Wrench,
-  ArrowRight,
-  LayoutDashboard,
-  Home,
-} from 'lucide-react';
+import { ArrowLeft, Plus, Home } from 'lucide-react';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 
 const AddResourcePage = () => {
   const navigate = useNavigate();
@@ -68,69 +59,8 @@ const AddResourcePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Building2 className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                Smart Campus
-              </span>
-            </Link>
-            
-            <div className="hidden xl:flex items-center gap-6">
-              <button
-                onClick={() => navigate('/customer/resources')}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Building2 className="w-4 h-4" />
-                Browse Resources
-              </button>
-              <button
-                onClick={() => navigate('/dashboard/my-tickets')}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Ticket className="w-4 h-4" />
-                My Tickets
-              </button>
-              <button
-                onClick={() => navigate('/dashboard/technician/tickets')}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Wrench className="w-4 h-4" />
-                Technician
-              </button>
-              <button
-                onClick={() => navigate('/dashboard/notifications')}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Bell className="w-4 h-4" />
-                Notifications
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/login')}
-                className="hidden sm:block text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => navigate('/login')}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
-              >
-                Get Started
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-white">
+      <UnifiedNavbar portal="admin" />
 
       {/* Main Content */}
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
@@ -173,7 +103,7 @@ const AddResourcePage = () => {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
             <div className="grid sm:grid-cols-2 gap-6">
               {/* Resource Name */}
               <div className="sm:col-span-2">
@@ -329,7 +259,7 @@ const AddResourcePage = () => {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <Plus className="w-5 h-5" />
                 {isSaving ? 'Creating...' : 'Create Resource'}

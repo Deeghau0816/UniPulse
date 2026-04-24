@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ticketService, type TicketStatus, type TicketPriority, type TicketCategory } from '../services/ticketService';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 
 type DashboardTab = 'assigned' | 'open' | 'in_progress' | 'resolved';
 
@@ -189,6 +190,7 @@ const TechnicianDashboardPage = () => {
 
   return (
     <>
+      <UnifiedNavbar portal="admin" />
       <style>{`
         * {
           box-sizing: border-box;

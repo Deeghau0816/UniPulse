@@ -16,7 +16,7 @@ import {
   ChevronRight,
   Star,
 } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 import BottomBar from '../components/BottomBar';
 
 import sliitCampus from '../assets/home/sliit_campus.jpg';
@@ -284,7 +284,7 @@ const HomePage = () => {
         `}
       </style>
 
-      <Navbar />
+      <UnifiedNavbar portal="user" />
 
       {/* Hero Section with Video Background */}
       <section className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">

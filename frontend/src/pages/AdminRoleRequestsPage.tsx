@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import Navbar from '../components/Navbar';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 import BottomBar from '../components/BottomBar';
 import { Shield, Check, X, Search, Filter, ShieldCheck, Clock } from 'lucide-react';
 
@@ -133,7 +133,7 @@ export default function AdminRoleRequestsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <Navbar />
+      <UnifiedNavbar portal="admin" />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16 mb-20 sm:mb-0">
         <div className="mb-8">

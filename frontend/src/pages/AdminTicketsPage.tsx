@@ -4,6 +4,7 @@ import { ticketService, type TicketStatus, type TicketPriority, type TicketCateg
 import { analyticsService, type AnalyticsData } from '../services/analyticsService';
 import KPICard from '../components/KPICard';
 import TicketCategoryChart from '../components/TicketCategoryChart';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 
 type TechnicianFilter = 'ALL' | 'UNASSIGNED' | string;
 
@@ -231,6 +232,7 @@ const AdminTicketsPage = () => {
 
   return (
     <>
+      <UnifiedNavbar portal="admin" />
       <style>{`
         * {
           box-sizing: border-box;

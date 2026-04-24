@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationService, type NotificationItem, type NotificationType, type FilterType } from '../services/notificationService';
 import { Bell, CheckCircle, Clock, Search, MessageSquare, AlertCircle, FileText, Check } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 import BottomBar from '../components/BottomBar';
 
 const NotificationsPage = () => {
@@ -98,7 +98,7 @@ const NotificationsPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <Navbar />
+      <UnifiedNavbar portal="user" />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16 mb-20 sm:mb-0">
         {/* Header Section */}

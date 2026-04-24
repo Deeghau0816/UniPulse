@@ -11,14 +11,13 @@ import {
   Clock,
   Shield,
   UserPlus,
-  User,
 } from 'lucide-react';
 import axios from 'axios';
 import { resourceService } from '../services/resourceService';
 import { reservationService } from '../services/reservationService';
 import { ticketService } from '../services/ticketService';
 import { useAuth } from '../contexts/AuthContext';
-import uniPulseLogo from '../assets/home/uniPulseLogo.png';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 
 const API_BASE_URL = 'http://localhost:8083';
 
@@ -244,55 +243,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-blue-500/20 bg-white border border-slate-200">
-                <img
-                  src={uniPulseLogo}
-                  alt="UniPulse Logo"
-                  className="w-7 h-7 object-contain"
-                />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                Admin Dashboard
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/')}
-                className="hidden sm:flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-              >
-                <Home className="w-4 h-4" />
-                Back to Home
-              </button>
-
-              <button
-                onClick={() => navigate('/admin/account')}
-                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm transition-colors hover:bg-slate-50"
-              >
-                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100">
-                  {adminPortalUser?.profileImage ? (
-                    <img
-                      src={adminPortalUser.profileImage}
-                      alt={adminDisplayName}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-5 w-5 text-slate-500" />
-                  )}
-                </div>
-
-                <span className="max-w-[120px] truncate text-sm font-semibold text-slate-700">
-                  {adminDisplayName}
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <UnifiedNavbar portal="admin" />
 
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">

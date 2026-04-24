@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import Navbar from '../components/Navbar';
+import UnifiedNavbar from '../components/UnifiedNavbar';
 import BottomBar from '../components/BottomBar';
 import { UserPlus, Clock, CheckCircle, XCircle, ChevronDown, Send } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -129,7 +129,7 @@ export default function RoleRequestPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans">
-      <Navbar />
+      <UnifiedNavbar portal="user" />
 
       <main className="mx-auto mt-16 mb-20 flex-1 w-full max-w-5xl px-4 py-8 sm:mb-0 sm:px-6 lg:px-8">
         <div className="mb-8">
