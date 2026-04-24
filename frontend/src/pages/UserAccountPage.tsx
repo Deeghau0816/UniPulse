@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Mail,
   User,
@@ -12,7 +12,8 @@ import {
   Image as ImageIcon,
   AlertTriangle,
   IdCard,
-  Lock
+  Lock,
+  Upload,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -40,10 +41,12 @@ interface UserData {
 }
 
 const API_BASE_URL = 'http://localhost:8081';
+const MAX_PROFILE_IMAGE_BYTES = 2 * 1024 * 1024;
 
 export default function UserAccountPage() {
   const navigate = useNavigate();
   const { logout, updateUser, userPortalUser, getToken } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [user, setUser] = useState<UserData>({
     firstName: '',
@@ -72,27 +75,47 @@ export default function UserAccountPage() {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    if (userPortalUser) {
-      const localMappedUser: UserData = {
-        id: String(userPortalUser.id),
-        firstName: userPortalUser.firstName || '',
-        lastName: userPortalUser.lastName || '',
-        fullName:
-          userPortalUser.name ||
-          `${userPortalUser.firstName || ''} ${userPortalUser.lastName || ''}`.trim(),
-        email: userPortalUser.email || '',
-        sliitId: userPortalUser.sliitId || '',
-        role: userPortalUser.role || 'STUDENT',
-        profileImage: userPortalUser.profileImage || '',
-      };
+  const normalizeProfileImage = (image?: string | null, provider?: string) => {
+    const value = image?.trim() || '';
+    if (!value) return '';
 
-      setUser(localMappedUser);
-      setFormData(localMappedUser);
+    const isUploadedImage = value.startsWith('data:image/');
+    if ((provider || '').toUpperCase() === 'GOOGLE' && !isUploadedImage) {
+      return '';
     }
 
-    fetchProfile();
-  }, [userPortalUser]);
+    return value;
+  };
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (userPortalUser) {
+        const localMappedUser: UserData = {
+          id: String(userPortalUser.id),
+          firstName: userPortalUser.firstName || '',
+          lastName: userPortalUser.lastName || '',
+          fullName:
+            userPortalUser.name ||
+            `${userPortalUser.firstName || ''} ${userPortalUser.lastName || ''}`.trim(),
+          email: userPortalUser.email || '',
+          sliitId: userPortalUser.sliitId || '',
+          role: userPortalUser.role || 'STUDENT',
+          profileImage: normalizeProfileImage(
+            userPortalUser.profileImage,
+            userPortalUser.provider
+          ),
+        };
+
+        setUser(localMappedUser);
+        setFormData(localMappedUser);
+      }
+
+      await fetchProfile();
+    };
+
+    loadProfile();
+    // IMPORTANT: keep this empty. Do not add userPortalUser here.
+  }, []);
 
   const fetchProfile = async () => {
     try {
@@ -108,7 +131,8 @@ export default function UserAccountPage() {
         },
       });
 
-      const data = response.data;
+      const data = response.data?.data || response.data;
+
       const mappedUser: UserData = {
         id: String(data.id),
         firstName: data.firstName || '',
@@ -119,25 +143,11 @@ export default function UserAccountPage() {
         email: data.email || '',
         sliitId: data.sliitId || '',
         role: data.role || 'STUDENT',
-        profileImage: data.profileImage || '',
+        profileImage: normalizeProfileImage(data.profileImage, data.provider),
       };
 
       setUser(mappedUser);
       setFormData(mappedUser);
-
-      updateUser(
-        {
-          id: mappedUser.id,
-          firstName: mappedUser.firstName,
-          lastName: mappedUser.lastName,
-          name: mappedUser.fullName,
-          email: mappedUser.email,
-          sliitId: mappedUser.sliitId,
-          role: mappedUser.role as any,
-          profileImage: mappedUser.profileImage || null,
-        },
-        'user'
-      );
     } catch (error) {
       console.error('Failed to fetch profile:', error);
     }
@@ -160,9 +170,7 @@ export default function UserAccountPage() {
     }
   }, [user.role]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
     setFormData((prev) => {
@@ -176,6 +184,57 @@ export default function UserAccountPage() {
     });
   };
 
+  const handlePickImage = () => {
+    if (!isEditing) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleImageSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file.');
+      return;
+    }
+
+    if (file.size > MAX_PROFILE_IMAGE_BYTES) {
+      alert('Please select an image smaller than 2 MB.');
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+
+      setFormData((prev) => ({
+        ...prev,
+        profileImage: result,
+      }));
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    if (!isEditing) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      profileImage: '',
+    }));
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSave = async () => {
     if (password && password !== confirmPassword) {
       alert('Passwords do not match');
@@ -184,33 +243,48 @@ export default function UserAccountPage() {
 
     try {
       setIsSaving(true);
+
       const token = getToken('user');
 
-      const payload = {
+      if (!token) {
+        alert('You are not logged in. Please login again.');
+        logout('user');
+        navigate('/login');
+        return;
+      }
+
+      const payload: any = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         sliitId: formData.sliitId,
         email: formData.email,
-        password: password || '',
-        profileImage: formData.profileImage || '',
+        profileImage: formData.profileImage || null,
       };
+
+      if (password.trim() !== '') {
+        payload.password = password;
+      }
 
       const response = await axios.put(`${API_BASE_URL}/api/users/me`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
 
-      const saved = response.data;
-      const updatedUser = {
+      const saved = response.data?.data || response.data;
+
+      const updatedUser: UserData = {
         id: String(saved.id),
-        firstName: saved.firstName,
-        lastName: saved.lastName,
-        fullName: saved.fullName || `${saved.firstName} ${saved.lastName}`.trim(),
-        email: saved.email,
-        sliitId: saved.sliitId,
-        role: saved.role,
-        profileImage: saved.profileImage || '',
+        firstName: saved.firstName || '',
+        lastName: saved.lastName || '',
+        fullName:
+          saved.fullName ||
+          `${saved.firstName || ''} ${saved.lastName || ''}`.trim(),
+        email: saved.email || '',
+        sliitId: saved.sliitId || '',
+        role: saved.role || user.role,
+        profileImage: normalizeProfileImage(saved.profileImage, saved.provider),
       };
 
       setUser(updatedUser);
@@ -236,7 +310,14 @@ export default function UserAccountPage() {
       alert('Profile updated successfully.');
     } catch (error: any) {
       console.error('Failed to update profile:', error);
-      alert(error?.response?.data?.message || 'Failed to update profile.');
+
+      const backendMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.response?.data ||
+        'Failed to update profile.';
+
+      alert(backendMessage);
     } finally {
       setIsSaving(false);
     }
@@ -247,12 +328,24 @@ export default function UserAccountPage() {
     setPassword('');
     setConfirmPassword('');
     setIsEditing(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleDeleteAccount = async () => {
     try {
       setIsDeleting(true);
+
       const token = getToken('user');
+
+      if (!token) {
+        alert('You are not logged in. Please login again.');
+        logout('user');
+        navigate('/login');
+        return;
+      }
 
       await axios.delete(`${API_BASE_URL}/api/users/me`, {
         headers: {
@@ -286,6 +379,24 @@ export default function UserAccountPage() {
         return 'bg-blue-100 text-blue-700 border-blue-200';
     }
   };
+
+  const inputClass =
+    'w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 read-only:bg-slate-50 read-only:text-slate-600';
+
+  const primaryBtn =
+    'inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:shadow-blue-500/35 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60';
+
+  const dangerBtn =
+    'inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-500 to-rose-600 px-5 py-2.5 font-bold text-white shadow-lg shadow-red-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:from-red-600 hover:to-rose-700 hover:shadow-xl hover:shadow-red-500/35 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60';
+
+  const successBtn =
+    'inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-2.5 font-bold text-white shadow-lg shadow-emerald-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:from-emerald-600 hover:to-teal-700 hover:shadow-xl hover:shadow-emerald-500/35 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60';
+
+  const neutralBtn =
+    'inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-2.5 font-bold text-slate-700 shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-60';
+
+  const darkBtn =
+    'inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-950 px-5 py-2.5 font-bold text-white shadow-lg shadow-slate-900/20 transition-all duration-300 hover:-translate-y-0.5 hover:from-slate-900 hover:to-black hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-60';
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -335,15 +446,13 @@ export default function UserAccountPage() {
                   {roleLabel}
                 </span>
 
-                {(user.role === 'STUDENT' || user.role === 'ACADEMIC' || user.role === 'NON_ACADEMIC') && (
-                  <button
-                    onClick={() => navigate('/dashboard/role-request')}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-                  >
-                    <RefreshCw size={16} />
-                    Change Role
-                  </button>
-                )}
+                <button
+                  onClick={() => navigate('/dashboard/role-request')}
+                  className={`mt-4 ${primaryBtn}`}
+                >
+                  <RefreshCw size={16} />
+                  Change Role
+                </button>
               </div>
 
               <div className="mt-8 space-y-4">
@@ -368,7 +477,7 @@ export default function UserAccountPage() {
               </div>
             </div>
 
-            <div className="lg:col-span-2 rounded-3xl border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur-sm">
+            <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur-sm lg:col-span-2">
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-800">
@@ -380,10 +489,10 @@ export default function UserAccountPage() {
                 </div>
 
                 {!isEditing ? (
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap gap-3">
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white shadow-md transition hover:bg-blue-700"
+                      className={primaryBtn}
                     >
                       <Pencil size={18} />
                       Edit Profile
@@ -391,26 +500,24 @@ export default function UserAccountPage() {
 
                     <button
                       onClick={() => setShowDeletePopup(true)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 font-semibold text-white shadow-md transition hover:bg-red-700"
+                      className={dangerBtn}
                     >
                       <Trash2 size={18} />
                       Delete Profile
                     </button>
                   </div>
                 ) : (
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap gap-3">
                     <button
                       onClick={handleSave}
                       disabled={isSaving}
-                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 font-semibold text-white shadow-md transition hover:bg-emerald-700 disabled:opacity-70"
+                      className={successBtn}
                     >
                       <Save size={18} />
                       {isSaving ? 'Saving...' : 'Save'}
                     </button>
-                    <button
-                      onClick={handleCancel}
-                      className="inline-flex items-center gap-2 rounded-xl bg-slate-200 px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-300"
-                    >
+
+                    <button onClick={handleCancel} className={neutralBtn}>
                       <X size={18} />
                       Cancel
                     </button>
@@ -420,127 +527,201 @@ export default function UserAccountPage() {
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">First Name</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    First Name
+                  </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <User
+                      className="absolute left-3 top-3.5 text-slate-400"
+                      size={18}
+                    />
                     <input
                       type="text"
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
-                      disabled={!isEditing}
-                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
+                      readOnly={!isEditing}
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Last Name</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Last Name
+                  </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <User
+                      className="absolute left-3 top-3.5 text-slate-400"
+                      size={18}
+                    />
                     <input
                       type="text"
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
-                      disabled={!isEditing}
-                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
+                      readOnly={!isEditing}
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Full Name</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Full Name
+                  </label>
                   <input
                     type="text"
                     value={formData.fullName}
-                    disabled
+                    readOnly
                     className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">SLIIT ID</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    SLIIT ID
+                  </label>
                   <div className="relative">
-                    <IdCard className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <IdCard
+                      className="absolute left-3 top-3.5 text-slate-400"
+                      size={18}
+                    />
                     <input
                       type="text"
                       name="sliitId"
                       value={formData.sliitId}
                       onChange={handleChange}
-                      disabled={!isEditing}
-                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
+                      readOnly={!isEditing}
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Email</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Email
+                  </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <Mail
+                      className="absolute left-3 top-3.5 text-slate-400"
+                      size={18}
+                    />
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      disabled={!isEditing}
-                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
+                      readOnly={!isEditing}
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Profile Picture Path</label>
-                  <div className="relative">
-                    <ImageIcon className="absolute left-3 top-3.5 text-slate-400" size={18} />
-                    <input
-                      type="text"
-                      name="profileImage"
-                      value={formData.profileImage || ''}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      placeholder="/images/profile.jpg or https://..."
-                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
-                    />
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Profile Picture
+                  </label>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelected}
+                    className="hidden"
+                  />
+
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-slate-100 shadow-inner">
+                        {formData.profileImage ? (
+                          <img
+                            src={formData.profileImage}
+                            alt="Profile Preview"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="h-8 w-8 text-slate-400" />
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          onClick={handlePickImage}
+                          disabled={!isEditing}
+                          className={darkBtn}
+                        >
+                          <Upload size={16} />
+                          Choose Image
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          disabled={!isEditing}
+                          className={neutralBtn}
+                        >
+                          <X size={16} />
+                          Remove Image
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="mt-3 text-xs text-slate-500">
+                      Click "Choose Image" to open your PC folders and upload a profile picture.
+                    </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">New Password</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    New Password
+                  </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <Lock
+                      className="absolute left-3 top-3.5 text-slate-400"
+                      size={18}
+                    />
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      disabled={!isEditing}
+                      readOnly={!isEditing}
                       placeholder="Leave blank to keep current password"
-                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Confirm Password</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Confirm Password
+                  </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <Lock
+                      className="absolute left-3 top-3.5 text-slate-400"
+                      size={18}
+                    />
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      disabled={!isEditing}
+                      readOnly={!isEditing}
                       placeholder="Repeat new password"
-                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none transition focus:border-blue-500"
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Current Role</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Current Role
+                  </label>
                   <input
                     type="text"
                     value={roleLabel}
-                    disabled
+                    readOnly
                     className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600 outline-none"
                   />
                 </div>
@@ -553,15 +734,20 @@ export default function UserAccountPage() {
       <BottomBar />
 
       {showDeletePopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
             <div className="mb-4 flex items-center gap-3">
               <div className="rounded-full bg-red-100 p-3 text-red-600">
                 <AlertTriangle size={24} />
               </div>
+
               <div>
-                <h3 className="text-xl font-bold text-slate-900">Delete Profile</h3>
-                <p className="text-sm text-slate-500">This action cannot be undone.</p>
+                <h3 className="text-xl font-bold text-slate-900">
+                  Delete Profile
+                </h3>
+                <p className="text-sm text-slate-500">
+                  This action cannot be undone.
+                </p>
               </div>
             </div>
 
@@ -574,14 +760,15 @@ export default function UserAccountPage() {
               <button
                 onClick={() => setShowDeletePopup(false)}
                 disabled={isDeleting}
-                className="rounded-xl bg-slate-200 px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-300"
+                className={neutralBtn}
               >
                 Cancel
               </button>
+
               <button
                 onClick={handleDeleteAccount}
                 disabled={isDeleting}
-                className="rounded-xl bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700 disabled:opacity-70"
+                className={dangerBtn}
               >
                 {isDeleting ? 'Deleting...' : 'Yes, Delete'}
               </button>

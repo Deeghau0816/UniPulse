@@ -1,28 +1,55 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { notificationService, type NotificationItem, type NotificationType, type FilterType } from '../services/notificationService';
-import { Bell, CheckCircle, Clock, Search, MessageSquare, AlertCircle, FileText, Check } from 'lucide-react';
+import {
+  notificationService,
+  type NotificationItem,
+  type NotificationType,
+  type FilterType
+} from '../services/notificationService';
+import {
+  Bell,
+  CheckCircle,
+  Clock,
+  MessageSquare,
+  AlertCircle,
+  FileText,
+  Check,
+  Shield,
+  UserCircle2
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 import BottomBar from '../components/BottomBar';
+import { useAuth } from '../contexts/AuthContext';
 
 const NotificationsPage = () => {
-  const navigate = useNavigate();
+  const { userPortalUser, getToken } = useAuth();
+  const filterOptions: Array<{ value: FilterType; label: string }> = [
+    { value: 'ALL', label: 'All Notifications' },
+    { value: 'UNREAD', label: 'Unread' },
+    { value: 'ACCOUNT_ACTIVITY', label: 'Account Activity' },
+    { value: 'ROLE_REQUEST', label: 'Role Requests' },
+    { value: 'ROLE_REQUEST_RESULT', label: 'Role Results' },
+    { value: 'STATUS_CHANGE', label: 'Status Updates' },
+    { value: 'NEW_COMMENT', label: 'Comments' },
+    { value: 'ASSIGNMENT', label: 'Assignments' },
+  ];
 
   const [filter, setFilter] = useState<FilterType>('ALL');
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Get current user ID - hardcoded for testing
-  const getCurrentUserId = (): number => {
-    return 1; // Use hardcoded user ID for testing
-  };
-
   useEffect(() => {
     const fetchNotifications = async () => {
+      if (!userPortalUser?.id) return;
+
+      const token = getToken('user');
+      if (!token) return;
+
       try {
         setLoading(true);
-        const userId = getCurrentUserId();
-        const notificationData = await notificationService.getAllNotifications(userId);
+        const notificationData = await notificationService.getAllNotifications(
+          Number(userPortalUser.id),
+          token
+        );
         setNotifications(notificationData);
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
@@ -31,8 +58,8 @@ const NotificationsPage = () => {
       }
     };
 
-    fetchNotifications();
-  }, []);
+    void fetchNotifications();
+  }, [userPortalUser?.id]);
 
   const filteredNotifications = useMemo(() => {
     if (filter === 'ALL') return notifications;
@@ -43,8 +70,11 @@ const NotificationsPage = () => {
   const unreadCount = notifications.filter((item) => !item.isRead).length;
 
   const markAsRead = async (id: number): Promise<void> => {
+    const token = getToken('user');
+    if (!token) return;
+
     try {
-      await notificationService.markAsRead(id);
+      await notificationService.markAsRead(id, token);
       setNotifications((prev) =>
         prev.map((item) =>
           item.id === id ? { ...item, isRead: true } : item
@@ -56,9 +86,13 @@ const NotificationsPage = () => {
   };
 
   const markAllAsRead = async (): Promise<void> => {
+    if (!userPortalUser?.id) return;
+
+    const token = getToken('user');
+    if (!token) return;
+
     try {
-      const userId = getCurrentUserId();
-      await notificationService.markAllAsRead(userId);
+      await notificationService.markAllAsRead(Number(userPortalUser.id), token);
       setNotifications((prev) =>
         prev.map((item) => ({ ...item, isRead: true }))
       );
@@ -69,6 +103,9 @@ const NotificationsPage = () => {
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
+      case 'ACCOUNT_ACTIVITY': return <UserCircle2 className="w-5 h-5 text-sky-500" />;
+      case 'ROLE_REQUEST': return <Shield className="w-5 h-5 text-indigo-500" />;
+      case 'ROLE_REQUEST_RESULT': return <CheckCircle className="w-5 h-5 text-emerald-500" />;
       case 'STATUS_CHANGE': return <AlertCircle className="w-5 h-5 text-amber-500" />;
       case 'NEW_COMMENT': return <MessageSquare className="w-5 h-5 text-blue-500" />;
       case 'ASSIGNMENT': return <FileText className="w-5 h-5 text-purple-500" />;
@@ -78,6 +115,9 @@ const NotificationsPage = () => {
 
   const getNotificationLabel = (type: NotificationType): string => {
     switch (type) {
+      case 'ACCOUNT_ACTIVITY': return 'Account Activity';
+      case 'ROLE_REQUEST': return 'Role Request';
+      case 'ROLE_REQUEST_RESULT': return 'Role Result';
       case 'STATUS_CHANGE': return 'Status Update';
       case 'NEW_COMMENT': return 'New Comment';
       case 'ASSIGNMENT': return 'Assignment';
@@ -101,7 +141,6 @@ const NotificationsPage = () => {
       <Navbar />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16 mb-20 sm:mb-0">
-        {/* Header Section */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
@@ -109,14 +148,16 @@ const NotificationsPage = () => {
               Notifications
             </h1>
             <p className="text-slate-500 mt-1">
-              Stay updated on your tickets, assignments, and comments.
+              Stay updated on account activity, role requests, and system updates.
             </p>
           </div>
+
           <div className="flex items-center gap-3">
             <span className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-600"></span>
               {unreadCount} Unread
             </span>
+
             <button
               onClick={markAllAsRead}
               className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2"
@@ -127,27 +168,22 @@ const NotificationsPage = () => {
           </div>
         </div>
 
-        {/* Filters */}
         <div className="bg-white border border-slate-200 rounded-xl p-2 mb-6 flex flex-wrap gap-2 shadow-sm">
-          {(['ALL', 'UNREAD', 'STATUS_CHANGE', 'NEW_COMMENT', 'ASSIGNMENT'] as const).map((f) => (
+          {filterOptions.map((option) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              key={option.value}
+              onClick={() => setFilter(option.value)}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                filter === f
+                filter === option.value
                   ? 'bg-blue-50 text-blue-700'
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              {f === 'ALL' ? 'All Notifications' :
-               f === 'UNREAD' ? 'Unread' :
-               f === 'STATUS_CHANGE' ? 'Status Updates' :
-               f === 'NEW_COMMENT' ? 'Comments' : 'Assignments'}
+              {option.label}
             </button>
           ))}
         </div>
 
-        {/* Notifications List */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
           {loading ? (
             <div className="p-8 text-center text-slate-500 flex flex-col items-center">
@@ -160,7 +196,7 @@ const NotificationsPage = () => {
                 <Bell className="w-8 h-8 text-slate-300" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-1">You're all caught up!</h3>
-              <p className="text-slate-500">No notifications found for the selected filter.</p>
+              <p className="text-slate-500">No notifications found.</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
@@ -173,6 +209,9 @@ const NotificationsPage = () => {
                 >
                   <div className="mt-1 flex-shrink-0">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      item.type === 'ACCOUNT_ACTIVITY' ? 'bg-sky-100' :
+                      item.type === 'ROLE_REQUEST' ? 'bg-indigo-100' :
+                      item.type === 'ROLE_REQUEST_RESULT' ? 'bg-emerald-100' :
                       item.type === 'STATUS_CHANGE' ? 'bg-amber-100' :
                       item.type === 'NEW_COMMENT' ? 'bg-blue-100' :
                       item.type === 'ASSIGNMENT' ? 'bg-purple-100' : 'bg-slate-100'
@@ -180,7 +219,7 @@ const NotificationsPage = () => {
                       {getNotificationIcon(item.type)}
                     </div>
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4 mb-1">
                       <h4 className={`text-base font-semibold truncate ${!item.isRead ? 'text-slate-900' : 'text-slate-700'}`}>
@@ -191,17 +230,14 @@ const NotificationsPage = () => {
                         {formatDate(item.createdAt)}
                       </div>
                     </div>
-                    
+
                     <p className={`text-sm mb-3 ${!item.isRead ? 'text-slate-700' : 'text-slate-600'}`}>
                       {item.message}
                     </p>
-                    
+
                     <div className="flex items-center gap-4">
                       <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-100 px-2 py-1 rounded">
                         {getNotificationLabel(item.type)}
-                      </span>
-                      <span className="text-xs font-medium text-slate-500">
-                        Ticket: #{item.relatedTicketId}
                       </span>
                     </div>
                   </div>
@@ -210,12 +246,6 @@ const NotificationsPage = () => {
                     {!item.isRead && (
                       <div className="w-2.5 h-2.5 rounded-full bg-blue-600 mb-1"></div>
                     )}
-                    <button
-                      onClick={() => navigate(`/dashboard/tickets/${item.relatedTicketId}`)}
-                      className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                      View Ticket
-                    </button>
                     {!item.isRead && (
                       <button
                         onClick={() => markAsRead(item.id)}

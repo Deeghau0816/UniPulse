@@ -5,6 +5,7 @@ import com.unipulse.backend.dto.CompleteProfileRequest;
 import com.unipulse.backend.dto.LoginRequest;
 import com.unipulse.backend.dto.RegisterRequest;
 import com.unipulse.backend.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -26,23 +27,27 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authService.register(request));
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
+                                                 HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.register(request, httpRequest.getHeader("User-Agent")));
     }
 
     @PostMapping("/admin/register")
-    public ResponseEntity<AuthResponse> adminRegister(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authService.adminRegister(request));
+    public ResponseEntity<AuthResponse> adminRegister(@Valid @RequestBody RegisterRequest request,
+                                                      HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.adminRegister(request, httpRequest.getHeader("User-Agent")));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
+                                              HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.login(request, httpRequest.getHeader("User-Agent")));
     }
 
     @PostMapping("/admin/login")
-    public ResponseEntity<AuthResponse> adminLogin(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.adminLogin(request));
+    public ResponseEntity<AuthResponse> adminLogin(@Valid @RequestBody LoginRequest request,
+                                                   HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.adminLogin(request, httpRequest.getHeader("User-Agent")));
     }
 
     @PutMapping("/complete-profile")
