@@ -1,12 +1,13 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth, type UserRole } from '../contexts/AuthContext';
+import { useAuth, type PortalSide, type UserRole } from '../contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: UserRole;
   requiredRoles?: UserRole[];
   fallbackPath?: string;
+  portal?: PortalSide;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
@@ -14,20 +15,28 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   requiredRoles,
   fallbackPath = '/login',
+  portal,
 }) => {
-  const { isAuthenticated, hasRole, hasAnyRole } = useAuth();
+  const { loading, currentPortal, isUserAuthenticated, isAdminAuthenticated, hasRole, hasAnyRole } =
+    useAuth();
+
+  const targetPortal = portal ?? currentPortal;
+  const isAuthenticated =
+    targetPortal === 'admin' ? isAdminAuthenticated : isUserAuthenticated;
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to={fallbackPath} replace />;
   }
 
-  // Check if user has the specific required role
-  if (requiredRole && !hasRole(requiredRole)) {
+  if (requiredRole && !hasRole(requiredRole, targetPortal)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // Check if user has any of the required roles
-  if (requiredRoles && !hasAnyRole(requiredRoles)) {
+  if (requiredRoles && !hasAnyRole(requiredRoles, targetPortal)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

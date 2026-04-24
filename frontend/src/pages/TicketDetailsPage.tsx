@@ -198,6 +198,12 @@ const TicketDetailsPage = () => {
 
   const handleEditTicket = (): void => {
     if (ticket) {
+      // Check if technician is assigned - prevent editing
+      if (ticket.assignedTechnician && ticket.assignedTechnician.trim() !== '') {
+        alert('This ticket cannot be edited because a technician has already been assigned. Please contact the technician for any changes.');
+        return;
+      }
+      
       setEditForm({
         category: ticket.category,
         location: ticket.location,
@@ -238,7 +244,11 @@ const TicketDetailsPage = () => {
         technicianType: updatedTicket.technicianType || '',
         resolutionNotes: updatedTicket.resolutionNotes || '',
         rejectionReason: updatedTicket.rejectionReason || '',
-        attachments: [],
+        attachments: updatedTicket.attachments?.map(att => ({
+          id: att.id,
+          name: att.originalFileName || att.fileName,
+          url: `/api/tickets/${updatedTicket.id}/attachments/${att.id}`
+        })) || [],
         comments: [],
       };
       
@@ -248,7 +258,15 @@ const TicketDetailsPage = () => {
       alert('Ticket updated successfully!');
     } catch (error) {
       console.error('Failed to update ticket:', error);
-      alert('Failed to update ticket. Please try again.');
+      
+      // Handle specific error for technician assignment restriction
+      if (error instanceof Error && error.message.includes('technician has been assigned')) {
+        alert('This ticket cannot be updated because a technician has been assigned. Contact the technician for any changes.');
+        setIsEditing(false);
+        setEditForm({});
+      } else {
+        alert('Failed to update ticket. Please try again.');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -323,7 +341,7 @@ const TicketDetailsPage = () => {
             width: 46px;
             height: 46px;
             border: 3px solid #fed7aa;
-            border-top-color: #f97316;
+            border-top-color: #ea580c;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin: 0 auto 16px;
@@ -526,10 +544,11 @@ const TicketDetailsPage = () => {
         }
 
         .page-subtitle {
-          font-size: 15px;
+          font-size: 20px;
           line-height: 1.7;
-          color: #52525b;
+          color: #080874;
           max-width: 760px;
+          font-weight: 400;
         }
 
         .badge-wrap {
@@ -556,10 +575,10 @@ const TicketDetailsPage = () => {
         .status-closed { background: #f3f4f6; color: #374151; border-color: #9ca3af; }
         .status-rejected { background: #fee2e2; color: #991b1b; border-color: #f87171; }
 
-        .priority-low { background: #fafafa; color: #52525b; border-color: #d4d4d8; }
+        .priority-low { background: #f0f9ff; color: #1e40af; border-color: #3b82f6; }
         .priority-medium { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
         .priority-high { background: #ffedd5; color: #c2410c; border-color: #fb923c; }
-        .priority-critical { background: #111111; color: #ffffff; border-color: #111111; }
+        .priority-critical { background: #1e3a8a; color: #ffffff; border-color: #1e3a8a; }
 
         .content-section {
           padding: 0 72px 72px;
@@ -590,7 +609,7 @@ const TicketDetailsPage = () => {
         .card-title {
           font-size: 18px;
           font-weight: 700;
-          color: #111111;
+          color: #0c177e;
           margin-bottom: 16px;
         }
 
@@ -602,7 +621,7 @@ const TicketDetailsPage = () => {
 
         .meta-item {
           background: #fafafa;
-          border: 1px solid #e4e4e7;
+          border: 1px solid  #f97316;
           border-radius: 14px;
           padding: 16px;
         }
@@ -610,7 +629,7 @@ const TicketDetailsPage = () => {
         .meta-label {
           font-size: 11px;
           font-weight: 700;
-          color: #71717a;
+          color: #b3772e;
           margin-bottom: 6px;
           text-transform: uppercase;
         }
@@ -623,7 +642,7 @@ const TicketDetailsPage = () => {
 
         .description-box {
           background: #fafafa;
-          border: 1px solid #e4e4e7;
+          border: 1px solid  #f97316;
           border-radius: 14px;
           padding: 16px;
           font-size: 14px;
@@ -679,8 +698,8 @@ const TicketDetailsPage = () => {
         }
 
         .timeline-step.active .step-circle {
-          background: #f97316;
-          border-color: #f97316;
+          background: #ea580c;
+          border-color: #ea580c;
           color: white;
         }
 
@@ -707,7 +726,7 @@ const TicketDetailsPage = () => {
         .comment-input {
           width: 100%;
           padding: 12px;
-          border: 1px solid #d4d4d8;
+          border: 1px solid  #f97316;
           border-radius: 12px;
           font-size: 14px;
           resize: vertical;
@@ -773,7 +792,7 @@ const TicketDetailsPage = () => {
         .edit-textarea {
           width: 100%;
           padding: 10px 12px;
-          border: 1px solid #d4d4d8;
+          border: 1px solid  #f97316;
           border-radius: 8px;
           background: #ffffff;
           color: #111111;
@@ -783,8 +802,8 @@ const TicketDetailsPage = () => {
 
         .edit-input:focus,
         .edit-textarea:focus {
-          border-color: #f97316;
-          box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+          border-color: #1e3a8a;
+          box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
         }
 
         .edit-textarea {
@@ -875,7 +894,7 @@ const TicketDetailsPage = () => {
 
         .attachment-card {
           background: #fafafa;
-          border: 1px solid #e4e4e7;
+          border: 1px solid  #f97316;
           border-radius: 12px;
           padding: 16px;
           text-align: center;
@@ -956,9 +975,7 @@ const TicketDetailsPage = () => {
               <button className="nav-btn" onClick={() => navigate('/dashboard/notifications')}>
                 Notifications
               </button>
-              <button className="nav-btn" onClick={() => navigate('/dashboard/admin/tickets')}>
-                Admin View
-              </button>
+              
             </div>
 
             <div className="title-row">
@@ -979,9 +996,15 @@ const TicketDetailsPage = () => {
                 </span>
                 {!isEditing && (
                   <>
-                    <button className="primary-btn" onClick={handleEditTicket}>
-                      Edit Ticket
-                    </button>
+                    {!ticket.assignedTechnician || ticket.assignedTechnician.trim() === '' ? (
+                      <button className="primary-btn" onClick={handleEditTicket}>
+                        Edit Ticket
+                      </button>
+                    ) : (
+                      <button className="primary-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }} title="Cannot edit - technician assigned">
+                        Edit Ticket (Locked)
+                      </button>
+                    )}
                     <button className="delete-btn" onClick={() => setShowDeleteDialog(true)}>
                       Delete Ticket
                     </button>

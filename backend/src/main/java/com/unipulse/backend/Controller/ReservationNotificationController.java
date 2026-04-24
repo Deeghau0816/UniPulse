@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/reservation-notifications")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://localhost:8081"})
 public class ReservationNotificationController {
 
     private final ReservationNotificationRepository notificationRepository;
@@ -46,10 +46,12 @@ public class ReservationNotificationController {
     @PutMapping("/{id}/read")
     @Transactional
     public ResponseEntity<ApiResponse<ReservationNotificationDTO>> markOneRead(@PathVariable Long id) {
-        return notificationRepository.findById(id).map(n -> {
-            n.setRead(true);
-            notificationRepository.save(n);
-            return ResponseEntity.ok(ApiResponse.success("Marked as read", ReservationNotificationDTO.fromEntity(n)));
+        return notificationRepository.findById(id).map(notification -> {
+            notification.setRead(true);
+            notificationRepository.save(notification);
+            return ResponseEntity.ok(
+                    ApiResponse.success("Marked as read", ReservationNotificationDTO.fromEntity(notification))
+            );
         }).orElse(ResponseEntity.notFound().build());
     }
 

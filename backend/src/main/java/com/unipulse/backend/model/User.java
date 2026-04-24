@@ -1,5 +1,6 @@
 package com.unipulse.backend.model;
 
+import com.unipulse.backend.util.NameUtils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,8 +17,14 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String fullName;
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false)
+    private String lastName = "";
+
+    @Column(name = "sliit_id", unique = true)
+    private String sliitId;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -26,10 +33,32 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private Role role;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AuthProvider provider = AuthProvider.LOCAL;
+
+    @Column(name = "profile_image")
+    private String profileImage;
+
+    @Column(name = "profile_completed", nullable = false)
+    private boolean profileCompleted = false;
+
+    @Transient
+    public String getFullName() {
+        return NameUtils.buildFullName(firstName, lastName);
+    }
+
+    public void setFullName(String fullName) {
+        String[] names = NameUtils.splitFullName(fullName);
+        this.firstName = names[0];
+        this.lastName = names[1];
+    }
+
+    @Transient
+    public String getName() {
+        return getFullName();
+    }
 }

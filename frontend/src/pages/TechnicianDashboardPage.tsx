@@ -280,10 +280,11 @@ const TechnicianDashboardPage = () => {
         }
 
         .page-subtitle {
-          font-size: 15px;
+          font-size: 20px;
           line-height: 1.7;
-          color: #52525b;
+          color: #080883;
           max-width: 760px;
+          font-weight: 400;
         }
 
         .header-right {
@@ -314,9 +315,9 @@ const TechnicianDashboardPage = () => {
         .quick-btn {
           padding: 12px 16px;
           border-radius: 14px;
-          border: 1px solid #d4d4d8;
+          border: 1px solid #a4b5e3;
           background: #ffffff;
-          color: #111111;
+          color: #1e3a8a;
           font-size: 14px;
           font-weight: 700;
           cursor: pointer;
@@ -324,7 +325,7 @@ const TechnicianDashboardPage = () => {
         }
 
         .quick-btn:hover {
-          background: #fafafa;
+          background: #f0f9ff;
         }
 
         .content-section {
@@ -346,9 +347,9 @@ const TechnicianDashboardPage = () => {
         }
 
         .tab-btn {
-          border: 1px solid #d4d4d8;
+          border: 1px solid #bccaf0;
           background: #ffffff;
-          color: #111111;
+          color: #1e3a8a;
           padding: 12px 16px;
           border-radius: 14px;
           font-size: 14px;
@@ -366,11 +367,11 @@ const TechnicianDashboardPage = () => {
 
         .filter-card {
           background: rgba(255,255,255,0.92);
-          border: 1px solid #e4e4e7;
+          border: 1px solid #9db2ec;
           border-radius: 22px;
           padding: 22px;
           margin-bottom: 22px;
-          box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+          box-shadow: 0 10px 24px rgba(30, 58, 138, 0.05);
         }
 
         .filter-grid {
@@ -383,9 +384,9 @@ const TechnicianDashboardPage = () => {
         .select {
           width: 100%;
           border-radius: 14px;
-          border: 1px solid #d4d4d8;
+          border: 1px solid #a8bcf3;
           background: #ffffff;
-          color: #111111;
+          color: #1e3a8a;
           padding: 14px 16px;
           font-size: 14px;
           outline: none;
@@ -397,14 +398,14 @@ const TechnicianDashboardPage = () => {
 
         .input:focus,
         .select:focus {
-          border-color: #f97316;
-          box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+          border-color: #a3b7ef;
+          box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.12);
         }
 
         .clear-btn {
-          border: 1px solid #d4d4d8;
+          border: 1px solid #a3b6ec;
           background: #ffffff;
-          color: #111111;
+          color: #1e3a8a;
           padding: 14px 18px;
           border-radius: 14px;
           font-size: 14px;
@@ -414,7 +415,7 @@ const TechnicianDashboardPage = () => {
 
         .results-text {
           font-size: 14px;
-          color: #52525b;
+          color: #1e3a8a;
           margin-bottom: 18px;
         }
 
@@ -426,7 +427,7 @@ const TechnicianDashboardPage = () => {
 
         .ticket-card {
           background: rgba(255,255,255,0.92);
-          border: 1px solid #e4e4e7;
+          border: 1px solid #ea580c;
           border-radius: 22px;
           padding: 22px;
           box-shadow: 0 10px 24px rgba(0,0,0,0.05);
@@ -455,7 +456,7 @@ const TechnicianDashboardPage = () => {
         .ticket-category {
           font-size: 22px;
           font-weight: 800;
-          color: #111111;
+          color: black;
           margin-bottom: 6px;
         }
 
@@ -472,30 +473,33 @@ const TechnicianDashboardPage = () => {
         }
 
         .badge {
-          padding: 8px 12px;
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 700;
-          border: 1px solid transparent;
-          white-space: nowrap;
-          text-transform: uppercase;
-        }
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px;
+  border-radius: 16px;        /* rounded rectangle */
+  border: 1px solid;
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 130px;
+  justify-content: center;
+}
 
-        .status-open { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
-        .status-progress { background: #fff7ed; color: #ea580c; border-color: #fb923c; }
-        .status-resolved { background: #f4f4f5; color: #18181b; border-color: #d4d4d8; }
-        .status-closed { background: #fafafa; color: #3f3f46; border-color: #d4d4d8; }
-        .status-rejected { background: #111111; color: #ffffff; border-color: #111111; }
+        .status-open      { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
+        .status-progress  { background: #fefce8; color: #a16207; border-color: #fde047; }
+        .status-resolved  { background: #f0fdf4; color: #166534; border-color: #86efac; }
+        .status-closed    { background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; }
+        .status-rejected  { background: #fdf2f8; color: #9d174d; border-color: #f9a8d4; }
 
-        .priority-low { background: #fafafa; color: #52525b; border-color: #d4d4d8; }
-        .priority-medium { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
-        .priority-high { background: #ffedd5; color: #c2410c; border-color: #fb923c; }
-        .priority-critical { background: #111111; color: #ffffff; border-color: #111111; }
+        .priority-low      { background: #f8fafc; color: #475569; border-color: #cbd5e1; }
+        .priority-medium   { background: #fefce8; color: #a16207; border-color: #fde047; }
+        .priority-high     { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
+        .priority-critical { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
 
         .ticket-description {
           font-size: 14px;
           line-height: 1.7;
-          color: #3f3f46;
+          color: #1e3a8a;
           margin-bottom: 16px;
         }
 
@@ -516,14 +520,14 @@ const TechnicianDashboardPage = () => {
         .meta-label {
           font-size: 11px;
           font-weight: 700;
-          color: #71717a;
+          color: #1e3a8a;
           margin-bottom: 6px;
           text-transform: uppercase;
         }
 
         .meta-value {
           font-size: 13px;
-          color: #111111;
+          color: #1e3a8a;
         }
 
         .ticket-footer {
@@ -532,7 +536,7 @@ const TechnicianDashboardPage = () => {
           align-items: center;
           gap: 12px;
           padding-top: 16px;
-          border-top: 1px solid #e4e4e7;
+          border-top: 1px solid #1e3a8a;
         }
 
         .ticket-actions {
@@ -563,50 +567,49 @@ const TechnicianDashboardPage = () => {
         }
 
         .status-btn.status-progress {
-          background: linear-gradient(135deg, #3b82f6, #60a5fa);
-          color: white;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
+  background: linear-gradient(135deg, #93c5fd, #bfdbfe);
+  color: #1e40af;
+  box-shadow: 0 4px 12px rgba(147, 197, 253, 0.4);
+}
 
-        .status-btn.status-resolved {
-          background: linear-gradient(135deg, #10b981, #34d399);
-          color: white;
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
+.status-btn.status-resolved {
+  background: linear-gradient(135deg, #6ee7b7, #a7f3d0);
+  color: #065f46;
+  box-shadow: 0 4px 12px rgba(110, 231, 183, 0.4);
+}
 
-        .status-btn.status-closed {
-          background: linear-gradient(135deg, #6b7280, #9ca3af);
-          color: white;
-          box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
-        }
+.status-btn.status-closed {
+  background: linear-gradient(135deg, #d1d5db, #e5e7eb);
+  color: #374151;
+  box-shadow: 0 4px 12px rgba(209, 213, 219, 0.4);
+}
 
-        .status-btn.status-open {
-          background: linear-gradient(135deg, #f59e0b, #fbbf24);
-          color: white;
-          box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-        }
+.status-btn.status-open {
+  background: linear-gradient(135deg, #fcd34d, #fde68a);
+  color: #92400e;
+  box-shadow: 0 4px 12px rgba(252, 211, 77, 0.4);
+}
 
-        .message-btn {
-          padding: 8px 12px;
-          border-radius: 10px;
-          font-size: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border: none;
-          background: linear-gradient(135deg, #10b981, #34d399);
-          color: white;
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
+.message-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  background: linear-gradient(135deg, #6ee7b7, #a7f3d0);
+  color: #065f46;
+  box-shadow: 0 4px 12px rgba(110, 231, 183, 0.4);
+}
 
-        .message-btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-        }
-
+.message-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(110, 231, 183, 0.5);
+}
         .ticket-date {
           font-size: 13px;
-          color: #71717a;
+          color: #1e3a8a;
         }
 
         .details-btn {
@@ -722,15 +725,8 @@ const TechnicianDashboardPage = () => {
                 </div>
 
                 <div className="quick-links">
-                  <button className="quick-btn" onClick={() => navigate('/dashboard/my-tickets')}>
-                    My Tickets
-                  </button>
-                  <button className="quick-btn" onClick={() => navigate('/dashboard/notifications')}>
-                    Notifications
-                  </button>
-                  <button className="quick-btn" onClick={() => navigate('/dashboard/admin/tickets')}>
-                    Admin View
-                  </button>
+                  
+                  
                 </div>
               </div>
             </div>

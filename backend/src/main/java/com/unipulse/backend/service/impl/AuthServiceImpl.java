@@ -1,8 +1,10 @@
 package com.unipulse.backend.service.impl;
 
+import com.unipulse.backend.Mapper.UserMapper;
 import com.unipulse.backend.Repository.NotificationRepository;
 import com.unipulse.backend.Repository.UserRepository;
 import com.unipulse.backend.dto.AuthResponse;
+import com.unipulse.backend.dto.CompleteProfileRequest;
 import com.unipulse.backend.dto.LoginRequest;
 import com.unipulse.backend.dto.RegisterRequest;
 import com.unipulse.backend.model.AuthProvider;
@@ -17,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -42,25 +45,31 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        String normalizedSliitId = request.getSliitId().trim();
+
+        if (userRepository.findByEmail(normalizedEmail).isPresent()) {
             throw new RuntimeException("Email is already registered");
         }
 
+        if (userRepository.findBySliitId(normalizedSliitId).isPresent()) {
+            throw new RuntimeException("SLIIT ID is already registered");
+        }
+
+        Role selectedRole = parseAllowedSignupRole(request.getRole());
+
         User user = new User();
-        user.setFullName(request.getFullName());
-        user.setEmail(request.getEmail());
+        user.setFirstName(request.getFirstName().trim());
+        user.setLastName(request.getLastName().trim());
+        user.setSliitId(normalizedSliitId);
+        user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.STUDENT);
+        user.setRole(selectedRole);
         user.setProvider(AuthProvider.LOCAL);
+        user.setProfileCompleted(true);
 
         User savedUser = userRepository.save(user);
-
-        Notification registerNotification = new Notification();
-        registerNotification.setTitle("Account Created");
-        registerNotification.setMessage("Your account was created successfully.");
-        registerNotification.setRead(false);
-        registerNotification.setUser(savedUser);
-        notificationRepository.save(registerNotification);
+        saveNotification(savedUser, "Account Created", "Your account was created successfully.");
 
         try {
             emailService.sendSimpleEmail(
@@ -72,31 +81,42 @@ public class AuthServiceImpl implements AuthService {
             System.out.println("Registration email failed: " + e.getMessage());
         }
 
-        return new AuthResponse(
-                "User registered successfully",
-                savedUser.getId(),
-                savedUser.getFullName(),
-                savedUser.getEmail(),
-                savedUser.getRole().name(),
-                null
-        );
+        String jwtToken = generateTokenForUser(savedUser);
+        return new AuthResponse(jwtToken, UserMapper.toDto(savedUser));
+    }
+
+    @Override
+    public AuthResponse adminRegister(RegisterRequest request) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+
+        if (userRepository.findByEmail(normalizedEmail).isPresent()) {
+            throw new RuntimeException("Email is already registered");
+        }
+
+        Role selectedRole = parseAdminSignupRole(request.getRole());
+
+        User user = new User();
+        user.setFirstName(request.getFirstName().trim());
+        user.setLastName(request.getLastName().trim());
+        user.setSliitId("ADMIN-" + System.currentTimeMillis());
+        user.setEmail(normalizedEmail);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(selectedRole);
+        user.setProvider(AuthProvider.LOCAL);
+        user.setProfileCompleted(true);
+
+        User savedUser = userRepository.save(user);
+        saveNotification(savedUser, "Admin Account Created", "Your admin account was created successfully.");
+
+        String jwtToken = generateTokenForUser(savedUser);
+        return new AuthResponse(jwtToken, UserMapper.toDto(savedUser));
     }
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = authenticate(request);
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid password");
-        }
-
-        Notification loginNotification = new Notification();
-        loginNotification.setTitle("Login Successful");
-        loginNotification.setMessage("Login completed successfully.");
-        loginNotification.setRead(false);
-        loginNotification.setUser(user);
-        notificationRepository.save(loginNotification);
+        saveNotification(user, "Login Successful", "Login completed successfully.");
 
         try {
             emailService.sendSimpleEmail(
@@ -108,25 +128,117 @@ public class AuthServiceImpl implements AuthService {
             System.out.println("Login email failed: " + e.getMessage());
         }
 
+        String jwtToken = generateTokenForUser(user);
+        return new AuthResponse(jwtToken, UserMapper.toDto(user));
+    }
+
+    @Override
+    public AuthResponse adminLogin(LoginRequest request) {
+        User user = authenticate(request);
+
+        if (user.getRole() != Role.TECHNICIAN && user.getRole() != Role.SYSTEM_ADMIN) {
+            throw new RuntimeException("Access denied. Only Technician or System Admin can log in here.");
+        }
+
+        saveNotification(user, "Admin Login Successful", "Admin login completed successfully.");
+
+        String jwtToken = generateTokenForUser(user);
+        return new AuthResponse(jwtToken, UserMapper.toDto(user));
+    }
+
+    @Override
+    public AuthResponse completeProfile(String email, CompleteProfileRequest request) {
+        User user = userRepository.findByEmail(email.trim().toLowerCase())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String sliitId = request.getSliitId().trim();
+
+        userRepository.findBySliitId(sliitId)
+                .filter(existingUser -> !existingUser.getId().equals(user.getId()))
+                .ifPresent(existingUser -> {
+                    throw new RuntimeException("SLIIT ID is already registered");
+                });
+
+        Role selectedRole = parseAllowedSignupRole(request.getRole());
+
+        user.setSliitId(sliitId);
+        user.setRole(selectedRole);
+        user.setProfileCompleted(true);
+
+        User savedUser = userRepository.save(user);
+        String jwtToken = generateTokenForUser(savedUser);
+
+        return new AuthResponse(jwtToken, UserMapper.toDto(savedUser));
+    }
+
+    private User authenticate(LoginRequest request) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new RuntimeException("User not registered"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid password");
+        }
+
+        return user;
+    }
+
+    private Role parseAllowedSignupRole(String rawRole) {
+        if (rawRole == null || rawRole.isBlank()) {
+            throw new RuntimeException("Role is required");
+        }
+
+        Role role;
+        try {
+            role = Role.valueOf(rawRole.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException("Invalid role");
+        }
+
+        if (role != Role.STUDENT && role != Role.ACADEMIC && role != Role.NON_ACADEMIC) {
+            throw new RuntimeException("Only STUDENT, ACADEMIC, or NON_ACADEMIC can be selected during signup");
+        }
+
+        return role;
+    }
+
+    private Role parseAdminSignupRole(String rawRole) {
+        if (rawRole == null || rawRole.isBlank()) {
+            throw new RuntimeException("Role is required");
+        }
+
+        Role role;
+        try {
+            role = Role.valueOf(rawRole.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException("Invalid role");
+        }
+
+        if (role != Role.TECHNICIAN && role != Role.SYSTEM_ADMIN) {
+            throw new RuntimeException("Only TECHNICIAN or SYSTEM_ADMIN can be selected during admin signup");
+        }
+
+        return role;
+    }
+
+    private void saveNotification(User user, String title, String message) {
+        Notification notification = new Notification();
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setRead(false);
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setUser(user);
+        notificationRepository.save(notification);
+    }
+
+    private String generateTokenForUser(User user) {
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
         );
 
-        String jwtToken = userJwtService.generateToken(
-                userDetails,
-                user.getId(),
-                user.getRole().name()
-        );
-
-        return new AuthResponse(
-                "Login successful",
-                user.getId(),
-                user.getFullName(),
-                user.getEmail(),
-                user.getRole().name(),
-                jwtToken
-        );
+        return userJwtService.generateToken(userDetails, user);
     }
 }

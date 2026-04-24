@@ -1,3 +1,4 @@
+
 package com.unipulse.backend.Controller;
 
 import com.unipulse.backend.dto.AssignTechnicianRequest;
@@ -55,6 +56,8 @@ public class TicketController {
         request.setCategory(category);
         request.setLocation(location);
         request.setPriority(priority);
+        
+        
         request.setDescription(description);
         request.setPreferredContact(preferredContact);
         request.setCreatedBy(createdBy);

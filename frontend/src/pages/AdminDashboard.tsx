@@ -6,24 +6,35 @@ import {
   Ticket,
   Home,
   BarChart3,
-  LogOut,
   ChevronRight,
-  LayoutDashboard,
   Plus,
   Clock,
+  Shield,
+  UserPlus,
+  User,
 } from 'lucide-react';
+import axios from 'axios';
 import { resourceService } from '../services/resourceService';
 import { reservationService } from '../services/reservationService';
 import { ticketService } from '../services/ticketService';
+import { useAuth } from '../contexts/AuthContext';
+import uniPulseLogo from '../assets/home/uniPulseLogo.png';
+
+const API_BASE_URL = 'http://localhost:8083';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { adminPortalUser, getToken } = useAuth();
+
   const [stats, setStats] = useState({
     totalResources: 0,
     totalBookings: 0,
     totalTickets: 0,
     pendingRequests: 0,
+    totalRoleRequests: 0,
+    pendingRoleRequests: 0,
   });
+
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
@@ -32,61 +43,97 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const [resources, reservations, tickets] = await Promise.all([
+        const token = getToken('admin');
+
+        const [resources, reservations, tickets, roleRequestsResponse] = await Promise.all([
           resourceService.getAllResources().catch(() => []),
           reservationService.getAll().catch(() => []),
           ticketService.getAllTickets().catch(() => []),
+          axios
+            .get(`${API_BASE_URL}/api/users/admin/role-requests`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+            .then((res) => res.data)
+            .catch(() => []),
         ]);
 
+        const roleRequests = Array.isArray(roleRequestsResponse) ? roleRequestsResponse : [];
+
         const pendingBookings = reservations.filter((r: any) => r.status === 'PENDING').length;
-        const pendingTickets = tickets.filter((t: any) => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length;
+        const pendingTickets = tickets.filter(
+          (t: any) => t.status === 'OPEN' || t.status === 'IN_PROGRESS'
+        ).length;
+        const pendingRoleRequests = roleRequests.filter(
+          (req: any) => req.status === 'PENDING'
+        ).length;
 
         setStats({
           totalResources: resources.length,
           totalBookings: reservations.length,
           totalTickets: tickets.length,
-          pendingRequests: pendingBookings + pendingTickets,
+          pendingRequests: pendingBookings + pendingTickets + pendingRoleRequests,
+          totalRoleRequests: roleRequests.length,
+          pendingRoleRequests,
         });
 
-        // Format recent activity
         const activities: any[] = [];
 
-        // Add recent reservations
         reservations.slice(0, 3).forEach((r: any) => {
           activities.push({
             type: 'booking',
-            message: `New booking request for ${r.resourceName || 'a resource'} by ${r.userName || r.userId}`,
+            message: `New booking request for ${r.resourceName || 'a resource'} by ${
+              r.userName || r.userId
+            }`,
             time: formatTimeAgo(r.createdAt),
+            sortDate: r.createdAt ? new Date(r.createdAt).getTime() : 0,
             icon: Calendar,
             color: 'bg-blue-100 text-blue-600',
           });
         });
 
-        // Add recent tickets
         tickets.slice(0, 3).forEach((t: any) => {
           activities.push({
             type: 'ticket',
-            message: `Ticket #${t.ticketCode || t.id} ${t.status === 'ASSIGNED' ? 'assigned to ' + t.assignedTechnician : 'created'}`,
+            message: `Ticket #${t.ticketCode || t.id} ${
+              t.status === 'ASSIGNED'
+                ? 'assigned to ' + (t.assignedTechnician || 'technician')
+                : 'created'
+            }`,
             time: formatTimeAgo(t.createdAt),
+            sortDate: t.createdAt ? new Date(t.createdAt).getTime() : 0,
             icon: Ticket,
             color: 'bg-orange-100 text-orange-600',
           });
         });
 
-        // Add recent resources
+        roleRequests.slice(0, 3).forEach((req: any) => {
+          activities.push({
+            type: 'role',
+            message: `${req.fullName || req.userName || 'User'} requested role change to ${
+              req.requestedRole || 'a new role'
+            }`,
+            time: formatTimeAgo(req.createdAt),
+            sortDate: req.createdAt ? new Date(req.createdAt).getTime() : 0,
+            icon: Shield,
+            color: 'bg-purple-100 text-purple-600',
+          });
+        });
+
         resources.slice(0, 2).forEach((r: any) => {
           activities.push({
             type: 'resource',
-            message: `Resource "${r.name}" is ${r.status}`,
+            message: `Resource "${r.name}" is ${r.status || 'available'}`,
             time: formatTimeAgo(r.createdAt),
+            sortDate: r.createdAt ? new Date(r.createdAt).getTime() : 0,
             icon: Building2,
             color: 'bg-emerald-100 text-emerald-600',
           });
         });
 
-        // Sort by time (most recent first) and take top 5
-        activities.sort((a, b) => b.time.localeCompare(a.time));
-        setRecentActivity(activities.slice(0, 5));
+        activities.sort((a, b) => b.sortDate - a.sortDate);
+        setRecentActivity(activities.slice(0, 6));
       } catch (err) {
         console.error('Failed to fetch admin stats:', err);
         setError('Failed to load dashboard data');
@@ -96,10 +143,11 @@ const AdminDashboard = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [getToken]);
 
   const formatTimeAgo = (dateString?: string): string => {
     if (!dateString) return 'Just now';
+
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -150,6 +198,18 @@ const AdminDashboard = () => {
       action: () => navigate('/dashboard/admin/tickets'),
       actionLabel: 'Manage Tickets',
     },
+    {
+      id: 'roles',
+      title: 'Role Management',
+      description: 'Review role change requests and approve or reject user role updates',
+      icon: Shield,
+      color: 'from-purple-500 to-fuchsia-600',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200',
+      stats: { label: 'Requests', value: stats.totalRoleRequests },
+      action: () => navigate('/dashboard/admin/role-requests'),
+      actionLabel: 'Open Role Management',
+    },
   ];
 
   const quickActions = [
@@ -168,20 +228,32 @@ const AdminDashboard = () => {
     {
       label: 'Pending Requests',
       icon: Clock,
-      action: () => navigate('/reservations/admin'),
+      action: () => navigate('/dashboard/admin/role-requests'),
       color: 'bg-amber-500 hover:bg-amber-600',
+    },
+    {
+      label: 'Add Admin',
+      icon: UserPlus,
+      action: () => navigate('/admin/register'),
+      color: 'bg-rose-500 hover:bg-rose-600',
     },
   ];
 
+  const adminDisplayName =
+    adminPortalUser?.firstName || adminPortalUser?.name?.split(' ')[0] || 'Admin';
+
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <LayoutDashboard className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-blue-500/20 bg-white border border-slate-200">
+                <img
+                  src={uniPulseLogo}
+                  alt="UniPulse Logo"
+                  className="w-7 h-7 object-contain"
+                />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
                 Admin Dashboard
@@ -196,22 +268,34 @@ const AdminDashboard = () => {
                 <Home className="w-4 h-4" />
                 Back to Home
               </button>
+
               <button
-                onClick={() => navigate('/login')}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
+                onClick={() => navigate('/admin/account')}
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm transition-colors hover:bg-slate-50"
               >
-                <LogOut className="w-4 h-4" />
-                Logout
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100">
+                  {adminPortalUser?.profileImage ? (
+                    <img
+                      src={adminPortalUser.profileImage}
+                      alt={adminDisplayName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-5 w-5 text-slate-500" />
+                  )}
+                </div>
+
+                <span className="max-w-[120px] truncate text-sm font-semibold text-slate-700">
+                  {adminDisplayName}
+                </span>
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
               <Home className="w-4 h-4" />
@@ -219,18 +303,20 @@ const AdminDashboard = () => {
               <span className="text-slate-900 font-medium">Admin Dashboard</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">
-              Welcome, Admin
+              Welcome, {adminDisplayName}
             </h1>
             <p className="text-lg text-slate-600">
-              Manage your campus facilities, bookings, and support tickets from one place.
+              Manage your campus facilities, bookings, support tickets, and role requests from one place.
             </p>
           </div>
 
-          {/* Stats Cards */}
           {loading ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm animate-pulse">
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm animate-pulse"
+                >
                   <div className="h-12 w-12 bg-slate-100 rounded-xl mb-4" />
                   <div className="h-8 bg-slate-100 rounded mb-2" />
                   <div className="h-4 bg-slate-100 rounded w-2/3" />
@@ -262,7 +348,7 @@ const AdminDashboard = () => {
                     <Calendar className="w-6 h-6 text-emerald-600" />
                   </div>
                   <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                    +12%
+                    Bookings
                   </span>
                 </div>
                 <div className="text-3xl font-bold text-slate-900 mb-1">{stats.totalBookings}</div>
@@ -275,7 +361,7 @@ const AdminDashboard = () => {
                     <Ticket className="w-6 h-6 text-orange-600" />
                   </div>
                   <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
-                    {stats.pendingRequests} Pending
+                    Tickets
                   </span>
                 </div>
                 <div className="text-3xl font-bold text-slate-900 mb-1">{stats.totalTickets}</div>
@@ -297,7 +383,6 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {/* Quick Actions */}
           <div className="mb-8">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Quick Actions</h2>
             <div className="flex flex-wrap gap-3">
@@ -314,10 +399,9 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Admin Sections */}
           <div>
             <h2 className="text-xl font-bold text-slate-900 mb-4">Management Sections</h2>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
               {adminSections.map((section) => {
                 const Icon = section.icon;
                 return (
@@ -326,8 +410,9 @@ const AdminDashboard = () => {
                     className={`bg-white rounded-2xl border ${section.borderColor} overflow-hidden hover:shadow-xl hover:shadow-slate-900/10 hover:border-slate-300 transition-all cursor-pointer group`}
                     onClick={section.action}
                   >
-                    {/* Header */}
-                    <div className={`h-32 bg-gradient-to-br ${section.color} flex items-center justify-center relative overflow-hidden`}>
+                    <div
+                      className={`h-32 bg-gradient-to-br ${section.color} flex items-center justify-center relative overflow-hidden`}
+                    >
                       <div className="absolute inset-0 opacity-10">
                         <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
                         <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full translate-y-1/2 -translate-x-1/2" />
@@ -335,7 +420,6 @@ const AdminDashboard = () => {
                       <Icon className="w-16 h-16 text-white relative z-10" />
                     </div>
 
-                    {/* Content */}
                     <div className="p-6">
                       <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
                         {section.title}
@@ -343,14 +427,14 @@ const AdminDashboard = () => {
                       <p className="text-slate-600 text-sm mb-4 line-clamp-2">
                         {section.description}
                       </p>
-                      
-                      {/* Stats */}
-                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 ${section.bgColor} rounded-lg mb-4`}>
+
+                      <div
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 ${section.bgColor} rounded-lg mb-4`}
+                      >
                         <span className="text-2xl font-bold text-slate-900">{section.stats.value}</span>
                         <span className="text-sm text-slate-600">{section.stats.label}</span>
                       </div>
 
-                      {/* Action Button */}
                       <button className="w-full py-2.5 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 group-hover:bg-blue-600">
                         {section.actionLabel}
                         <ChevronRight className="w-4 h-4" />
@@ -362,7 +446,6 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Recent Activity */}
           <div className="mt-8">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Recent Activity</h2>
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
@@ -387,7 +470,10 @@ const AdminDashboard = () => {
                   {recentActivity.map((activity, index) => {
                     const ActivityIcon = activity.icon;
                     return (
-                      <div key={index} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                      <div
+                        key={index}
+                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors"
+                      >
                         <div className={`w-10 h-10 ${activity.color} rounded-lg flex items-center justify-center`}>
                           <ActivityIcon className="w-5 h-5" />
                         </div>

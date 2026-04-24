@@ -1,5 +1,6 @@
 package com.unipulse.backend.service;
 
+import com.unipulse.backend.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -32,10 +33,18 @@ public class UserJwtService {
         return claimsResolver.apply(claims);
     }
 
-    public String generateToken(UserDetails userDetails, Long userId, String role) {
+    public String generateToken(UserDetails userDetails, User user) {
         Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("userId", userId);
-        extraClaims.put("role", role);
+        extraClaims.put("userId", user.getId());
+        extraClaims.put("role", user.getRole().name());
+        extraClaims.put("email", user.getEmail());
+        extraClaims.put("firstName", user.getFirstName());
+        extraClaims.put("lastName", user.getLastName());
+        extraClaims.put("name", user.getFullName());
+        extraClaims.put("sliitId", user.getSliitId());
+        extraClaims.put("profileImage", user.getProfileImage());
+        extraClaims.put("provider", user.getProvider().name());
+        extraClaims.put("profileCompleted", user.isProfileCompleted());
 
         return Jwts.builder()
                 .claims(extraClaims)

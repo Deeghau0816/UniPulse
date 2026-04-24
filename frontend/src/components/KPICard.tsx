@@ -26,34 +26,34 @@ const KPICard = ({
   const getColorClasses = () => {
     const baseClasses = {
       primary: {
-        bg: 'linear-gradient(135deg, #fb923c, #ffffff)',
-        lightBg: '#fff7ed',
-        text: '#ea580c',
-        border: '#fdba74'
+        bg: 'linear-gradient(135deg, #93C5FD, #ffffff)',
+        lightBg: '#EFF6FF',
+        text: '#1D4ED8',
+        border: '#BFDBFE'
       },
       success: {
-        bg: 'linear-gradient(135deg, #c0bab5, #ffffff)',
-        lightBg: '#fff7ed',
-        text: '#ea580c',
-        border: '#fdba74'
+        bg: 'linear-gradient(135deg, #6EE7B7, #ffffff)',
+        lightBg: '#ECFDF5',
+        text: '#065F46',
+        border: '#A7F3D0'
       },
       warning: {
-        bg: 'linear-gradient(135deg, #fb923c, #ffffff)',
-        lightBg: '#fff7ed',
-        text: '#ea580c',
-        border: '#fdba74'
+        bg: 'linear-gradient(135deg, #FCD34D, #ffffff)',
+        lightBg: '#FFFBEB',
+        text: '#92400E',
+        border: '#FDE68A'
       },
       danger: {
-        bg: 'linear-gradient(135deg, #fb923c, #ffffff)',
-        lightBg: '#fff7ed',
-        text: '#ea580c',
-        border: '#fdba74'
+        bg: 'linear-gradient(135deg, #FCA5A5, #ffffff)',
+        lightBg: '#FEF2F2',
+        text: '#991B1B',
+        border: '#FECACA'
       },
       info: {
-        bg: 'linear-gradient(135deg, #fb923c, #ffffff)',
-        lightBg: '#fff7ed',
-        text: '#ea580c',
-        border: '#fdba74'
+        bg: 'linear-gradient(135deg, white, #f1e1b3)',
+        lightBg: '#EDE9FE',
+        text: 'black',
+        borderColor: '#0d0d8a90'
       }
     };
     
@@ -128,8 +128,9 @@ const KPICard = ({
     <div className={`kpi-card ${sizes.card}`}>
       <style>{`
         .kpi-card {
+          borderColor: #000;
           background: ${colors.bg};
-          border-radius: 16px;
+          border-radius: 18px;
           padding: 24px;
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
           position: relative;
@@ -172,7 +173,7 @@ const KPICard = ({
         .kpi-content {
           position: relative;
           z-index: 2;
-          color: white;
+          color: ${colors.text};
         }
         
         .kpi-header {
