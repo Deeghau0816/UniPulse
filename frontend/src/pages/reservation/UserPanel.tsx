@@ -5,9 +5,7 @@ import type { ReservationSummary, ReservationRecord } from '../../types/reservat
 import { ReservationRequestForm } from '../../components/reservation/ReservationRequestForm';
 import { MyReservationsList } from '../../components/reservation/MyReservationsList';
 import { NotificationPanel } from '../../components/reservation/NotificationPanel';
-
-// Hard-coded demo user; replace with OAuth user in Module E
-const DEMO_USER = { id: '1', name: 'Test User' };
+import { useAuth } from '../../contexts/AuthContext';
 
 type Tab = 'dashboard' | 'request' | 'reservations' | 'notifications';
 
@@ -27,13 +25,16 @@ const UserPanel: React.FC = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [updatingReservation, setUpdatingReservation] = useState<ReservationRecord | null>(null);
   const [hoveredNav, setHoveredNav] = useState<Tab | null>(null);
+  const { user } = useAuth();
 
   const loadSummary = useCallback(async () => {
     try {
-      const data = await reservationService.getSummary(DEMO_USER.id);
-      setSummary(data);
+      if (user?.id) {
+        const data = await reservationService.getSummary(user.id);
+        setSummary(data);
+      }
     } catch { /* non-critical */ }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => { loadSummary(); }, [loadSummary, refreshKey]);
 
@@ -92,8 +93,8 @@ const UserPanel: React.FC = () => {
             fontSize: '22px', marginBottom: '10px',
             boxShadow: '0 4px 12px rgba(249,115,22,0.4)',
           }}>👤</div>
-          <div style={{ color: '#1a1a2e', fontWeight: 700, fontSize: '16px' }}>{DEMO_USER.name}</div>
-          <div style={{ color: 'rgba(20,20,40,0.55)', fontSize: '13px' }}>Student – USER role</div>
+          <div style={{ color: '#1a1a2e', fontWeight: 700, fontSize: '16px' }}>{user?.name || 'User'}</div>
+          <div style={{ color: 'rgba(20,20,40,0.55)', fontSize: '13px' }}>{user?.role || 'USER'} role</div>
         </div>
 
         {/* Navigation */}
@@ -222,7 +223,7 @@ const UserPanel: React.FC = () => {
           {activeTab === 'dashboard' && (
             <div>
               <h3 style={{ margin: '0 0 24px', fontSize: '22px', fontWeight: 700, color: '#111827' }}>
-                Welcome back, {DEMO_USER.name.split(' ')[0]}!
+                Welcome back, {user?.name?.split(' ')[0] || 'User'}!
               </h3>
 
               {/* Summary Cards */}
@@ -357,7 +358,7 @@ const UserPanel: React.FC = () => {
               {/* Recent Reservations Preview */}
               <div style={{ backgroundColor: '#f3f3f3', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '24px' }}>
                 <h4 style={{ margin: '0 0 20px', fontSize: '18px', fontWeight: 700, color: '#0a1423' }}>Recent Bookings</h4>
-                <MyReservationsList userId={DEMO_USER.id} refreshKey={refreshKey} onUpdateClick={handleUpdateClick} />
+                {user && <MyReservationsList userId={user.id} refreshKey={refreshKey} onUpdateClick={handleUpdateClick} />}
               </div>
             </div>
           )}
@@ -368,7 +369,7 @@ const UserPanel: React.FC = () => {
               <h3 style={{ margin: '0 0 24px', fontSize: '22px', fontWeight: 700, color: '#111827' }}>
                  My Bookings
               </h3>
-              <MyReservationsList userId={DEMO_USER.id} refreshKey={refreshKey} onUpdateClick={handleUpdateClick} />
+              {user && <MyReservationsList userId={user.id} refreshKey={refreshKey} onUpdateClick={handleUpdateClick} />}
             </div>
           )}
 
@@ -378,9 +379,9 @@ const UserPanel: React.FC = () => {
               <h3 style={{ margin: '0 0 24px', fontSize: '22px', fontWeight: 700, color: '#111827' }}>
                  {updatingReservation ? 'Update Booking Request' : 'New Booking Request'}
               </h3>
-              <ReservationRequestForm
-                userId={DEMO_USER.id}
-                userName={DEMO_USER.name}
+              {user && <ReservationRequestForm
+                userId={user.id}
+                userName={user.name}
                 initialData={updatingReservation || undefined}
                 isUpdate={!!updatingReservation}
                 initialResourceId={resourceIdFromUrl ? parseInt(resourceIdFromUrl, 10) : undefined}
@@ -388,14 +389,14 @@ const UserPanel: React.FC = () => {
                   setRefreshKey(k => k + 1);
                   setActiveTab('reservations');
                 }}
-              />
+              />}
             </div>
           )}
 
           {/* ── NOTIFICATIONS TAB ── */}
           {activeTab === 'notifications' && (
             <div style={{ backgroundColor: '#f3f3f3', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '24px' }}>
-              <NotificationPanel userId={DEMO_USER.id} />
+              {user && <NotificationPanel userId={user.id} />}
             </div>
           )}
         </div>
