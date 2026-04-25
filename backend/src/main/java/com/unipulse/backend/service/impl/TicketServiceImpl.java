@@ -339,19 +339,17 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private void createStatusChangeNotification(Ticket ticket, TicketStatus oldStatus, TicketStatus newStatus) {
-        if (ticket.getCreatedBy() != null && !oldStatus.equals(newStatus)) {
+        if (ticket.getCreatedById() != null && !oldStatus.equals(newStatus)) {
             String title = "Ticket #" + ticket.getTicketCode() + " Status Updated";
-            String message = String.format("Your ticket #%s status was changed from %s to %s", 
+            String message = String.format("Your ticket #%s status was changed from %s to %s",
                 ticket.getTicketCode(), oldStatus, newStatus);
-            
+
             try {
                 NotificationRequest notificationRequest = new NotificationRequest();
-                // Use a default user ID (1) for "Current User" since we don't have user mapping
-                Long userId = getUserIdFromCreatedBy(ticket.getCreatedBy());
-                notificationRequest.setUserId(userId);
+                notificationRequest.setUserId(ticket.getCreatedById());
                 notificationRequest.setTitle(title);
                 notificationRequest.setMessage(message);
-                
+
                 notificationService.createNotification(notificationRequest);
             } catch (Exception e) {
                 // Log error but don't fail the ticket update
@@ -361,18 +359,17 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private void createAssignmentNotification(Ticket ticket, String assignedTechnician) {
-        if (ticket.getCreatedBy() != null && assignedTechnician != null) {
+        if (ticket.getCreatedById() != null && assignedTechnician != null) {
             String title = "Ticket #" + ticket.getTicketCode() + " Assigned";
-            String message = String.format("Your ticket #%s has been assigned to %s", 
+            String message = String.format("Your ticket #%s has been assigned to %s",
                 ticket.getTicketCode(), assignedTechnician);
-            
+
             try {
                 NotificationRequest notificationRequest = new NotificationRequest();
-                Long userId = getUserIdFromCreatedBy(ticket.getCreatedBy());
-                notificationRequest.setUserId(userId);
+                notificationRequest.setUserId(ticket.getCreatedById());
                 notificationRequest.setTitle(title);
                 notificationRequest.setMessage(message);
-                
+
                 notificationService.createNotification(notificationRequest);
             } catch (Exception e) {
                 System.err.println("Failed to create assignment notification: " + e.getMessage());
@@ -381,18 +378,17 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private void createCommentNotification(Ticket ticket, String commenterName) {
-        if (ticket.getCreatedBy() != null) {
+        if (ticket.getCreatedById() != null) {
             String title = "New Comment on Ticket #" + ticket.getTicketCode();
-            String message = String.format("A new comment was added to your ticket #%s by %s", 
+            String message = String.format("A new comment was added to your ticket #%s by %s",
                 ticket.getTicketCode(), commenterName);
-            
+
             try {
                 NotificationRequest notificationRequest = new NotificationRequest();
-                Long userId = getUserIdFromCreatedBy(ticket.getCreatedBy());
-                notificationRequest.setUserId(userId);
+                notificationRequest.setUserId(ticket.getCreatedById());
                 notificationRequest.setTitle(title);
                 notificationRequest.setMessage(message);
-                
+
                 notificationService.createNotification(notificationRequest);
             } catch (Exception e) {
                 System.err.println("Failed to create comment notification: " + e.getMessage());
@@ -401,18 +397,17 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private void createResolutionNotification(Ticket ticket, String resolutionNotes) {
-        if (ticket.getCreatedBy() != null && resolutionNotes != null && !resolutionNotes.trim().isEmpty()) {
+        if (ticket.getCreatedById() != null && resolutionNotes != null && !resolutionNotes.trim().isEmpty()) {
             String title = "Ticket #" + ticket.getTicketCode() + " Resolved";
-            String message = String.format("Your ticket #%s has been resolved: %s", 
+            String message = String.format("Your ticket #%s has been resolved: %s",
                 ticket.getTicketCode(), resolutionNotes);
-            
+
             try {
                 NotificationRequest notificationRequest = new NotificationRequest();
-                Long userId = getUserIdFromCreatedBy(ticket.getCreatedBy());
-                notificationRequest.setUserId(userId);
+                notificationRequest.setUserId(ticket.getCreatedById());
                 notificationRequest.setTitle(title);
                 notificationRequest.setMessage(message);
-                
+
                 notificationService.createNotification(notificationRequest);
             } catch (Exception e) {
                 System.err.println("Failed to create resolution notification: " + e.getMessage());

@@ -626,7 +626,7 @@ const MyTicketsPage = () => {
               <button className="primary-btn" onClick={() => navigate('/dashboard/tickets/new')}>
                 + Create New Ticket
               </button>
-              <button className="secondary-btn" onClick={() => navigate('/dashboard/notifications')}>
+              <button className="secondary-btn" onClick={() => navigate('/dashboard/ticket-notifications')}>
                 Notifications
               </button>
             </div>

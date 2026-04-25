@@ -872,7 +872,7 @@ const TechnicianTicketDetailsPage = () => {
               <button className="nav-btn" onClick={() => navigate('/dashboard/technician/tickets')}>
                 Technician Dashboard
               </button>
-              <button className="nav-btn" onClick={() => navigate('/dashboard/notifications')}>
+              <button className="nav-btn" onClick={() => navigate('/dashboard/ticket-notifications')}>
                 Notifications
               </button>
             </div>

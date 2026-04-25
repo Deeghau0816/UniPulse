@@ -695,7 +695,7 @@ const CreateTicketPage = () => {
               <button className="header-btn" onClick={() => navigate('/dashboard/my-tickets')}>
                 My Tickets
               </button>
-              <button className="header-btn" onClick={() => navigate('/dashboard/notifications')}>
+              <button className="header-btn" onClick={() => navigate('/dashboard/ticket-notifications')}>
                 Notifications
               </button>
             </div>

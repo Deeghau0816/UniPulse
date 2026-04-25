@@ -974,7 +974,7 @@ const TicketDetailsPage = () => {
               <button className="nav-btn" onClick={() => navigate('/dashboard/my-tickets')}>
                 Back to My Tickets
               </button>
-              <button className="nav-btn" onClick={() => navigate('/dashboard/notifications')}>
+              <button className="nav-btn" onClick={() => navigate('/dashboard/ticket-notifications')}>
                 Notifications
               </button>
               

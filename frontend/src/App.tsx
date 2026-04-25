@@ -27,6 +27,7 @@ import TechnicianTicketDetailsPage from './pages/TechnicianTicketDetailsPage';
 import AdminTicketsPage from './pages/AdminTicketsPage';
 import AdminTicketDetailsPage from './pages/AdminTicketDetailsPage';
 import NotificationsPage from './pages/NotificationsPage';
+import TicketNotificationsPage from './pages/TicketNotificationsPage';
 import RoleRequestPage from './pages/RoleRequestPage';
 import AdminRoleRequestsPage from './pages/AdminRoleRequestsPage';
 import FacilitiesCataloguePage from './pages/FacilitiesCataloguePage';
@@ -247,6 +248,24 @@ function AppRoutes() {
       />
 
       <Route
+        path="/dashboard/ticket-notifications"
+        element={
+          <ProtectedRoute
+            portal="user"
+            requiredRoles={[
+              'STUDENT',
+              'ACADEMIC',
+              'NON_ACADEMIC',
+              'TECHNICIAN',
+              'SYSTEM_ADMIN',
+            ]}
+          >
+            <TicketNotificationsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/dashboard/my-tickets"
         element={
           <ProtectedRoute
@@ -286,9 +305,8 @@ function AppRoutes() {
         path="/dashboard/technician/tickets"
         element={
           <ProtectedRoute
-            portal="admin"
-            fallbackPath="/admin/login"
-            requiredRole="TECHNICIAN"
+            portal="user"
+            requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC','TECHNICIAN']}
           >
             <TechnicianDashboardPage />
           </ProtectedRoute>
@@ -299,9 +317,8 @@ function AppRoutes() {
         path="/dashboard/technician/tickets/:ticketId"
         element={
           <ProtectedRoute
-            portal="admin"
-            fallbackPath="/admin/login"
-            requiredRole="TECHNICIAN"
+            portal="user"
+            requiredRoles={['STUDENT', 'ACADEMIC', 'NON_ACADEMIC','TECHNICIAN']}
           >
             <TechnicianTicketDetailsPage />
           </ProtectedRoute>

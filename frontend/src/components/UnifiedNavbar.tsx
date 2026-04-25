@@ -88,7 +88,7 @@ export default function UnifiedNavbar({ portal = 'user' }: UnifiedNavbarProps) {
             {/* Notifications */}
             {user && (
               <Link
-                to="/dashboard/notifications"
+                to={location.pathname.startsWith('/dashboard/technician') || location.pathname.startsWith('/dashboard/my-tickets') || location.pathname.startsWith('/dashboard/tickets') ? '/dashboard/ticket-notifications' : '/dashboard/notifications'}
                 className="relative p-2 text-slate-500 hover:text-blue-600 transition-colors"
               >
                 <Bell className="w-5 h-5" />
