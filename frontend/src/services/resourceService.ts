@@ -237,6 +237,108 @@ class ResourceService {
     });
   }
 
+  async createResourceWithImage(resource: ResourceRequest, imageFile: File): Promise<ResourceResponse> {
+    console.log('createResourceWithImage called with file:', imageFile.name);
+    const url = `${API_BASE_URL}/resources`;
+    const formData = new FormData();
+    
+    formData.append('name', resource.name);
+    formData.append('type', resource.type);
+    formData.append('location', resource.location);
+    formData.append('description', resource.description);
+    formData.append('availabilityWindows', resource.availabilityWindows);
+    formData.append('status', resource.status);
+    
+    if (resource.capacity) {
+      formData.append('capacity', resource.capacity.toString());
+    }
+    
+    if (resource.imageUrl) {
+      formData.append('imageUrl', resource.imageUrl);
+    }
+    
+    formData.append('image', imageFile);
+
+    const token = localStorage.getItem('user_token') || localStorage.getItem('admin_token');
+    
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      console.log('Sending multipart request to:', url);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Multipart request failed:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      const result = await response.json();
+      console.log('Multipart request successful, imageUrl:', result.imageUrl);
+      return result;
+    } catch (error) {
+      console.error('Resource creation with image failed:', error);
+      throw error;
+    }
+  }
+
+  async updateResourceWithImage(resourceId: string, resource: ResourceRequest, imageFile: File): Promise<ResourceResponse> {
+    console.log('updateResourceWithImage called with file:', imageFile.name);
+    const url = `${API_BASE_URL}/resources/${resourceId}`;
+    const formData = new FormData();
+    
+    formData.append('name', resource.name);
+    formData.append('type', resource.type);
+    formData.append('location', resource.location);
+    formData.append('description', resource.description);
+    formData.append('availabilityWindows', resource.availabilityWindows);
+    formData.append('status', resource.status);
+    
+    if (resource.capacity) {
+      formData.append('capacity', resource.capacity.toString());
+    }
+    
+    if (resource.imageUrl) {
+      formData.append('imageUrl', resource.imageUrl);
+    }
+    
+    formData.append('image', imageFile);
+
+    const token = localStorage.getItem('user_token') || localStorage.getItem('admin_token');
+    
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      console.log('Sending multipart update request to:', url);
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Multipart update request failed:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      const result = await response.json();
+      console.log('Multipart update request successful, imageUrl:', result.imageUrl);
+      return result;
+    } catch (error) {
+      console.error('Resource update with image failed:', error);
+      throw error;
+    }
+  }
+
   async updateResource(id: string, resource: ResourceRequest): Promise<ResourceResponse> {
     if (this.useMockData) {
       const index = mockResources.findIndex(r => r.id === parseInt(id));

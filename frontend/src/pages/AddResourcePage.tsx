@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { resourceService, type ResourceRequest } from '../services/resourceService';
-import { ArrowLeft, Plus, Home } from 'lucide-react';
+import { ArrowLeft, Plus, Home, X } from 'lucide-react';
 import UnifiedNavbar from '../components/UnifiedNavbar';
 
 const AddResourcePage = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +21,9 @@ const AddResourcePage = () => {
     status: 'ACTIVE',
     imageUrl: '',
   });
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -37,6 +41,25 @@ const AddResourcePage = () => {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const preview = URL.createObjectURL(file);
+      setImagePreview(preview);
+      setFormData({ ...formData, imageUrl: '' });
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setFormData({ ...formData, imageUrl: '' });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -47,7 +70,18 @@ const AddResourcePage = () => {
 
     try {
       setIsSaving(true);
-      const response = await resourceService.createResource(formData);
+      console.log('handleSubmit called, imageFile:', imageFile ? imageFile.name : 'null');
+      let response;
+      
+      if (imageFile) {
+        console.log('Calling createResourceWithImage');
+        response = await resourceService.createResourceWithImage(formData, imageFile);
+      } else {
+        console.log('Calling createResource (no image)');
+        response = await resourceService.createResource(formData);
+      }
+      
+      console.log('Resource created successfully, response:', response);
       setError(null);
       navigate(`/dashboard/resources/${response.id}`);
     } catch (err) {
@@ -223,27 +257,46 @@ const AddResourcePage = () => {
                 </select>
               </div>
 
-              {/* Image URL */}
+              {/* Image Upload */}
               <div className="sm:col-span-2">
                 <label className="block text-sm font-semibold text-slate-900 mb-2">
-                  Image URL
+                  Resource Image
                 </label>
-                <input
-                  type="url"
-                  name="imageUrl"
-                  value={formData.imageUrl || ''}
-                  onChange={handleInputChange}
-                  placeholder="https://example.com/resource-image.jpg"
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                />
-                <p className="mt-1 text-xs text-slate-500">Add a photo URL to display the resource image in the customer view</p>
-                
-                {formData.imageUrl && (
-                  <div className="mt-4 rounded-xl overflow-hidden border border-slate-200">
-                    <img src={formData.imageUrl} alt="Preview" className="w-full h-48 object-cover" />
-                    <div className="px-4 py-2 bg-slate-50 text-xs text-slate-600 text-center">Image Preview</div>
-                  </div>
-                )}
+                <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  {!imagePreview ? (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        Choose Image
+                      </button>
+                      <p className="mt-2 text-xs text-slate-500">or drag and drop</p>
+                      <p className="mt-1 text-xs text-slate-400">PNG, JPG, GIF up to 5MB</p>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover rounded-lg" />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <div className="mt-2 text-xs text-slate-600">Image Preview</div>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-slate-500">Upload an image to display the resource in the customer view</p>
               </div>
             </div>
 

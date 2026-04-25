@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ticketService, type TicketStatus, type TicketPriority, type TicketCategory } from '../services/ticketService';
 import { analyticsService, type AnalyticsData } from '../services/analyticsService';
+import { userService, type User } from '../services/userService';
 import KPICard from '../components/KPICard';
 import TicketCategoryChart from '../components/TicketCategoryChart';
 import UnifiedNavbar from '../components/UnifiedNavbar';
@@ -39,19 +40,11 @@ const AdminTicketsPage = () => {
   const [analyticsLoading, setAnalyticsLoading] = useState<boolean>(true);
   const [selectedPeriod, setSelectedPeriod] = useState<'overall' | 'today' | 'week' | 'month' | 'year'>('overall');
 
-  type TechnicianEntry = { name: string; type: string };
+  // Technicians state
+  const [technicians, setTechnicians] = useState<User[]>([]);
+  const [techniciansLoading, setTechniciansLoading] = useState<boolean>(true);
 
-  const technicianList: TechnicianEntry[] = [
-    { name: 'Nimal Perera',    type: 'ELECTRICAL' },
-    { name: 'Kasun Madusha',   type: 'IT_SUPPORT' },
-    { name: 'Ayesha Fernando', type: 'IT_SUPPORT' },
-    { name: 'Sanjeewa Silva',  type: 'MECHANICAL' },
-    { name: 'Rohan Perera',    type: 'MECHANICAL' },
-    { name: 'Thilini Perera',  type: 'LAB_EQUIPMENT' },
-    { name: 'Chamath Perera',  type: 'ELECTRICAL' },
-  ];
-
-  const technicianOptions: string[] = technicianList.map(t => t.name);
+  const technicianOptions: string[] = technicians.map(t => t.name || `${t.firstName} ${t.lastName}`);
 
   const [assignSuccess, setAssignSuccess] = useState<string | null>(null);
 
@@ -90,6 +83,24 @@ const AdminTicketsPage = () => {
   useEffect(() => {
     fetchAnalytics(selectedPeriod);
   }, [selectedPeriod]);
+
+  useEffect(() => {
+    const fetchTechnicians = async () => {
+      try {
+        setTechniciansLoading(true);
+        console.log('Fetching technicians...');
+        const techUsers = await userService.getTechnicians();
+        console.log('Setting technicians state:', techUsers);
+        setTechnicians(techUsers);
+      } catch (error) {
+        console.error('Failed to fetch technicians:', error);
+      } finally {
+        setTechniciansLoading(false);
+      }
+    };
+
+    fetchTechnicians();
+  }, []);
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -170,8 +181,8 @@ const AdminTicketsPage = () => {
 
   const handleAssignTechnician = async (ticketId: string, technicianName: string): Promise<void> => {
     try {
-      const techEntry = technicianList.find(t => t.name === technicianName);
-      const technicianType = techEntry?.type;
+      const techEntry = technicians.find(t => (t.name || `${t.firstName} ${t.lastName}`) === technicianName);
+      const technicianType = techEntry?.role === 'TECHNICIAN' ? 'IT_SUPPORT' : undefined;
       await ticketService.assignTechnician(ticketId, technicianName, technicianType);
       setTickets((prev) =>
         prev.map((ticket) =>
@@ -960,12 +971,21 @@ const AdminTicketsPage = () => {
                         }
                       >
                         <option value="">— Unassigned —</option>
-                        {technicianList.map((tech) => (
-                          <option key={tech.name} value={tech.name}>
-                            {tech.name} ({tech.type.replace('_', ' ')})
-                          </option>
-                        ))}
+                        {technicians.length === 0 ? (
+                          <option disabled>No technicians available</option>
+                        ) : (
+                          technicians.map((tech) => (
+                            <option key={tech.id} value={tech.name || `${tech.firstName} ${tech.lastName}`}>
+                              {tech.name || `${tech.firstName} ${tech.lastName}`}
+                            </option>
+                          ))
+                        )}
                       </select>
+                      {technicians.length === 0 && !techniciansLoading && (
+                        <div style={{ fontSize: '12px', color: '#ea580c', marginTop: '4px' }}>
+                          No technicians found. Please ensure users with TECHNICIAN role exist in the system.
+                        </div>
+                      )}
                     </div>
 
                     <div className="ticket-footer">

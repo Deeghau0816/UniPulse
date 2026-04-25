@@ -193,7 +193,11 @@ const CustomerResourceDetailsPage = () => {
               {/* Image */}
               <div className="rounded-2xl overflow-hidden mb-8 border border-slate-200">
                 {resource.imageUrl ? (
-                  <img src={resource.imageUrl} alt={resource.name} className="w-full h-64 sm:h-80 object-cover" />
+                  <img 
+                    src={resource.imageUrl.startsWith('http') ? resource.imageUrl : `http://localhost:8083${resource.imageUrl}`} 
+                    alt={resource.name} 
+                    className="w-full h-64 sm:h-80 object-cover" 
+                  />
                 ) : (
                   <div className="w-full h-64 sm:h-80 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
                     <span className="text-8xl">{getResourceIcon(resource.type)}</span>

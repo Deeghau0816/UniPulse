@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ticketService, type TicketPriority, type TicketCategory } from '../services/ticketService';
+import { useAuth } from '../contexts/AuthContext';
 import UnifiedNavbar from '../components/UnifiedNavbar';
 
 type FormDataState = {
@@ -29,6 +30,7 @@ type FormErrors = {
 
 const CreateTicketPage = () => {
   const navigate = useNavigate();
+  const { userPortalUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [formData, setFormData] = useState<FormDataState>({
@@ -201,10 +203,13 @@ const CreateTicketPage = () => {
         priority: formData.priority as TicketPriority,
         description: formData.description,
         preferredContact: formData.preferredContact,
-        createdBy: 'Current User', // You can update this with actual user data
+        createdBy: userPortalUser?.name || 'Current User',
       };
 
-      const createdTicket = await ticketService.createTicket(ticketRequest);
+      const attachmentFiles = attachments.map(a => a.file);
+      const createdByUserId = userPortalUser?.id ? Number(userPortalUser.id) : undefined;
+
+      const createdTicket = await ticketService.createTicket(ticketRequest, attachmentFiles, createdByUserId);
       
       console.log('Created ticket:', createdTicket);
       setSubmitMessage('Incident ticket submitted successfully!');

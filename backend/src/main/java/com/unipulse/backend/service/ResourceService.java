@@ -5,6 +5,7 @@ import com.unipulse.backend.dto.ResourceResponse;
 import com.unipulse.backend.dto.ResourceStatusUpdateRequest;
 import com.unipulse.backend.enums.ResourceStatus;
 import com.unipulse.backend.enums.ResourceType;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -16,7 +17,11 @@ public interface ResourceService {
 
     ResourceResponse createResource(ResourceRequest request);
 
+    ResourceResponse createResource(ResourceRequest request, MultipartFile image);
+
     ResourceResponse updateResource(Long id, ResourceRequest request);
+
+    ResourceResponse updateResource(Long id, ResourceRequest request, MultipartFile image);
 
     void deleteResource(Long id);
 

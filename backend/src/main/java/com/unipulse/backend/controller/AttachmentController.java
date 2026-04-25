@@ -32,6 +32,21 @@ public class AttachmentController {
                 .body(resource);
     }
 
+    @GetMapping("/{attachmentId}/view")
+    public ResponseEntity<Resource> viewAttachment(@PathVariable Long attachmentId) {
+        byte[] fileContent = ticketService.downloadAttachment(attachmentId);
+        ByteArrayResource resource = new ByteArrayResource(fileContent);
+
+        // Determine content type based on file content or use a default
+        MediaType mediaType = MediaType.IMAGE_JPEG; // Default to JPEG
+        // You could enhance this to detect the actual file type
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .contentLength(fileContent.length)
+                .body(resource);
+    }
+
     @DeleteMapping("/{attachmentId}")
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long attachmentId) {
         ticketService.deleteAttachment(attachmentId);

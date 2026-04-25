@@ -9,6 +9,7 @@ type Attachment = {
   id: number;
   name: string;
   url: string;
+  downloadUrl: string;
 };
 
 type TicketDetails = {
@@ -79,7 +80,8 @@ const TechnicianTicketDetailsPage = () => {
           attachments: ticketResponse.attachments?.map(att => ({
             id: att.id,
             name: att.originalFileName || att.fileName,
-            url: `http://localhost:8083/api/tickets/${ticketResponse.id}/attachments/${att.id}`
+            url: `http://localhost:8083/api/attachments/${att.id}/view`,
+            downloadUrl: `http://localhost:8083/api/attachments/${att.id}/download`
           })) || [],
         };
         
@@ -1000,7 +1002,7 @@ const TechnicianTicketDetailsPage = () => {
                           </div>
                           <div className="attachment-name">{attachment.name}</div>
                           <a 
-                            href={attachment.url} 
+                            href={attachment.downloadUrl} 
                             download={attachment.name}
                             className="download-btn"
                             onClick={(e) => e.stopPropagation()}

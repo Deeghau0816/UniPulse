@@ -11,14 +11,22 @@ import com.unipulse.backend.Repository.ResourceRepository;
 import com.unipulse.backend.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class ResourceServiceImpl implements ResourceService {
 
     private final ResourceRepository resourceRepository;
+    private static final String UPLOAD_DIR = "uploads/resources";
 
     @Override
     public List<ResourceResponse> getAllResources() {
@@ -52,6 +60,51 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    public ResourceResponse createResource(ResourceRequest request, MultipartFile image) {
+        String imageUrl = request.getImageUrl();
+        
+        if (image != null && !image.isEmpty()) {
+            try {
+                Path uploadPath = Paths.get(UPLOAD_DIR);
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                    System.out.println("Created upload directory: " + uploadPath.toAbsolutePath());
+                }
+                
+                String originalFilename = image.getOriginalFilename();
+                String fileExtension = originalFilename != null ? 
+                    originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
+                String newFilename = UUID.randomUUID().toString() + fileExtension;
+                
+                Path filePath = uploadPath.resolve(newFilename);
+                Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                
+                imageUrl = "/uploads/resources/" + newFilename;
+                System.out.println("Image saved to: " + filePath.toAbsolutePath());
+                System.out.println("Image URL: " + imageUrl);
+            } catch (IOException e) {
+                System.err.println("Failed to store image file: " + e.getMessage());
+                throw new RuntimeException("Failed to store image file", e);
+            }
+        }
+        
+        Resource resource = Resource.builder()
+                .name(request.getName())
+                .type(request.getType())
+                .capacity(request.getCapacity())
+                .location(request.getLocation())
+                .description(request.getDescription())
+                .availabilityWindows(request.getAvailabilityWindows())
+                .status(request.getStatus())
+                .imageUrl(imageUrl)
+                .build();
+
+        Resource savedResource = resourceRepository.save(resource);
+        System.out.println("Resource saved with imageUrl: " + savedResource.getImageUrl());
+        return mapToResponse(savedResource);
+    }
+
+    @Override
     public ResourceResponse updateResource(Long id, ResourceRequest request) {
         Resource resource = getResourceEntityById(id);
 
@@ -65,6 +118,51 @@ public class ResourceServiceImpl implements ResourceService {
         resource.setImageUrl(request.getImageUrl());
 
         Resource updatedResource = resourceRepository.save(resource);
+        return mapToResponse(updatedResource);
+    }
+
+    @Override
+    public ResourceResponse updateResource(Long id, ResourceRequest request, MultipartFile image) {
+        Resource resource = getResourceEntityById(id);
+
+        String imageUrl = request.getImageUrl();
+        
+        if (image != null && !image.isEmpty()) {
+            try {
+                Path uploadPath = Paths.get(UPLOAD_DIR);
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                    System.out.println("Created upload directory: " + uploadPath.toAbsolutePath());
+                }
+                
+                String originalFilename = image.getOriginalFilename();
+                String fileExtension = originalFilename != null ? 
+                    originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
+                String newFilename = UUID.randomUUID().toString() + fileExtension;
+                
+                Path filePath = uploadPath.resolve(newFilename);
+                Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                
+                imageUrl = "/uploads/resources/" + newFilename;
+                System.out.println("Image saved to: " + filePath.toAbsolutePath());
+                System.out.println("Image URL: " + imageUrl);
+            } catch (IOException e) {
+                System.err.println("Failed to store image file: " + e.getMessage());
+                throw new RuntimeException("Failed to store image file", e);
+            }
+        }
+
+        resource.setName(request.getName());
+        resource.setType(request.getType());
+        resource.setCapacity(request.getCapacity());
+        resource.setLocation(request.getLocation());
+        resource.setDescription(request.getDescription());
+        resource.setAvailabilityWindows(request.getAvailabilityWindows());
+        resource.setStatus(request.getStatus());
+        resource.setImageUrl(imageUrl);
+
+        Resource updatedResource = resourceRepository.save(resource);
+        System.out.println("Resource updated with imageUrl: " + updatedResource.getImageUrl());
         return mapToResponse(updatedResource);
     }
 

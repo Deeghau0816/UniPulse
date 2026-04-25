@@ -20,6 +20,87 @@ import {
 } from 'lucide-react';
 import UnifiedNavbar from '../components/UnifiedNavbar';
 
+// Resource Card Component
+const ResourceCard = ({ resource, navigate, getTypeIcon, getTypeLabel, getTypeColor, formatDate }: any) => {
+  const [imageError, setImageError] = useState(false);
+  const imageUrl = resource.imageUrl 
+    ? (resource.imageUrl.startsWith('http') ? resource.imageUrl : `http://localhost:8083${resource.imageUrl}`)
+    : null;
+
+  return (
+    <div className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-slate-900/10 hover:border-blue-300 transition-all">
+      {/* Card Header */}
+      <div className="relative h-48 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center overflow-hidden">
+        {imageUrl && !imageError ? (
+          <img 
+            src={imageUrl}
+            alt={resource.name}
+            className="w-full h-full object-cover"
+            onLoad={() => {
+              console.log('Image loaded successfully:', imageUrl);
+            }}
+            onError={() => {
+              console.error('Image failed to load:', imageUrl);
+              setImageError(true);
+            }}
+          />
+        ) : null}
+        {(!imageUrl || imageError) && (
+          <div className="text-6xl">{getTypeIcon(resource.type)}</div>
+        )}
+        <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold ${
+          resource.status === 'ACTIVE'
+            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+            : 'bg-red-100 text-red-700 border border-red-200'
+        }`}>
+          {resource.status === 'ACTIVE' ? 'Active' : 'Out of Service'}
+        </div>
+        <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold ${getTypeColor(resource.type)}`}>
+          {getTypeLabel(resource.type)}
+        </div>
+      </div>
+
+      {/* Card Content */}
+      <div className="p-6">
+        <h3 className="text-xl font-bold text-slate-900 mb-2">
+          {resource.name}
+        </h3>
+        <div className="flex items-center gap-2 text-sm text-slate-600 mb-3">
+          <MapPin className="w-4 h-4" />
+          {resource.location}
+        </div>
+        {resource.capacity && (
+          <div className="flex items-center gap-2 text-sm text-slate-600 mb-3">
+            <Users className="w-4 h-4" />
+            Capacity: {resource.capacity} people
+          </div>
+        )}
+        <p className="text-slate-600 text-sm line-clamp-2 mb-3">
+          {resource.description}
+        </p>
+        <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+          <Calendar className="w-4 h-4" />
+          {resource.availabilityWindows}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+          <span className="text-xs text-slate-500">
+            Added {formatDate(resource.createdAt)}
+          </span>
+          <button
+            onClick={() => navigate(`/dashboard/resources/${resource.id}`)}
+            className="flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+          >
+            View Details
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 type Resource = {
   id: string;
   name: string;
@@ -29,6 +110,7 @@ type Resource = {
   description: string;
   availabilityWindows: string;
   status: ResourceStatus;
+  imageUrl?: string;
   createdAt: string;
 };
 
@@ -79,17 +161,21 @@ const FacilitiesCataloguePage = () => {
         setLoading(true);
         const resourceResponses = await resourceService.getAllResources();
         
-        const resources: Resource[] = resourceResponses.map(response => ({
-          id: response.id.toString(),
-          name: response.name,
-          type: response.type,
-          capacity: response.capacity || undefined,
-          location: response.location,
-          description: response.description,
-          availabilityWindows: response.availabilityWindows,
-          status: response.status,
-          createdAt: response.createdAt,
-        }));
+        const resources: Resource[] = resourceResponses.map(response => {
+          console.log('Resource imageUrl:', response.imageUrl);
+          return {
+            id: response.id.toString(),
+            name: response.name,
+            type: response.type,
+            capacity: response.capacity || undefined,
+            location: response.location,
+            description: response.description,
+            availabilityWindows: response.availabilityWindows,
+            status: response.status,
+            imageUrl: response.imageUrl,
+            createdAt: response.createdAt,
+          };
+        });
         
         setResources(resources);
         setError(null);
@@ -547,63 +633,15 @@ const FacilitiesCataloguePage = () => {
               </div>
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredResources.map((resource) => (
-                  <div
+                  <ResourceCard
                     key={resource.id}
-                    className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-slate-900/10 hover:border-blue-300 transition-all"
-                  >
-                    {/* Card Header */}
-                    <div className="relative h-48 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                      <div className="text-6xl">{getTypeIcon(resource.type)}</div>
-                      <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold ${
-                        resource.status === 'ACTIVE'
-                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                          : 'bg-red-100 text-red-700 border border-red-200'
-                      }`}>
-                        {resource.status === 'ACTIVE' ? 'Active' : 'Out of Service'}
-                      </div>
-                      <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold ${getTypeColor(resource.type)}`}>
-                        {getTypeLabel(resource.type)}
-                      </div>
-                    </div>
-
-                    {/* Card Content */}
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold text-slate-900 mb-2">
-                        {resource.name}
-                      </h3>
-                      <div className="flex items-center gap-2 text-sm text-slate-600 mb-3">
-                        <MapPin className="w-4 h-4" />
-                        {resource.location}
-                      </div>
-                      {resource.capacity && (
-                        <div className="flex items-center gap-2 text-sm text-slate-600 mb-3">
-                          <Users className="w-4 h-4" />
-                          Capacity: {resource.capacity} people
-                        </div>
-                      )}
-                      <p className="text-slate-600 text-sm line-clamp-2 mb-3">
-                        {resource.description}
-                      </p>
-                      <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                        <Calendar className="w-4 h-4" />
-                        {resource.availabilityWindows}
-                      </div>
-
-                      {/* Footer */}
-                      <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                        <span className="text-xs text-slate-500">
-                          Added {formatDate(resource.createdAt)}
-                        </span>
-                        <button
-                          onClick={() => navigate(`/dashboard/resources/${resource.id}`)}
-                          className="flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all"
-                        >
-                          View Details
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                    resource={resource}
+                    navigate={navigate}
+                    getTypeIcon={getTypeIcon}
+                    getTypeLabel={getTypeLabel}
+                    getTypeColor={getTypeColor}
+                    formatDate={formatDate}
+                  />
                 ))}
               </div>
             </>

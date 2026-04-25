@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -32,10 +33,66 @@ public class ResourceController {
         return ResponseEntity.ok(resourceService.getResourceById(id));
     }
 
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<ResourceResponse> createResourceWithImage(
+            @RequestParam("name") String name,
+            @RequestParam("type") ResourceType type,
+            @RequestParam("location") String location,
+            @RequestParam("description") String description,
+            @RequestParam("availabilityWindows") String availabilityWindows,
+            @RequestParam("status") ResourceStatus status,
+            @RequestParam(value = "capacity", required = false) Integer capacity,
+            @RequestParam(value = "imageUrl", required = false) String imageUrl,
+            @RequestParam(value = "image", required = false) MultipartFile image
+    ) {
+        System.out.println("createResourceWithImage called with image: " + (image != null ? image.getOriginalFilename() : "null"));
+        ResourceRequest request = new ResourceRequest();
+        request.setName(name);
+        request.setType(type);
+        request.setLocation(location);
+        request.setDescription(description);
+        request.setAvailabilityWindows(availabilityWindows);
+        request.setStatus(status);
+        request.setCapacity(capacity);
+        request.setImageUrl(imageUrl);
+        
+        ResourceResponse createdResource = resourceService.createResource(request, image);
+        return new ResponseEntity<>(createdResource, HttpStatus.CREATED);
+    }
+
     @PostMapping
     public ResponseEntity<ResourceResponse> createResource(@Valid @RequestBody ResourceRequest request) {
+        System.out.println("createResource called (JSON) with imageUrl: " + request.getImageUrl());
         ResourceResponse createdResource = resourceService.createResource(request);
         return new ResponseEntity<>(createdResource, HttpStatus.CREATED);
+    }
+
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<ResourceResponse> updateResourceWithImage(
+            @PathVariable Long id,
+            @RequestParam("name") String name,
+            @RequestParam("type") ResourceType type,
+            @RequestParam("location") String location,
+            @RequestParam("description") String description,
+            @RequestParam("availabilityWindows") String availabilityWindows,
+            @RequestParam("status") ResourceStatus status,
+            @RequestParam(value = "capacity", required = false) Integer capacity,
+            @RequestParam(value = "imageUrl", required = false) String imageUrl,
+            @RequestParam(value = "image", required = false) MultipartFile image
+    ) {
+        System.out.println("updateResourceWithImage called with image: " + (image != null ? image.getOriginalFilename() : "null"));
+        ResourceRequest request = new ResourceRequest();
+        request.setName(name);
+        request.setType(type);
+        request.setLocation(location);
+        request.setDescription(description);
+        request.setAvailabilityWindows(availabilityWindows);
+        request.setStatus(status);
+        request.setCapacity(capacity);
+        request.setImageUrl(imageUrl);
+        
+        ResourceResponse updatedResource = resourceService.updateResource(id, request, image);
+        return ResponseEntity.ok(updatedResource);
     }
 
     @PutMapping("/{id}")

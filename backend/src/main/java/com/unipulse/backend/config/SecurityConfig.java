@@ -64,6 +64,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/auth/google/**", "/api/auth/admin/google/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
 
                         .requestMatchers(HttpMethod.PUT, "/api/auth/complete-profile").authenticated()
 
@@ -72,6 +73,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/reservations/**").permitAll()
                         .requestMatchers("/api/analytics/**").permitAll()
                         .requestMatchers("/api/reservation-notifications/**").permitAll()
+                        .requestMatchers("/api/attachments/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()
@@ -80,7 +82,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/admin/**").hasAnyRole("TECHNICIAN", "SYSTEM_ADMIN")
                         .requestMatchers("/api/users/*/role-requests").authenticated()
                         .requestMatchers("/api/notifications/**").authenticated()
-                        .requestMatchers("/api/attachments/**").authenticated()
 
                         .requestMatchers("/api/users/**").hasAnyRole("TECHNICIAN", "SYSTEM_ADMIN")
                         .anyRequest().authenticated()

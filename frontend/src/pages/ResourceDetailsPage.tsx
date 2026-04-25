@@ -13,6 +13,8 @@ const ResourceDetailsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<ResourceRequest>({
     name: '',
@@ -71,16 +73,37 @@ const ResourceDetailsPage = () => {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
   const handleSave = async () => {
     if (!resourceId) return;
 
     try {
       setIsSaving(true);
-      await resourceService.updateResource(resourceId, formData);
+      
+      if (imageFile) {
+        await resourceService.updateResourceWithImage(resourceId, formData, imageFile);
+      } else {
+        await resourceService.updateResource(resourceId, formData);
+      }
       
       const updatedResponse = await resourceService.getResourceById(resourceId);
       setResource(updatedResponse);
       setIsEditing(false);
+      setImageFile(null);
+      setImagePreview(null);
       setError(null);
     } catch (err) {
       console.error('Failed to update resource:', err);
@@ -413,20 +436,33 @@ const ResourceDetailsPage = () => {
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-semibold text-slate-900 mb-2">Image URL</label>
-                    <input
-                      type="url"
-                      name="imageUrl"
-                      value={formData.imageUrl || ''}
-                      onChange={handleInputChange}
-                      placeholder="https://example.com/resource-image.jpg"
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    />
-                    {formData.imageUrl && (
-                      <div className="mt-4 rounded-xl overflow-hidden border border-slate-200">
-                        <img src={formData.imageUrl} alt="Preview" className="w-full h-48 object-cover" />
-                      </div>
-                    )}
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">Resource Image</label>
+                    <div className="space-y-4">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      />
+                      {(imagePreview || resource?.imageUrl) && (
+                        <div className="relative rounded-xl overflow-hidden border border-slate-200">
+                          <img 
+                            src={imagePreview || (resource?.imageUrl?.startsWith('http') ? resource.imageUrl : `http://localhost:8083${resource?.imageUrl}`)} 
+                            alt="Preview" 
+                            className="w-full h-48 object-cover" 
+                          />
+                          {imagePreview && (
+                            <button
+                              type="button"
+                              onClick={handleRemoveImage}
+                              className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -476,7 +512,11 @@ const ResourceDetailsPage = () => {
                     <div>
                       <h3 className="text-lg font-semibold text-slate-900 mb-3">Resource Image</h3>
                       <div className="rounded-xl overflow-hidden border border-slate-200">
-                        <img src={resource.imageUrl} alt={resource.name} className="w-full h-64 object-cover" />
+                        <img 
+                          src={resource.imageUrl.startsWith('http') ? resource.imageUrl : `http://localhost:8083${resource.imageUrl}`} 
+                          alt={resource.name} 
+                          className="w-full h-64 object-cover" 
+                        />
                       </div>
                     </div>
                   )}

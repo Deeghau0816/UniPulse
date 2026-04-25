@@ -6,7 +6,7 @@ import UnifiedNavbar from '../components/UnifiedNavbar';
 
 const TicketNotificationsPage = () => {
   const navigate = useNavigate();
-  const { userPortalUser } = useAuth();
+  const { userPortalUser, getToken } = useAuth();
 
   const [filter, setFilter] = useState<TicketFilterType>('ALL');
   const [notifications, setNotifications] = useState<TicketNotificationItem[]>([]);
@@ -17,13 +17,23 @@ const TicketNotificationsPage = () => {
     return userPortalUser?.id ? Number(userPortalUser.id) : 1;
   };
 
+  // Get current auth token
+  const getTokenForRequest = (): string | null => {
+    return getToken('user');
+  };
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
         setLoading(true);
         const userId = getCurrentUserId();
-        const notificationData = await ticketNotificationService.getAllNotifications(userId);
-        setNotifications(notificationData);
+        const token = getTokenForRequest();
+        const notificationData = await ticketNotificationService.getAllNotifications(userId, token);
+        // Filter out login notifications - only show ticket-related notifications
+        const ticketNotifications = notificationData.filter(notif =>
+          notif.title.includes('Ticket') || notif.message.includes('Ticket')
+        );
+        setNotifications(ticketNotifications);
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
       } finally {
@@ -44,7 +54,8 @@ const TicketNotificationsPage = () => {
 
   const markAsRead = async (id: number): Promise<void> => {
     try {
-      await ticketNotificationService.markAsRead(id);
+      const token = getTokenForRequest();
+      await ticketNotificationService.markAsRead(id, token);
       setNotifications((prev) =>
         prev.map((item) =>
           item.id === id ? { ...item, isRead: true } : item
@@ -58,7 +69,8 @@ const TicketNotificationsPage = () => {
   const markAllAsRead = async (): Promise<void> => {
     try {
       const userId = getCurrentUserId();
-      await ticketNotificationService.markAllAsRead(userId);
+      const token = getTokenForRequest();
+      await ticketNotificationService.markAllAsRead(userId, token);
       setNotifications((prev) =>
         prev.map((item) => ({ ...item, isRead: true }))
       );

@@ -14,13 +14,23 @@ export interface NotificationItem {
 class NotificationService {
   private readonly API_BASE_URL = 'http://localhost:8083/api';
 
+  private getAuthHeaders(): Record<string, string> {
+    // Check for both user and admin tokens (AuthContext stores them as 'user_token' and 'admin_token')
+    const token = localStorage.getItem('user_token') || localStorage.getItem('admin_token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  }
+
   async getAllNotifications(userId: number): Promise<NotificationItem[]> {
     try {
       const response = await fetch(`${this.API_BASE_URL}/notifications/user/${userId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -52,9 +62,7 @@ class NotificationService {
     try {
       const response = await fetch(`${this.API_BASE_URL}/notifications/user/${userId}/unread`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -86,9 +94,7 @@ class NotificationService {
     try {
       const response = await fetch(`${this.API_BASE_URL}/notifications/${id}/read`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -104,9 +110,7 @@ class NotificationService {
     try {
       const response = await fetch(`${this.API_BASE_URL}/notifications/user/${userId}/read-all`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {

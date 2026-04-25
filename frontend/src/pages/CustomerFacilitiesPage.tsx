@@ -236,7 +236,7 @@ const CustomerFacilitiesPage = () => {
                     <div className="relative h-48 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
                       {resource.imageUrl ? (
                         <img
-                          src={resource.imageUrl}
+                          src={resource.imageUrl.startsWith('http') ? resource.imageUrl : `http://localhost:8083${resource.imageUrl}`}
                           alt={resource.name}
                           className="w-full h-full object-cover"
                         />

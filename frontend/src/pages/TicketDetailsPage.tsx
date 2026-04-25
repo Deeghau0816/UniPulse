@@ -9,6 +9,7 @@ type Attachment = {
   id: number;
   name: string;
   url: string;
+  downloadUrl: string;
 };
 
 type CommentItem = {
@@ -105,7 +106,8 @@ const TicketDetailsPage = () => {
           attachments: ticketResponse.attachments?.map(att => ({
             id: att.id,
             name: att.originalFileName || att.fileName,
-            url: `/api/tickets/${ticketResponse.id}/attachments/${att.id}`
+            url: `http://localhost:8083/api/attachments/${att.id}/view`,
+            downloadUrl: `http://localhost:8083/api/attachments/${att.id}/download`
           })) || [],
           comments: [], // TODO: Fetch comments when comment API is ready
         };
@@ -248,7 +250,8 @@ const TicketDetailsPage = () => {
         attachments: updatedTicket.attachments?.map(att => ({
           id: att.id,
           name: att.originalFileName || att.fileName,
-          url: `/api/tickets/${updatedTicket.id}/attachments/${att.id}`
+          url: `http://localhost:8083/api/attachments/${att.id}/view`,
+          downloadUrl: `http://localhost:8083/api/attachments/${att.id}/download`
         })) || [],
         comments: [],
       };
@@ -1240,6 +1243,24 @@ const TicketDetailsPage = () => {
                             className="attachment-image"
                           />
                           <div className="attachment-name">{attachment.name}</div>
+                          <a
+                            href={attachment.downloadUrl}
+                            download={attachment.name}
+                            className="download-btn"
+                            style={{
+                              display: 'inline-block',
+                              marginTop: '8px',
+                              padding: '6px 12px',
+                              backgroundColor: '#f97316',
+                              color: 'white',
+                              textDecoration: 'none',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              fontWeight: '500'
+                            }}
+                          >
+                            Download
+                          </a>
                         </div>
                       ))}
                     </div>
@@ -1253,18 +1274,16 @@ const TicketDetailsPage = () => {
                   </div>
                 </div>
 
-                {ticket.assignedTechnician && (
-                  <div className="card">
-                    <div className="card-title">Direct Messages</div>
-                    <MessageChat
-                      ticketId={ticket.id}
-                      currentUserName={currentUserName}
-                      currentUserRole={currentUserRole}
-                      recipientName={isCurrentUserTechnician ? ticket.createdBy : ticket.assignedTechnician}
-                      isTechnician={isCurrentUserTechnician}
-                    />
-                  </div>
-                )}
+                <div className="card">
+                  <div className="card-title">Direct Messages</div>
+                  <MessageChat
+                    ticketId={ticket.id}
+                    currentUserName={currentUserName}
+                    currentUserRole={currentUserRole}
+                    recipientName={isCurrentUserTechnician ? ticket.createdBy : (ticket.assignedTechnician || 'Not Assigned')}
+                    isTechnician={isCurrentUserTechnician}
+                  />
+                </div>
 
                 
               </div>

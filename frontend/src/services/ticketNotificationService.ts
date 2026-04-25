@@ -14,13 +14,21 @@ export interface TicketNotificationItem {
 class TicketNotificationService {
   private readonly API_BASE_URL = 'http://localhost:8083/api';
 
-  async getAllNotifications(userId: number): Promise<TicketNotificationItem[]> {
+  private getAuthHeaders(token?: string | null): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  }
+
+  async getAllNotifications(userId: number, token?: string | null): Promise<TicketNotificationItem[]> {
     try {
       const response = await fetch(`${this.API_BASE_URL}/notifications/user/${userId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(token),
       });
 
       if (!response.ok) {
@@ -48,13 +56,11 @@ class TicketNotificationService {
     }
   }
 
-  async getUnreadNotifications(userId: number): Promise<TicketNotificationItem[]> {
+  async getUnreadNotifications(userId: number, token?: string | null): Promise<TicketNotificationItem[]> {
     try {
       const response = await fetch(`${this.API_BASE_URL}/notifications/user/${userId}/unread`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(token),
       });
 
       if (!response.ok) {
@@ -82,13 +88,11 @@ class TicketNotificationService {
     }
   }
 
-  async markAsRead(id: number): Promise<void> {
+  async markAsRead(id: number, token?: string | null): Promise<void> {
     try {
       const response = await fetch(`${this.API_BASE_URL}/notifications/${id}/read`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(token),
       });
 
       if (!response.ok) {
@@ -100,13 +104,11 @@ class TicketNotificationService {
     }
   }
 
-  async markAllAsRead(userId: number): Promise<void> {
+  async markAllAsRead(userId: number, token?: string | null): Promise<void> {
     try {
       const response = await fetch(`${this.API_BASE_URL}/notifications/user/${userId}/read-all`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(token),
       });
 
       if (!response.ok) {

@@ -126,11 +126,55 @@ class TicketService {
     return this.request<TicketResponse>(`/tickets/${id}`);
   }
 
-  async createTicket(ticket: TicketRequest): Promise<TicketResponse> {
-    return this.request<TicketResponse>('/tickets', {
-      method: 'POST',
-      body: JSON.stringify(ticket),
-    });
+  async createTicket(ticket: TicketRequest, attachments?: File[], createdByUserId?: number): Promise<TicketResponse> {
+    const url = `${API_BASE_URL}/tickets`;
+    const formData = new FormData();
+    
+    formData.append('category', ticket.category);
+    formData.append('location', ticket.location);
+    formData.append('priority', ticket.priority);
+    formData.append('description', ticket.description);
+    formData.append('preferredContact', ticket.preferredContact);
+    formData.append('createdBy', ticket.createdBy);
+    
+    if (ticket.assignedTechnician) {
+      formData.append('assignedTechnician', ticket.assignedTechnician);
+    }
+    
+    if (createdByUserId) {
+      formData.append('createdByUserId', createdByUserId.toString());
+    }
+    
+    if (attachments && attachments.length > 0) {
+      attachments.forEach(file => {
+        formData.append('attachments', file);
+      });
+    }
+    
+    const token = localStorage.getItem('user_token') || localStorage.getItem('admin_token');
+    
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Ticket creation failed:', error);
+      throw error;
+    }
   }
 
   async updateTicket(id: string, ticket: TicketRequest): Promise<TicketResponse> {
