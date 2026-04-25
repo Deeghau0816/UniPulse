@@ -12,6 +12,7 @@ import com.unipulse.backend.model.RoleRequest;
 import com.unipulse.backend.model.User;
 import com.unipulse.backend.service.EmailService;
 import com.unipulse.backend.service.UserService;
+import com.unipulse.backend.util.NotificationMessageUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -94,7 +95,11 @@ public class UserServiceImpl implements UserService {
 
         user.setEmail(normalizedEmail);
         user.setSliitId(normalizedSliitId);
-        user.setProfileImage(request.getProfileImage() == null ? "" : request.getProfileImage().trim());
+
+        if (request.getProfileImage() != null) {
+            String trimmedProfileImage = request.getProfileImage().trim();
+            user.setProfileImage(trimmedProfileImage.isBlank() ? null : trimmedProfileImage);
+        }
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(request.getPassword().trim()));
@@ -158,41 +163,46 @@ public class UserServiceImpl implements UserService {
         roleRequest.setCreatedAt(LocalDateTime.now());
 
         RoleRequest savedRequest = roleRequestRepository.save(roleRequest);
+        String submittedAt = NotificationMessageUtils.formatEventTimestamp(savedRequest.getCreatedAt());
+        String requestedTransition = NotificationMessageUtils.formatRole(savedRequest.getCurrentRole())
+                + " to " + NotificationMessageUtils.formatRole(savedRequest.getRequestedRole());
 
         List<User> admins = userRepository.findByRoleIn(List.of(Role.TECHNICIAN, Role.SYSTEM_ADMIN));
 
         for (User admin : admins) {
-            Notification adminNotification = new Notification();
-            adminNotification.setTitle("Role Change Request");
-            adminNotification.setMessage(
-                    user.getFullName() + " requested role change from " +
-                            user.getRole().name() + " to " + request.getRequestedRole().name() + "."
-            );
-            adminNotification.setRead(false);
-            adminNotification.setCreatedAt(LocalDateTime.now());
-            adminNotification.setUser(admin);
-            notificationRepository.save(adminNotification);
+          Notification adminNotification = new Notification();
+          adminNotification.setTitle("Role Change Request");
+          adminNotification.setMessage(
+                  user.getFullName() + " requested a role change from " + requestedTransition
+                          + " on " + submittedAt + "."
+          );
+          adminNotification.setRead(false);
+          adminNotification.setCreatedAt(savedRequest.getCreatedAt());
+          adminNotification.setUser(admin);
+          notificationRepository.save(adminNotification);
 
-            try {
-                emailService.sendSimpleEmail(
-                        admin.getEmail(),
-                        "New Role Change Request",
-                        "User " + user.getFullName() + " (" + user.getEmail() + ") requested role change from " +
-                                user.getRole().name() + " to " + request.getRequestedRole().name() +
-                                (request.getReason() != null && !request.getReason().isBlank()
-                                        ? "\nReason: " + request.getReason()
-                                        : "")
-                );
-            } catch (Exception e) {
-                System.out.println("Admin email failed: " + e.getMessage());
-            }
+          try {
+              emailService.sendSimpleEmail(
+                      admin.getEmail(),
+                      "New Role Change Request",
+                      "User " + user.getFullName() + " (" + user.getEmail() + ") requested role change from " +
+                              user.getRole().name() + " to " + request.getRequestedRole().name() +
+                              (request.getReason() != null && !request.getReason().isBlank()
+                                      ? "\nReason: " + request.getReason()
+                                      : "")
+              );
+          } catch (Exception e) {
+              System.out.println("Admin email failed: " + e.getMessage());
+          }
         }
 
         Notification userNotification = new Notification();
         userNotification.setTitle("Role Request Submitted");
-        userNotification.setMessage("Your request for role " + request.getRequestedRole().name() + " was submitted.");
+        userNotification.setMessage(
+                "You requested a role change from " + requestedTransition + " on " + submittedAt + "."
+        );
         userNotification.setRead(false);
-        userNotification.setCreatedAt(LocalDateTime.now());
+        userNotification.setCreatedAt(savedRequest.getCreatedAt());
         userNotification.setUser(user);
         notificationRepository.save(userNotification);
 
@@ -246,22 +256,29 @@ public class UserServiceImpl implements UserService {
         roleRequest.setStatus(RoleRequest.Status.APPROVED);
         roleRequest.setReviewedAt(LocalDateTime.now());
         RoleRequest savedRequest = roleRequestRepository.save(roleRequest);
+        String submittedAt = NotificationMessageUtils.formatEventTimestamp(savedRequest.getCreatedAt());
+        String reviewedAt = NotificationMessageUtils.formatEventTimestamp(savedRequest.getReviewedAt());
+        String requestedTransition = NotificationMessageUtils.formatRole(savedRequest.getCurrentRole())
+                + " to " + NotificationMessageUtils.formatRole(savedRequest.getRequestedRole());
 
         Notification userNotification = new Notification();
         userNotification.setTitle("Role Request Approved");
-        userNotification.setMessage("Your role request has been approved. Your new role is " + user.getRole().name() + ".");
+        userNotification.setMessage(
+                "Your role change request from " + requestedTransition + ", submitted on " + submittedAt
+                        + ", was approved by admin on " + reviewedAt + "."
+        );
         userNotification.setRead(false);
-        userNotification.setCreatedAt(LocalDateTime.now());
+        userNotification.setCreatedAt(savedRequest.getReviewedAt());
         userNotification.setUser(user);
         notificationRepository.save(userNotification);
 
         try {
-            emailService.sendSimpleEmail(
-                    user.getEmail(),
-                    "Role Request Approved",
-                    "Hello " + user.getFullName() + ", your role request has been approved. Your new role is " +
-                            user.getRole().name() + "."
-            );
+          emailService.sendSimpleEmail(
+                  user.getEmail(),
+                  "Role Request Approved",
+                  "Hello " + user.getFullName() + ", your role request has been approved. Your new role is " +
+                          user.getRole().name() + "."
+          );
         } catch (Exception e) {
             System.out.println("Approval email failed: " + e.getMessage());
         }
@@ -288,12 +305,19 @@ public class UserServiceImpl implements UserService {
         RoleRequest savedRequest = roleRequestRepository.save(roleRequest);
 
         User user = roleRequest.getUser();
+        String submittedAt = NotificationMessageUtils.formatEventTimestamp(savedRequest.getCreatedAt());
+        String reviewedAt = NotificationMessageUtils.formatEventTimestamp(savedRequest.getReviewedAt());
+        String requestedTransition = NotificationMessageUtils.formatRole(savedRequest.getCurrentRole())
+                + " to " + NotificationMessageUtils.formatRole(savedRequest.getRequestedRole());
 
         Notification userNotification = new Notification();
         userNotification.setTitle("Role Request Rejected");
-        userNotification.setMessage("Your role request has been rejected.");
+        userNotification.setMessage(
+                "Your role change request from " + requestedTransition + ", submitted on " + submittedAt
+                        + ", was rejected by admin on " + reviewedAt + "."
+        );
         userNotification.setRead(false);
-        userNotification.setCreatedAt(LocalDateTime.now());
+        userNotification.setCreatedAt(savedRequest.getReviewedAt());
         userNotification.setUser(user);
         notificationRepository.save(userNotification);
 

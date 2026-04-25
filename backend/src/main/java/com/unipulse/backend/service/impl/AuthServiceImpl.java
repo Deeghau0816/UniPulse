@@ -14,6 +14,7 @@ import com.unipulse.backend.model.User;
 import com.unipulse.backend.service.AuthService;
 import com.unipulse.backend.service.EmailService;
 import com.unipulse.backend.service.UserJwtService;
+import com.unipulse.backend.util.NotificationMessageUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,7 +45,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request, String userAgent) {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
         String normalizedSliitId = request.getSliitId().trim();
 
@@ -69,7 +70,14 @@ public class AuthServiceImpl implements AuthService {
         user.setProfileCompleted(true);
 
         User savedUser = userRepository.save(user);
-        saveNotification(savedUser, "Account Created", "Your account was created successfully.");
+        LocalDateTime eventTime = LocalDateTime.now();
+        saveNotification(
+                savedUser,
+                "Account Created",
+                "You registered with a device (" + NotificationMessageUtils.describeDevice(userAgent) + ") on "
+                        + NotificationMessageUtils.formatEventTimestamp(eventTime) + ".",
+                eventTime
+        );
 
         try {
             emailService.sendSimpleEmail(
@@ -86,7 +94,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse adminRegister(RegisterRequest request) {
+    public AuthResponse adminRegister(RegisterRequest request, String userAgent) {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
 
         if (userRepository.findByEmail(normalizedEmail).isPresent()) {
@@ -106,17 +114,31 @@ public class AuthServiceImpl implements AuthService {
         user.setProfileCompleted(true);
 
         User savedUser = userRepository.save(user);
-        saveNotification(savedUser, "Admin Account Created", "Your admin account was created successfully.");
+        LocalDateTime eventTime = LocalDateTime.now();
+        saveNotification(
+                savedUser,
+                "Admin Account Created",
+                "You registered an admin account with a device (" + NotificationMessageUtils.describeDevice(userAgent)
+                        + ") on " + NotificationMessageUtils.formatEventTimestamp(eventTime) + ".",
+                eventTime
+        );
 
         String jwtToken = generateTokenForUser(savedUser);
         return new AuthResponse(jwtToken, UserMapper.toDto(savedUser));
     }
 
     @Override
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, String userAgent) {
         User user = authenticate(request);
 
-        saveNotification(user, "Login Successful", "Login completed successfully.");
+        LocalDateTime eventTime = LocalDateTime.now();
+        saveNotification(
+                user,
+                "Login Successful",
+                "You logged in with a device (" + NotificationMessageUtils.describeDevice(userAgent) + ") on "
+                        + NotificationMessageUtils.formatEventTimestamp(eventTime) + ".",
+                eventTime
+        );
 
         try {
             emailService.sendSimpleEmail(
@@ -133,14 +155,22 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse adminLogin(LoginRequest request) {
+    public AuthResponse adminLogin(LoginRequest request, String userAgent) {
         User user = authenticate(request);
 
         if (user.getRole() != Role.TECHNICIAN && user.getRole() != Role.SYSTEM_ADMIN) {
             throw new RuntimeException("Access denied. Only Technician or System Admin can log in here.");
         }
 
-        saveNotification(user, "Admin Login Successful", "Admin login completed successfully.");
+        LocalDateTime eventTime = LocalDateTime.now();
+        saveNotification(
+                user,
+                "Admin Login Successful",
+                "You logged in to the admin portal with a device ("
+                        + NotificationMessageUtils.describeDevice(userAgent) + ") on "
+                        + NotificationMessageUtils.formatEventTimestamp(eventTime) + ".",
+                eventTime
+        );
 
         String jwtToken = generateTokenForUser(user);
         return new AuthResponse(jwtToken, UserMapper.toDto(user));
@@ -222,12 +252,12 @@ public class AuthServiceImpl implements AuthService {
         return role;
     }
 
-    private void saveNotification(User user, String title, String message) {
+    private void saveNotification(User user, String title, String message, LocalDateTime createdAt) {
         Notification notification = new Notification();
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setRead(false);
-        notification.setCreatedAt(LocalDateTime.now());
+        notification.setCreatedAt(createdAt);
         notification.setUser(user);
         notificationRepository.save(notification);
     }

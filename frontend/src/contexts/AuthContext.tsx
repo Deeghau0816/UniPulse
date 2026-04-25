@@ -1,3 +1,4 @@
+// frontend/src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -29,6 +30,7 @@ interface RawUser {
   firstName?: string;
   lastName?: string;
   name?: string;
+  fullName?: string;
   email: string;
   role?: string;
   profileImage?: string | null;
@@ -52,6 +54,7 @@ interface JwtPayload {
   roles?: string[];
   authorities?: string[];
   userId?: string | number;
+  id?: string | number;
   sliitId?: string;
   provider?: string;
   profileCompleted?: boolean;
@@ -148,11 +151,31 @@ const normalizeRole = (rawRole?: string): UserRole => {
   }
 };
 
+const normalizeProfileImage = (
+  rawProfileImage?: string | null,
+  provider?: string
+): string | null => {
+  if (!rawProfileImage) return null;
+
+  const trimmed = rawProfileImage.trim();
+  if (!trimmed) return null;
+
+  const isUploadedImage = trimmed.startsWith('data:image/');
+
+  if ((provider || '').toUpperCase() === 'GOOGLE' && !isUploadedImage) {
+    return null;
+  }
+
+  return trimmed;
+};
+
 const normalizeUser = (rawUser: RawUser): User => {
   const firstName = rawUser.firstName;
   const lastName = rawUser.lastName;
+
   const fullName =
     rawUser.name ||
+    rawUser.fullName ||
     [firstName, lastName].filter(Boolean).join(' ').trim() ||
     rawUser.email ||
     'User';
@@ -164,7 +187,7 @@ const normalizeUser = (rawUser: RawUser): User => {
     name: fullName,
     email: rawUser.email,
     role: normalizeRole(rawUser.role),
-    profileImage: rawUser.profileImage ?? null,
+    profileImage: normalizeProfileImage(rawUser.profileImage, rawUser.provider),
     sliitId: rawUser.sliitId ?? null,
     provider: rawUser.provider,
     profileCompleted: rawUser.profileCompleted ?? true,
@@ -175,6 +198,7 @@ const buildUserFromPayload = (payload: JwtPayload): User => {
   const email = payload.email ?? payload.sub ?? '';
   const firstName = payload.firstName ?? payload.given_name ?? undefined;
   const lastName = payload.lastName ?? payload.family_name ?? undefined;
+
   const fullName =
     payload.name ||
     [firstName, lastName].filter(Boolean).join(' ').trim() ||
@@ -182,8 +206,14 @@ const buildUserFromPayload = (payload: JwtPayload): User => {
     email ||
     'OAuth User';
 
-  const id = payload.userId != null ? String(payload.userId) : email || 'oauth-user';
-  const profileImage = payload.profileImage ?? payload.picture ?? null;
+  const id =
+    payload.userId != null
+      ? String(payload.userId)
+      : payload.id != null
+        ? String(payload.id)
+        : email || 'oauth-user';
+
+  const rawProfileImage = payload.profileImage ?? payload.picture ?? null;
 
   return {
     id,
@@ -192,7 +222,7 @@ const buildUserFromPayload = (payload: JwtPayload): User => {
     name: fullName,
     email,
     role: normalizeRole(payload.role ?? payload.roles?.[0] ?? payload.authorities?.[0]),
-    profileImage,
+    profileImage: normalizeProfileImage(rawProfileImage, payload.provider),
     sliitId: payload.sliitId ?? null,
     provider: payload.provider,
     profileCompleted: payload.profileCompleted ?? true,
@@ -204,29 +234,54 @@ const loadSessionFromStorage = (
   userKey: string
 ): SessionState => {
   const storedToken = localStorage.getItem(tokenKey);
+  const storedUser = localStorage.getItem(userKey);
+
+  let parsedStoredUser: User | null = null;
+
+  if (storedUser) {
+    try {
+      parsedStoredUser = JSON.parse(storedUser) as User;
+    } catch (error) {
+      console.error('Error parsing stored user data:', error);
+      localStorage.removeItem(userKey);
+    }
+  }
 
   if (storedToken) {
     if (!isTokenExpired(storedToken)) {
       const payload = decodeJwtPayload(storedToken);
+
       if (payload) {
         const userFromToken = buildUserFromPayload(payload);
-        localStorage.setItem(userKey, JSON.stringify(userFromToken));
-        return { user: userFromToken, token: storedToken };
+
+        const mergedUser: User = {
+          ...userFromToken,
+          ...parsedStoredUser,
+          id: parsedStoredUser?.id || userFromToken.id,
+          email: parsedStoredUser?.email || userFromToken.email,
+          role: parsedStoredUser?.role || userFromToken.role,
+          profileImage:
+            parsedStoredUser?.profileImage ??
+            userFromToken.profileImage ??
+            null,
+        };
+
+        localStorage.setItem(userKey, JSON.stringify(mergedUser));
+        return { user: mergedUser, token: storedToken };
+      }
+
+      if (parsedStoredUser) {
+        return { user: parsedStoredUser, token: storedToken };
       }
     }
 
     localStorage.removeItem(tokenKey);
     localStorage.removeItem(userKey);
+    return { user: null, token: null };
   }
 
-  const storedUser = localStorage.getItem(userKey);
-  if (storedUser) {
-    try {
-      return { user: JSON.parse(storedUser) as User, token: null };
-    } catch (error) {
-      console.error('Error parsing stored user data:', error);
-      localStorage.removeItem(userKey);
-    }
+  if (parsedStoredUser) {
+    return { user: parsedStoredUser, token: null };
   }
 
   return { user: null, token: null };
@@ -244,9 +299,11 @@ const clearSessionStorage = (portal: PortalSide) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
+
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+
   return context;
 };
 
@@ -256,13 +313,22 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const location = useLocation();
+
   const currentPortal = useMemo<PortalSide>(
     () => getPortalFromPath(location.pathname),
     [location.pathname]
   );
 
-  const [userSession, setUserSession] = useState<SessionState>({ user: null, token: null });
-  const [adminSession, setAdminSession] = useState<SessionState>({ user: null, token: null });
+  const [userSession, setUserSession] = useState<SessionState>({
+    user: null,
+    token: null,
+  });
+
+  const [adminSession, setAdminSession] = useState<SessionState>({
+    user: null,
+    token: null,
+  });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -278,6 +344,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!localStorage.getItem(USER_TOKEN_STORAGE_KEY) && userToken) {
       localStorage.setItem(USER_TOKEN_STORAGE_KEY, userToken);
     }
+
     if (!localStorage.getItem(USER_DATA_STORAGE_KEY) && userData) {
       localStorage.setItem(USER_DATA_STORAGE_KEY, userData);
     }
@@ -298,6 +365,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           clearSessionStorage('user');
           return { user: null, token: null };
         }
+
         return prev;
       });
 
@@ -306,6 +374,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           clearSessionStorage('admin');
           return { user: null, token: null };
         }
+
         return prev;
       });
     }, 30000);
@@ -313,8 +382,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => window.clearInterval(interval);
   }, []);
 
-  const login = (userData: RawUser, token?: string, portal: PortalSide = currentPortal) => {
+  const login = (
+    userData: RawUser,
+    token?: string,
+    portal: PortalSide = currentPortal
+  ) => {
     const normalizedUser = normalizeUser(userData);
+
     const session: SessionState = {
       user: normalizedUser,
       token: token ?? null,
@@ -323,41 +397,87 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (portal === 'admin') {
       setAdminSession(session);
       localStorage.setItem(ADMIN_DATA_STORAGE_KEY, JSON.stringify(normalizedUser));
-      if (token) localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
-    } else {
-      setUserSession(session);
-      localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(normalizedUser));
-      if (token) localStorage.setItem(USER_TOKEN_STORAGE_KEY, token);
+
+      if (token) {
+        localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
+      }
+
+      return;
+    }
+
+    setUserSession(session);
+    localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(normalizedUser));
+
+    if (token) {
+      localStorage.setItem(USER_TOKEN_STORAGE_KEY, token);
     }
   };
 
-  const updateUser = (userData: Partial<User>, portal: PortalSide = currentPortal) => {
+  const updateUser = (
+    userData: Partial<User>,
+    portal: PortalSide = currentPortal
+  ) => {
+    const normalizedUserData: Partial<User> = {
+      ...userData,
+      profileImage:
+        userData.profileImage === undefined
+          ? undefined
+          : normalizeProfileImage(userData.profileImage, userData.provider),
+    };
+
     if (portal === 'admin') {
       setAdminSession((prev) => {
         if (!prev.user) return prev;
-        const updatedUser = { ...prev.user, ...userData };
+
+        const updatedUser = {
+          ...prev.user,
+          ...normalizedUserData,
+        };
+
         localStorage.setItem(ADMIN_DATA_STORAGE_KEY, JSON.stringify(updatedUser));
-        return { ...prev, user: updatedUser };
+
+        return {
+          ...prev,
+          user: updatedUser,
+        };
       });
+
       return;
     }
 
     setUserSession((prev) => {
       if (!prev.user) return prev;
-      const updatedUser = { ...prev.user, ...userData };
+
+      const updatedUser = {
+        ...prev.user,
+        ...normalizedUserData,
+      };
+
       localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(updatedUser));
-      return { ...prev, user: updatedUser };
+
+      return {
+        ...prev,
+        user: updatedUser,
+      };
     });
   };
 
   const logout = (portal: PortalSide = currentPortal) => {
     if (portal === 'admin') {
-      setAdminSession({ user: null, token: null });
+      setAdminSession({
+        user: null,
+        token: null,
+      });
+
       clearSessionStorage('admin');
       return;
     }
 
-    setUserSession({ user: null, token: null });
+    setUserSession({
+      user: null,
+      token: null,
+    });
+
     clearSessionStorage('user');
     localStorage.removeItem('selectedTechnician');
   };
@@ -372,11 +492,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isUserAuthenticated = !!userSession.user;
   const isAdminAuthenticated = !!adminSession.user;
 
-  const hasRole = (role: UserRole, portal: PortalSide = currentPortal): boolean => {
+  const hasRole = (
+    role: UserRole,
+    portal: PortalSide = currentPortal
+  ): boolean => {
     return getPortalUser(portal)?.role === role;
   };
 
-  const hasAnyRole = (roles: UserRole[], portal: PortalSide = currentPortal): boolean => {
+  const hasAnyRole = (
+    roles: UserRole[],
+    portal: PortalSide = currentPortal
+  ): boolean => {
     const portalUser = getPortalUser(portal);
     return portalUser ? roles.includes(portalUser.role) : false;
   };

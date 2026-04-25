@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Mail,
   User,
@@ -12,12 +12,14 @@ import {
   Image as ImageIcon,
   UserCog,
   BadgeCheck,
+  Upload,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
 const API_BASE_URL = 'http://localhost:8081';
+const MAX_PROFILE_IMAGE_BYTES = 2 * 1024 * 1024;
 
 type UserRole =
   | 'STUDENT'
@@ -41,6 +43,7 @@ interface AdminUserData {
 export default function AdminUserAccountPage() {
   const navigate = useNavigate();
   const { logout, updateUser, adminPortalUser, getToken } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [user, setUser] = useState<AdminUserData>({
     firstName: '',
@@ -69,6 +72,16 @@ export default function AdminUserAccountPage() {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const normalizeProfileImage = (image?: string | null, provider?: string) => {
+    const value = image?.trim() || '';
+    if (!value) return '';
+    const isUploadedImage = value.startsWith('data:image/');
+    if ((provider || '').toUpperCase() === 'GOOGLE' && !isUploadedImage) {
+      return '';
+    }
+    return value;
+  };
+
   useEffect(() => {
     if (adminPortalUser) {
       const localMappedUser: AdminUserData = {
@@ -81,7 +94,7 @@ export default function AdminUserAccountPage() {
         email: adminPortalUser.email || '',
         sliitId: adminPortalUser.sliitId || '',
         role: adminPortalUser.role || 'SYSTEM_ADMIN',
-        profileImage: adminPortalUser.profileImage || '',
+        profileImage: normalizeProfileImage(adminPortalUser.profileImage, adminPortalUser.provider),
       };
 
       setUser(localMappedUser);
@@ -114,7 +127,7 @@ export default function AdminUserAccountPage() {
         email: data.email || '',
         sliitId: data.sliitId || '',
         role: data.role || 'SYSTEM_ADMIN',
-        profileImage: data.profileImage || '',
+        profileImage: normalizeProfileImage(data.profileImage, data.provider),
       };
 
       setUser(mappedUser);
@@ -151,6 +164,51 @@ export default function AdminUserAccountPage() {
     });
   };
 
+  const handlePickImage = () => {
+    if (!isEditing) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleImageSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      alert('Please select an image file.');
+      return;
+    }
+
+    if (file.size > MAX_PROFILE_IMAGE_BYTES) {
+      alert('Please select an image smaller than 2 MB.');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      setFormData((prev) => ({
+        ...prev,
+        profileImage: result,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    if (!isEditing) return;
+    setFormData((prev) => ({
+      ...prev,
+      profileImage: '',
+    }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSave = async () => {
     if (password && password !== confirmPassword) {
       alert('Passwords do not match');
@@ -185,7 +243,7 @@ export default function AdminUserAccountPage() {
         email: saved.email,
         sliitId: saved.sliitId,
         role: saved.role,
-        profileImage: saved.profileImage || '',
+        profileImage: normalizeProfileImage(saved.profileImage, saved.provider),
       };
 
       setUser(updatedUser);
@@ -222,6 +280,9 @@ export default function AdminUserAccountPage() {
     setPassword('');
     setConfirmPassword('');
     setIsEditing(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -454,18 +515,56 @@ export default function AdminUserAccountPage() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-semibold text-slate-700">Profile Picture Path</label>
-                <div className="relative">
-                  <ImageIcon className="absolute left-3 top-3.5 text-slate-400" size={18} />
-                  <input
-                    type="text"
-                    name="profileImage"
-                    value={formData.profileImage || ''}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    placeholder="/images/admin.jpg or https://..."
-                    className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-800 outline-none focus:border-blue-500"
-                  />
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Profile Picture</label>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelected}
+                  className="hidden"
+                />
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-slate-100">
+                      {formData.profileImage ? (
+                        <img
+                          src={formData.profileImage}
+                          alt="Profile Preview"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="h-8 w-8 text-slate-400" />
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={handlePickImage}
+                        disabled={!isEditing}
+                        className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Upload size={16} />
+                        Choose Image
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        disabled={!isEditing}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <X size={16} />
+                        Remove Image
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-xs text-slate-500">
+                    Click "Choose Image" to open your PC folders and upload a profile picture.
+                  </p>
                 </div>
               </div>
 

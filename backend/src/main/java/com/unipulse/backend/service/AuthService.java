@@ -6,9 +6,9 @@ import com.unipulse.backend.dto.LoginRequest;
 import com.unipulse.backend.dto.RegisterRequest;
 
 public interface AuthService {
-    AuthResponse register(RegisterRequest request);
-    AuthResponse adminRegister(RegisterRequest request);
-    AuthResponse login(LoginRequest request);
-    AuthResponse adminLogin(LoginRequest request);
+    AuthResponse register(RegisterRequest request, String userAgent);
+    AuthResponse adminRegister(RegisterRequest request, String userAgent);
+    AuthResponse login(LoginRequest request, String userAgent);
+    AuthResponse adminLogin(LoginRequest request, String userAgent);
     AuthResponse completeProfile(String email, CompleteProfileRequest request);
 }
