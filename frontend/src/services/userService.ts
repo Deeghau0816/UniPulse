@@ -42,9 +42,18 @@ class UserService {
   }
 
   async getTechnicians(): Promise<User[]> {
-    const allUsers = await this.getAllUsers();
-    const technicians = allUsers.filter(user => user.role === 'TECHNICIAN');
-    console.log('Filtered technicians:', technicians);
+    const response = await fetch(`${API_BASE_URL}/users/technicians`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Failed to fetch technicians:', response.status, errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+
+    const technicians = await response.json();
+    console.log('Fetched technicians:', technicians);
     return technicians;
   }
 }

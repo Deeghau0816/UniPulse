@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  Building2, 
   Ticket, 
   Calendar, 
   Bell, 
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth, type PortalSide } from '../contexts/AuthContext';
+import uniPulseLogo from '../assets/home/uniPulseLogo.png';
 
 interface UnifiedNavbarProps {
   portal?: PortalSide;
@@ -35,16 +35,15 @@ export default function UnifiedNavbar({ portal = 'user' }: UnifiedNavbarProps) {
     }`;
 
   const userNavLinks = [
-    { path: '/customer/resources', label: 'Browse Resources', icon: Building2 },
+    { path: '/customer/resources', label: 'Browse Resources', icon: null },
     { path: '/dashboard/my-tickets', label: 'My Tickets', icon: Ticket },
-    { path: '/dashboard/technician/tickets', label: 'Technician', icon: Wrench },
     { path: '/reservations/user', label: 'My Reservations', icon: Calendar },
     { path: '/dashboard/notifications', label: 'Notifications', icon: Bell },
   ];
 
   const adminNavLinks = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/dashboard/resources', label: 'Resources', icon: Building2 },
+    { path: '/dashboard/resources', label: 'Resources', icon: null },
     { path: '/dashboard/admin/tickets', label: 'Tickets', icon: Ticket },
     { path: '/dashboard/technician/tickets', label: 'Technician', icon: Wrench },
     { path: '/reservations/admin', label: 'Reservations', icon: Calendar },
@@ -61,9 +60,7 @@ export default function UnifiedNavbar({ portal = 'user' }: UnifiedNavbarProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
+            <img src={uniPulseLogo} alt="UniPulse Logo" className="w-9 h-9" />
             <span className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
               UniPulse
             </span>
@@ -77,7 +74,7 @@ export default function UnifiedNavbar({ portal = 'user' }: UnifiedNavbarProps) {
                 to={link.path}
                 className={linkClass(link.path)}
               >
-                <link.icon className="w-4 h-4" />
+                {link.icon && <link.icon className="w-4 h-4" />}
                 {link.label}
               </Link>
             ))}
@@ -164,7 +161,7 @@ export default function UnifiedNavbar({ portal = 'user' }: UnifiedNavbarProps) {
                       : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  <link.icon className="w-5 h-5" />
+                  {link.icon && <link.icon className="w-5 h-5" />}
                   {link.label}
                 </Link>
               ))}

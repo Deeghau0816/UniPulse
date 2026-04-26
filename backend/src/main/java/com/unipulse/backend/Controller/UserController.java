@@ -36,6 +36,17 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    @GetMapping("/technicians")
+    public ResponseEntity<List<UserResponseDto>> getTechnicians() {
+        List<UserResponseDto> technicians = userService.getAllUsers()
+                .stream()
+                .filter(user -> user.getRole() == Role.TECHNICIAN)
+                .map(UserMapper::toDto)
+                .toList();
+
+        return ResponseEntity.ok(technicians);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
