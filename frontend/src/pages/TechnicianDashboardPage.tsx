@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ticketService, type TicketStatus, type TicketPriority, type TicketCategory } from '../services/ticketService';
 import UnifiedNavbar from '../components/UnifiedNavbar';
+import { useAuth } from '../contexts/AuthContext';
 
 type DashboardTab = 'assigned' | 'open' | 'in_progress' | 'resolved';
 
@@ -17,27 +18,11 @@ type TechnicianTicket = {
   createdAt: string;
 };
 
-const TECHNICIAN_LIST = [
-  'Nimal Perera',
-  'Kasun Madusha',
-  'Ayesha Fernando',
-  'Sanjeewa Silva',
-  'Rohan Perera',
-  'Thilini Perera',
-  'Chamath Perera',
-];
-
 const TechnicianDashboardPage = () => {
   const navigate = useNavigate();
+  const { adminPortalUser } = useAuth();
 
-  const [currentTechnician, setCurrentTechnician] = useState<string>(
-    () => localStorage.getItem('selectedTechnician') || TECHNICIAN_LIST[0]
-  );
-
-  const handleTechnicianChange = (name: string) => {
-    setCurrentTechnician(name);
-    localStorage.setItem('selectedTechnician', name);
-  };
+  const currentTechnician = adminPortalUser?.name || 'Technician';
 
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | TicketStatus>('ALL');
@@ -714,16 +699,9 @@ const TechnicianDashboardPage = () => {
                   background: '#ffffff', border: '1px solid #e4e4e7', borderRadius: '16px',
                   padding: '10px 16px', boxShadow: '0 6px 16px rgba(0,0,0,0.04)' }}>
                   <span style={{ fontSize: '13px', fontWeight: 700, color: '#52525b' }}>Viewing as:</span>
-                  <select
-                    value={currentTechnician}
-                    onChange={(e) => handleTechnicianChange(e.target.value)}
-                    style={{ border: 'none', background: 'transparent', fontWeight: 700,
-                      fontSize: '14px', color: '#ea580c', outline: 'none', cursor: 'pointer' }}
-                  >
-                    {TECHNICIAN_LIST.map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
+                  <span style={{ fontWeight: 700, fontSize: '14px', color: '#ea580c' }}>
+                    {currentTechnician}
+                  </span>
                 </div>
 
                 <div className="quick-links">
